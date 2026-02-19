@@ -15,6 +15,27 @@
       "when": 1771531134244,
       "tag": "0001_pretty_malice",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1771531657249,
+      "tag": "0002_burly_smasher",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1771531938898,
+      "tag": "0003_oval_skullbuster",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1771532091111,
+      "tag": "0004_tiresome_human_fly",
+      "breakpoints": true
     }
   ]
 }

@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
+import { useAuth } from "@/_core/hooks/useAuth";
 import {
   Menu, Search, X, TrendingUp, Globe,
-  Home as HomeIcon, Film, Heart, Share2, ArrowLeft,
+  Home as HomeIcon, Film, Heart, Share2, ArrowLeft, Trophy, Send, Award,
   PlayCircle, Clock, ChevronRight, Facebook, Instagram,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -70,6 +71,7 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
+  const { isAuthenticated } = useAuth();
   const { data: allArticles = [] } = trpc.articles.list.useQuery({ status: "online" });
   const { data: tickerData = [] } = trpc.ticker.list.useQuery();
   const { data: horizontalAds = [] } = trpc.ads.list.useQuery({ placement: "horizontal" });
@@ -397,6 +399,36 @@ export default function HomePage() {
                 <AdBanner ads={lateralAds} type="lateral" />
               )}
 
+              {/* UGC CTA */}
+              <Link href="/enviar-conteudo">
+                <div className="block w-full bg-[#001c56] rounded-2xl p-5 shadow-lg group hover:-translate-y-1 transition-transform border-b-4 border-[#00103a] cursor-pointer">
+                  <div className="flex items-center text-white">
+                    <div className="bg-white p-3 rounded-full mr-4 shadow-lg">
+                      <Send className="w-6 h-6 text-[#001c56]" />
+                    </div>
+                    <div>
+                      <h3 className="font-black text-base leading-tight uppercase tracking-tighter">Jornalismo Cidadão</h3>
+                      <p className="text-xs text-blue-200 font-bold mt-0.5">Envie sua história</p>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+
+              {/* Gamification CTA */}
+              <Link href="/ranking">
+                <div className="block w-full bg-gradient-to-r from-yellow-500 to-orange-500 rounded-2xl p-5 shadow-lg group hover:-translate-y-1 transition-transform border-b-4 border-orange-700 cursor-pointer">
+                  <div className="flex items-center text-white">
+                    <div className="bg-white p-3 rounded-full mr-4 shadow-lg">
+                      <Trophy className="w-6 h-6 text-orange-500" />
+                    </div>
+                    <div>
+                      <h3 className="font-black text-base leading-tight uppercase tracking-tighter">Ranking de Leitores</h3>
+                      <p className="text-xs text-yellow-100 font-bold mt-0.5">Ganhe pontos e badges</p>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+
               {/* Social Links */}
               <div className="bg-white rounded-2xl p-5 shadow-sm">
                 <h3 className="font-black text-sm uppercase tracking-wider text-[#001c56] mb-4 border-b border-gray-100 pb-3">Siga a CNN BRA</h3>
@@ -428,6 +460,11 @@ export default function HomePage() {
               <div className="w-2.5 h-2.5 bg-red-600 ml-1 rounded-sm" />
               <span className="text-white font-black text-2xl ml-1">BRA</span>
             </button>
+            <div className="flex flex-wrap justify-center gap-6 mb-4 text-sm">
+              <Link href="/enviar-conteudo"><span className="text-blue-200 hover:text-white font-bold cursor-pointer">Enviar Conteúdo</span></Link>
+              <Link href="/ranking"><span className="text-blue-200 hover:text-white font-bold cursor-pointer">Ranking</span></Link>
+              <Link href="/privacidade"><span className="text-blue-200 hover:text-white font-bold cursor-pointer">Privacidade</span></Link>
+            </div>
             <div className="flex flex-wrap justify-center gap-6 mb-6 font-bold uppercase text-xs tracking-widest text-blue-200">
               {CATEGORIES.filter(c => c.key !== "home").map((cat) => (
                 <button key={cat.key} onClick={() => handleCategoryChange(cat.key)} className="hover:text-white transition-colors">
@@ -454,10 +491,18 @@ export default function HomePage() {
           <HomeIcon className="w-6 h-6" />
           <span className="text-[9px] font-black uppercase mt-0.5">Início</span>
         </button>
-        <button onClick={() => setIsSearchOpen(true)} className="flex flex-col items-center p-2 text-gray-400 hover:text-[#001c56]">
-          <Search className="w-6 h-6" />
-          <span className="text-[9px] font-black uppercase mt-0.5">Buscar</span>
-        </button>
+        <Link href="/busca">
+          <span className="flex flex-col items-center p-2 text-gray-400 hover:text-[#001c56] cursor-pointer">
+            <Search className="w-6 h-6" />
+            <span className="text-[9px] font-black uppercase mt-0.5">Buscar</span>
+          </span>
+        </Link>
+        <Link href="/ranking">
+          <span className="flex flex-col items-center p-2 text-gray-400 hover:text-[#001c56] cursor-pointer">
+            <Trophy className="w-6 h-6" />
+            <span className="text-[9px] font-black uppercase mt-0.5">Ranking</span>
+          </span>
+        </Link>
       </nav>
     </div>
   );
