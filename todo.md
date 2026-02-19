@@ -1,0 +1,23 @@
+# CNN BRA Portal - TODO
+
+- [x] Design system: cores, fontes, tema CNN BRA (azul escuro #001c56, vermelho, branco)
+- [x] Schema do banco de dados: artigos, categorias, anúncios, configurações do site
+- [x] Migrar schema e criar tabelas no banco
+- [x] API backend: CRUD de artigos (criar, listar, editar, excluir, alternar status)
+- [x] API backend: CRUD de anúncios
+- [x] API backend: configurações do site
+- [x] Frontend: Header com logo CNN BRA, navegação por categorias, ticker de notícias
+- [x] Frontend: Hero slider com notícias em destaque
+- [x] Frontend: Feed de notícias recentes com cards
+- [x] Frontend: Sidebar com WhatsApp CTA e redes sociais
+- [ ] Frontend: Seção Reels/Shorts estilo TikTok (futuro)
+- [x] Frontend: Footer completo
+- [x] Frontend: Menu mobile responsivo
+- [x] Frontend: Página de artigo individual
+- [x] Painel Admin: gerenciamento de notícias com persistência no banco
+- [x] Painel Admin: gerenciamento de anúncios
+- [x] Painel Admin: analytics básico
+- [ ] Acessibilidade: VLibras widget
+- [x] Compartilhamento via WhatsApp
+- [x] SEO dinâmico (título, meta description por categoria)
+- [x] Testes vitest para as rotas de API (16 testes passando)
