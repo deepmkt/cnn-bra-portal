@@ -826,6 +826,35 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return db.getShortCount(input?.status);
       }),
+
+    // Auto-convert video articles to CNN Shorts
+    autoConvert: adminProcedure.mutation(async () => {
+      const allArticles = await db.getArticles({ status: "online" });
+      const videoArticles = allArticles.filter((a: any) => a.videoUrl && a.videoUrl.length > 5);
+      let converted = 0;
+      for (const article of videoArticles) {
+        // Check if a short with this video already exists
+        const existingShorts = await db.getShorts({ limit: 100 });
+        const alreadyExists = existingShorts.some((s: any) => s.videoUrl === article.videoUrl);
+        if (alreadyExists) continue;
+        
+        try {
+          await db.createShort({
+            title: (article.title || "").length > 80 ? (article.title || "").substring(0, 77) + "..." : (article.title || ""),
+            videoUrl: article.videoUrl || "",
+            thumbnailUrl: article.imageUrl || "",
+            category: article.category || "GERAL",
+            duration: 60,
+            status: "online",
+            authorName: "CNN BRA",
+          });
+          converted++;
+        } catch (err) {
+          console.error("[Shorts] Auto-convert error:", err);
+        }
+      }
+      return { converted, total: videoArticles.length };
+    }),
   }),
 
   // ===== NEWSLETTER =====
@@ -968,6 +997,12 @@ export const appRouter = router({
 
     adminList: adminProcedure.query(async () => {
       return db.getAllGlobalNews(50);
+    }),
+
+    fixImages: adminProcedure.mutation(async () => {
+      const { fixGlobalNewsImages } = await import("./globalNewsFetcher");
+      const fixed = await fixGlobalNewsImages();
+      return { fixed };
     }),
   }),
 });

@@ -162,3 +162,26 @@
 - [x] Sidebar: área de publicidade 300x250
 - [x] Trending Topics: ranking automático das matérias mais lidas (viewCount)
 - [x] Trending Topics: links clicáveis para as matérias
+
+## Sprint 11 - Publicidade Responsiva, Imagens Globais e Shorts
+
+### Publicidade
+- [x] Banner de publicidade intercalado no meio da lista de últimas notícias (a cada 4 artigos)
+- [x] Publicidade responsiva: adaptar ao tamanho da tela sem perder qualidade ou cobrir informações
+- [x] Garantir que ads não quebrem layout em mobile/tablet/desktop (aspect-ratio responsivo)
+
+### Imagens Globais
+- [x] Corrigir fetch de imagens das notícias globais (detectar e rejeitar logos Google News < 15KB)
+- [x] Melhorar scraping de imagens: extrair og:image, meta image, ou imagem principal do artigo
+- [x] Fallback para imagem placeholder quando não encontrar imagem (geração via IA ou Unsplash)
+- [x] Job automático para corrigir imagens existentes no banco (fixGlobalNewsImages)
+
+### CNN Shorts
+- [x] Adaptar matérias de vídeo automaticamente para o formato CNN Shorts
+- [x] Converter artigos com vídeo em shorts (extrair vídeo + título resumido)
+- [x] Criar shorts automaticamente a partir de notícias globais com vídeo
+- [x] Endpoint admin autoConvert para converter artigos com vídeo em shorts
+
+### Correções
+- [x] Cookie consent: botões com event handling robusto (preventDefault + stopPropagation)
+- [x] 77 testes passando (incluindo 15 novos para Sprint 11)

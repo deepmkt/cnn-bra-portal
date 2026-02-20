@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Cookie, Shield, ChevronDown, ChevronUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Cookie, Shield, ChevronDown, ChevronUp } from "lucide-react";
 
 const COOKIE_CONSENT_KEY = "cnn-bra-cookie-consent";
 
@@ -48,27 +47,39 @@ export function CookieConsent() {
     setVisible(false);
   };
 
-  const acceptAll = () => {
+  const handleAcceptAll = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     saveConsent({ necessary: true, analytics: true, marketing: true, personalization: true, timestamp: 0 });
   };
 
-  const rejectOptional = () => {
+  const handleRejectOptional = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     saveConsent({ necessary: true, analytics: false, marketing: false, personalization: false, timestamp: 0 });
   };
 
-  const saveCustom = () => {
+  const handleSaveCustom = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     saveConsent(preferences);
   };
 
   if (!visible) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-end justify-center pointer-events-none">
+    <div
+      className="fixed inset-0 z-[9999] flex items-end justify-center"
+      onClick={(e) => e.stopPropagation()}
+    >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/30 pointer-events-auto" />
+      <div className="absolute inset-0 bg-black/30" />
 
       {/* Banner */}
-      <div className="relative w-full max-w-4xl mx-4 mb-4 bg-white rounded-2xl shadow-2xl pointer-events-auto animate-in slide-in-from-bottom-10 duration-500">
+      <div
+        className="relative w-full max-w-4xl mx-4 mb-4 bg-white rounded-2xl shadow-2xl z-[10000] animate-in slide-in-from-bottom-10 duration-500"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="p-6">
           {/* Header */}
           <div className="flex items-start gap-4 mb-4">
@@ -88,7 +99,8 @@ export function CookieConsent() {
 
           {/* Expandable Details */}
           <button
-            onClick={() => setShowDetails(!showDetails)}
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowDetails(!showDetails); }}
             className="flex items-center gap-2 text-sm font-bold text-[#001c56] hover:text-[#002a7a] mb-4 transition-colors"
           >
             <Shield className="w-4 h-4" />
@@ -168,35 +180,44 @@ export function CookieConsent() {
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3">
-            <Button
-              onClick={acceptAll}
-              className="flex-1 bg-[#001c56] hover:bg-[#002a7a] text-white font-bold rounded-xl py-3"
+            <button
+              type="button"
+              onClick={handleAcceptAll}
+              className="flex-1 bg-[#001c56] hover:bg-[#002a7a] text-white font-bold rounded-xl py-3 px-6 text-sm transition-colors cursor-pointer"
             >
               Aceitar Todos
-            </Button>
+            </button>
             {showDetails ? (
-              <Button
-                onClick={saveCustom}
-                variant="outline"
-                className="flex-1 border-[#001c56] text-[#001c56] font-bold rounded-xl py-3 hover:bg-[#001c56] hover:text-white"
+              <button
+                type="button"
+                onClick={handleSaveCustom}
+                className="flex-1 border-2 border-[#001c56] text-[#001c56] font-bold rounded-xl py-3 px-6 text-sm hover:bg-[#001c56] hover:text-white transition-colors cursor-pointer bg-white"
               >
                 Salvar Preferências
-              </Button>
+              </button>
             ) : (
-              <Button
-                onClick={rejectOptional}
-                variant="outline"
-                className="flex-1 border-gray-300 text-gray-600 font-bold rounded-xl py-3 hover:bg-gray-100"
+              <button
+                type="button"
+                onClick={handleRejectOptional}
+                className="flex-1 border-2 border-gray-300 text-gray-600 font-bold rounded-xl py-3 px-6 text-sm hover:bg-gray-100 transition-colors cursor-pointer bg-white"
               >
                 Rejeitar Opcionais
-              </Button>
+              </button>
             )}
           </div>
 
           {/* Legal Link */}
           <p className="text-xs text-gray-400 text-center mt-3">
             Ao continuar navegando, você concorda com nossa{" "}
-            <a href="/privacidade" className="text-[#001c56] underline hover:text-[#002a7a]">Política de Privacidade</a>.
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                window.location.href = "/privacidade";
+              }}
+              className="text-[#001c56] underline hover:text-[#002a7a] cursor-pointer"
+            >
+              Política de Privacidade
+            </span>.
             Você pode alterar suas preferências a qualquer momento.
           </p>
         </div>

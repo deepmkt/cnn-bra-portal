@@ -269,10 +269,11 @@ export default function Home() {
           </section>
         )}
 
-        {/* ===== AD BANNER (below hero) ===== */}
-        <div className="w-full flex justify-center mb-8">
-          <div className="w-full max-w-[728px] h-[90px] bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-xs font-medium">
-            <span>PUBLICIDADE — 728×90</span>
+        {/* ===== AD BANNER (below hero) — Responsive ===== */}
+        <div className="w-full flex justify-center mb-8 px-4">
+          <div className="w-full max-w-[728px] aspect-[728/90] bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-xs font-medium">
+            <span className="hidden sm:inline">PUBLICIDADE — 728×90</span>
+            <span className="sm:hidden">PUBLICIDADE — BANNER</span>
           </div>
         </div>
 
@@ -295,46 +296,65 @@ export default function Home() {
               </div>
             )}
 
-            {filteredArticles.map(article => (
-              <article key={article.id} className="flex flex-col md:flex-row gap-5 group mb-8 pb-8 border-b border-gray-100 last:border-0 animate-slide-up hover:bg-gray-50 rounded-xl transition-colors p-3 -mx-3">
-                <div
-                  onClick={() => setLocation(`/artigo/${article.id}`)}
-                  className="w-full md:w-[280px] aspect-[4/3] overflow-hidden rounded-xl relative cursor-pointer shadow-md flex-shrink-0"
-                >
-                  <img
-                    src={article.imageUrl || "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=800&q=80"}
-                    alt={article.title}
-                    className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700"
-                    loading="lazy"
-                  />
-                  <div className="absolute top-3 left-3 bg-red-600 text-white text-[9px] font-bold px-2 py-0.5 rounded uppercase shadow-md">
-                    {article.category}
+            {filteredArticles.map((article, index) => (
+              <div key={article.id}>
+                <article className="flex flex-col md:flex-row gap-5 group mb-8 pb-8 border-b border-gray-100 last:border-0 animate-slide-up hover:bg-gray-50 rounded-xl transition-colors p-3 -mx-3">
+                  <div
+                    onClick={() => setLocation(`/artigo/${article.id}`)}
+                    className="w-full md:w-[280px] aspect-[4/3] overflow-hidden rounded-xl relative cursor-pointer shadow-md flex-shrink-0"
+                  >
+                    <img
+                      src={article.imageUrl || "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=800&q=80"}
+                      alt={article.title}
+                      className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700"
+                      loading="lazy"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=800&q=80";
+                      }}
+                    />
+                    <div className="absolute top-3 left-3 bg-red-600 text-white text-[9px] font-bold px-2 py-0.5 rounded uppercase shadow-md">
+                      {article.category}
+                    </div>
                   </div>
-                </div>
-                <div className="flex-1 flex flex-col justify-between py-1">
-                  <div onClick={() => setLocation(`/artigo/${article.id}`)} className="cursor-pointer">
-                    <h4 className="text-lg md:text-xl font-bold leading-snug mb-2 group-hover:text-red-600 transition-colors tracking-tight">
-                      {article.title}
-                    </h4>
-                    <p className="text-gray-500 line-clamp-2 text-sm leading-relaxed mb-4">
-                      {article.excerpt}
-                    </p>
+                  <div className="flex-1 flex flex-col justify-between py-1">
+                    <div onClick={() => setLocation(`/artigo/${article.id}`)} className="cursor-pointer">
+                      <h4 className="text-lg md:text-xl font-bold leading-snug mb-2 group-hover:text-red-600 transition-colors tracking-tight">
+                        {article.title}
+                      </h4>
+                      <p className="text-gray-500 line-clamp-2 text-sm leading-relaxed mb-4">
+                        {article.excerpt}
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider flex items-center">
+                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                        {article.publishedAt ? timeAgo(article.publishedAt) : "Recente"}
+                      </span>
+                      <button
+                        onClick={() => shareOnWhatsApp(article.title)}
+                        className="flex items-center text-gray-400 hover:text-green-600 text-[10px] font-semibold tracking-wider transition-all"
+                      >
+                        <WhatsAppIcon className="w-3.5 h-3.5 mr-1" />
+                        Enviar
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider flex items-center">
-                      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-                      {article.publishedAt ? timeAgo(article.publishedAt) : "Recente"}
-                    </span>
-                    <button
-                      onClick={() => shareOnWhatsApp(article.title)}
-                      className="flex items-center text-gray-400 hover:text-green-600 text-[10px] font-semibold tracking-wider transition-all"
-                    >
-                      <WhatsAppIcon className="w-3.5 h-3.5 mr-1" />
-                      Enviar
-                    </button>
+                </article>
+
+                {/* Intercalated Ad Banner — appears after every 4th article */}
+                {(index + 1) % 4 === 0 && index < filteredArticles.length - 1 && (
+                  <div className="w-full flex justify-center my-6 px-2">
+                    <div className="w-full max-w-full aspect-[728/90] bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-xs font-medium shadow-sm">
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="text-[10px] uppercase tracking-widest text-gray-300 font-bold">Publicidade</span>
+                        <span className="hidden sm:inline text-gray-400">ESPAÇO PUBLICITÁRIO — BANNER RESPONSIVO</span>
+                        <span className="sm:hidden text-gray-400">PUBLICIDADE</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </article>
+                )}
+              </div>
             ))}
           </div>
 
@@ -355,9 +375,9 @@ export default function Home() {
               </div>
             </a>
 
-            {/* AD 300x250 */}
+            {/* AD 300x250 — Responsive */}
             <div className="w-full flex justify-center">
-              <div className="w-[300px] h-[250px] bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-xs font-medium">
+              <div className="w-full max-w-[300px] aspect-[300/250] bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-xs font-medium">
                 <span>PUBLICIDADE — 300×250</span>
               </div>
             </div>

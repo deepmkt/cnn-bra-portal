@@ -1,0 +1,70 @@
+{
+  "query": "SELECT id, title, imageUrl, category FROM articles WHERE category = 'GLOBAL' ORDER BY id DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AGjn9SpCJUmEG7Z.root --database 6wzLmWaAhQKjEBEoadSqJc --execute SELECT id, title, imageUrl, category FROM articles WHERE category = 'GLOBAL' ORDER BY id DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "86",
+      "title": "PIB dos EUA desacelera em 2025 e fecha ano em 2,2%; Trump critica 'shutdown democrata'",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/K-C0S_UoLlox.webp",
+      "category": "GLOBAL"
+    },
+    {
+      "id": "85",
+      "title": "Brasil registra menor desemprego da história em 19 estados e DF em 2025",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/4pnu8tP23Igl.webp",
+      "category": "GLOBAL"
+    },
+    {
+      "id": "84",
+      "title": "ONU estabelece comissão para garantir 'controle humano' sobre a Inteligência Artificial",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/FthKrPCupaIL.webp",
+      "category": "GLOBAL"
+    },
+    {
+      "id": "83",
+      "title": "Tripulação de aérea britânica é hospitalizada após consumir balas de cannabis oferecidas por passageiro",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/uvyaN10kr5ei.webp",
+      "category": "GLOBAL"
+    },
+    {
+      "id": "82",
+      "title": "Trump solicita desclassificação de arquivos sobre fenômenos não identificados após declarações de Obama",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/bP3mXR8mLJxX.webp",
+      "category": "GLOBAL"
+    },
+    {
+      "id": "81",
+      "title": "Trump Lança 'Conselho de Paz' com Promessas de Reconstrução em Gaza e Olhar para a ONU",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/oAxxkwD80z57.webp",
+      "category": "GLOBAL"
+    },
+    {
+      "id": "80",
+      "title": "Maduro sanciona polêmica lei de anistia na Venezuela após aprovação parlamentar",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/hrkg0GwXdbcM.webp",
+      "category": "GLOBAL"
+    },
+    {
+      "id": "79",
+      "title": "Alpinista é Condenado na Áustria por Deixar Namorada Morrer Congelada em Expedição",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/RTkI30vndTTc.webp",
+      "category": "GLOBAL"
+    },
+    {
+      "id": "78",
+      "title": "Escândalo de Andrew: Como a prisão do ex-príncipe pode abalar a Monarquia Britânica",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/z3CfZxtnAHA6.webp",
+      "category": "GLOBAL"
+    },
+    {
+      "id": "77",
+      "title": "Tensão no Golfo: EUA intensificam presença militar e sinais de possível ataque ao Irã preocupam o mundo",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/C9Q6T9xBReQD.webp",
+      "category": "GLOBAL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\timageUrl\tcategory\n86\tPIB dos EUA desacelera em 2025 e fecha ano em 2,2%; Trump critica 'shutdown democrata'\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/K-C0S_UoLlox.webp\tGLOBAL\n85\tBrasil registra menor desemprego da história em 19 estados e DF em 2025\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/4pnu8tP23Igl.webp\tGLOBAL\n84\tONU estabelece comissão para garantir 'controle humano' sobre a Inteligência Artificial\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/FthKrPCupaIL.webp\tGLOBAL\n83\tTripulação de aérea britânica é hospitalizada após consumir balas de cannabis oferecidas por passageiro\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/uvyaN10kr5ei.webp\tGLOBAL\n82\tTrump solicita desclassificação de arquivos sobre fenômenos não identificados após declarações de Obama\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/bP3mXR8mLJxX.webp\tGLOBAL\n81\tTrump Lança 'Conselho de Paz' com Promessas de Reconstrução em Gaza e Olhar para a ONU\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/oAxxkwD80z57.webp\tGLOBAL\n80\tMaduro sanciona polêmica lei de anistia na Venezuela após aprovação parlamentar\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/hrkg0GwXdbcM.webp\tGLOBAL\n79\tAlpinista é Condenado na Áustria por Deixar Namorada Morrer Congelada em Expedição\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/RTkI30vndTTc.webp\tGLOBAL\n78\tEscândalo de Andrew: Como a prisão do ex-príncipe pode abalar a Monarquia Britânica\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/z3CfZxtnAHA6.webp\tGLOBAL\n77\tTensão no Golfo: EUA intensificam presença militar e sinais de possível ataque ao Irã preocupam o mundo\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/C9Q6T9xBReQD.webp\tGLOBAL\n",
+  "stderr": "",
+  "execution_time_ms": 116
+}

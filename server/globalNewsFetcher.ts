@@ -7,9 +7,10 @@
 import RSSParser from "rss-parser";
 import * as cheerio from "cheerio";
 import { invokeLLM } from "./_core/llm";
+import { generateImage } from "./_core/imageGeneration";
 import { storagePut } from "./storage";
 import { getDb } from "./db";
-import { articles, globalNewsCache } from "../drizzle/schema";
+import { articles, globalNewsCache, shorts } from "../drizzle/schema";
 import { eq, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
@@ -35,18 +36,133 @@ interface ScrapedArticle {
 }
 
 /**
+ * Decode Google News encoded URL using batchexecute API
+ */
+async function decodeGoogleNewsUrl(sourceUrl: string): Promise<string> {
+  try {
+    const url = new URL(sourceUrl);
+    const path = url.pathname.split("/");
+    
+    if (url.hostname === "news.google.com" && path.length > 1 && path[path.length - 2] === "articles") {
+      const base64 = path[path.length - 1];
+      
+      // Try offline decoding first
+      try {
+        const str = Buffer.from(base64, "base64").toString("binary");
+        const prefix = Buffer.from([0x08, 0x13, 0x22]).toString("binary");
+        let decoded = str;
+        if (decoded.startsWith(prefix)) {
+          decoded = decoded.substring(prefix.length);
+        }
+        const suffix = Buffer.from([0xd2, 0x01, 0x00]).toString("binary");
+        if (decoded.endsWith(suffix)) {
+          decoded = decoded.substring(0, decoded.length - suffix.length);
+        }
+        const bytes = Uint8Array.from(decoded, c => c.charCodeAt(0));
+        const len = bytes.at(0)!;
+        let result: string;
+        if (len >= 0x80) {
+          result = decoded.substring(2, len + 2);
+        } else {
+          result = decoded.substring(1, len + 1);
+        }
+        
+        // If it starts with http, we have a valid URL
+        if (result.startsWith("http")) {
+          return result;
+        }
+      } catch {}
+      
+      // Fallback: use batchexecute API
+      try {
+        const s = '[[["Fbv4je","[\\"garturlreq\\",[\[\\"en-US\\",\\"US\\",[\\"FINANCE_TOP_INDICES\\",\\"WEB_TEST_1_0_0\\"],null,null,1,1,\\"US:en\\",null,180,null,null,null,null,null,0,null,null,[1608992183,723341000]],\\"en-US\\",\\"US\\",1,[2,3,4,8],1,0,\\"655000234\\",0,0,null,0],\\"' + base64 + '\\"]",null,"generic"]]]';
+        
+        const response = await fetch("https://news.google.com/_/DotsSplashUi/data/batchexecute?rpcids=Fbv4je", {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
+            "Referer": "https://news.google.com/",
+            "User-Agent": USER_AGENT,
+          },
+          body: "f.req=" + encodeURIComponent(s),
+          method: "POST",
+        });
+        
+        const text = await response.text();
+        const header = '[\\"garturlres\\",\\"';
+        const footer = '\\",';
+        if (text.includes(header)) {
+          const start = text.substring(text.indexOf(header) + header.length);
+          if (start.includes(footer)) {
+            const decodedUrl = start.substring(0, start.indexOf(footer));
+            if (decodedUrl.startsWith("http")) {
+              return decodedUrl;
+            }
+          }
+        }
+      } catch {}
+    }
+    
+    // Fallback: follow redirects
+    return await resolveGoogleNewsUrl(sourceUrl);
+  } catch {
+    return sourceUrl;
+  }
+}
+
+/**
  * Fetch and follow Google News redirect to get the real article URL
  */
 async function resolveGoogleNewsUrl(googleUrl: string): Promise<string> {
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
     const response = await fetch(googleUrl, {
       method: "GET",
       headers: { "User-Agent": USER_AGENT },
       redirect: "follow",
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
     return response.url || googleUrl;
   } catch {
     return googleUrl;
+  }
+}
+
+/**
+ * Validate if an image URL is a real article image (not a logo/icon)
+ */
+async function isValidArticleImage(imageUrl: string): Promise<boolean> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    
+    const response = await fetch(imageUrl, {
+      method: "HEAD",
+      headers: { "User-Agent": USER_AGENT },
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    
+    if (!response.ok) return false;
+    
+    const contentLength = parseInt(response.headers.get("content-length") || "0");
+    const contentType = response.headers.get("content-type") || "";
+    
+    // Reject images that are too small (likely logos/icons)
+    if (contentLength > 0 && contentLength < 15000) return false;
+    
+    // Reject non-image content types
+    if (!contentType.startsWith("image/")) return false;
+    
+    // Reject known logo/icon patterns
+    const lowerUrl = imageUrl.toLowerCase();
+    if (lowerUrl.includes("logo") || lowerUrl.includes("favicon") || lowerUrl.includes("icon")) return false;
+    if (lowerUrl.includes("google.com/images") || lowerUrl.includes("gstatic.com")) return false;
+    
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -72,25 +188,60 @@ async function scrapeArticle(url: string): Promise<{ content: string; imageUrl: 
     // Remove unwanted elements
     $("script, style, nav, footer, header, aside, .ads, .advertisement, .social-share, .comments, iframe[src*='ads']").remove();
 
-    // Extract main image
+    // Extract main image - try multiple strategies
     let imageUrl: string | null = null;
+    
+    // Strategy 1: og:image (most reliable for news sites)
     const ogImage = $('meta[property="og:image"]').attr("content");
+    // Strategy 2: twitter:image
     const twitterImage = $('meta[name="twitter:image"]').attr("content");
-    const firstArticleImg = $("article img, .article-body img, .post-content img, main img").first().attr("src");
-    imageUrl = ogImage || twitterImage || firstArticleImg || null;
-
-    // Make relative URLs absolute
-    if (imageUrl && !imageUrl.startsWith("http")) {
-      try {
-        imageUrl = new URL(imageUrl, url).href;
-      } catch { imageUrl = null; }
+    // Strategy 3: First large image in article body
+    const articleImages: string[] = [];
+    $("article img, .article-body img, .post-content img, .entry-content img, main img, .materia img, .content img").each((_, el) => {
+      const src = $(el).attr("src") || $(el).attr("data-src") || $(el).attr("data-lazy-src");
+      if (src) articleImages.push(src);
+    });
+    // Strategy 4: Any large image on the page
+    const allImages: string[] = [];
+    $("img").each((_, el) => {
+      const src = $(el).attr("src") || $(el).attr("data-src");
+      const width = parseInt($(el).attr("width") || "0");
+      const height = parseInt($(el).attr("height") || "0");
+      if (src && (width > 300 || height > 200 || (!width && !height))) {
+        allImages.push(src);
+      }
+    });
+    
+    // Try candidates in order of preference
+    const imageCandidates = [ogImage, twitterImage, ...articleImages, ...allImages].filter(Boolean) as string[];
+    
+    for (const candidate of imageCandidates) {
+      let absoluteUrl = candidate;
+      if (!absoluteUrl.startsWith("http")) {
+        try {
+          absoluteUrl = new URL(absoluteUrl, url).href;
+        } catch { continue; }
+      }
+      
+      // Skip Google News logos and other known bad patterns
+      if (absoluteUrl.includes("news.google.com") || absoluteUrl.includes("gstatic.com")) continue;
+      if (absoluteUrl.includes("google.com/images/branding")) continue;
+      if (absoluteUrl.includes("play-lh.googleusercontent.com")) continue;
+      
+      // Validate the image
+      if (await isValidArticleImage(absoluteUrl)) {
+        imageUrl = absoluteUrl;
+        break;
+      }
     }
 
     // Extract video
     let videoUrl: string | null = null;
     const ogVideo = $('meta[property="og:video"]').attr("content");
+    const ogVideoSecure = $('meta[property="og:video:secure_url"]').attr("content");
     const videoSrc = $("video source").first().attr("src") || $("video").first().attr("src");
-    videoUrl = ogVideo || videoSrc || null;
+    const iframeVideo = $("iframe[src*='youtube'], iframe[src*='vimeo'], iframe[src*='dailymotion']").first().attr("src");
+    videoUrl = ogVideo || ogVideoSecure || videoSrc || iframeVideo || null;
     if (videoUrl && !videoUrl.startsWith("http")) {
       try {
         videoUrl = new URL(videoUrl, url).href;
@@ -102,6 +253,7 @@ async function scrapeArticle(url: string): Promise<{ content: string; imageUrl: 
       "article .article-body", "article .post-content", "article .entry-content",
       ".article-body", ".post-content", ".entry-content", ".story-body",
       "[itemprop='articleBody']", ".materia-conteudo", ".content-text",
+      ".article__content", ".text-body", ".article-text",
       "article p", "main p",
     ];
 
@@ -146,6 +298,13 @@ async function uploadImageToS3(imageUrl: string): Promise<string | null> {
     if (!response.ok) return null;
 
     const buffer = Buffer.from(await response.arrayBuffer());
+    
+    // Validate: reject images smaller than 15KB (likely logos/icons)
+    if (buffer.length < 15000) {
+      console.log(`[GlobalNews] Image too small (${buffer.length} bytes), likely a logo. Skipping.`);
+      return null;
+    }
+    
     const contentType = response.headers.get("content-type") || "image/jpeg";
     const ext = contentType.includes("png") ? "png" : contentType.includes("webp") ? "webp" : "jpg";
     const key = `global-news/${nanoid(12)}.${ext}`;
@@ -154,6 +313,31 @@ async function uploadImageToS3(imageUrl: string): Promise<string | null> {
     return url;
   } catch (err) {
     console.error(`[GlobalNews] Image upload error:`, err);
+    return null;
+  }
+}
+
+/**
+ * Generate an AI image for an article when no real image is available
+ */
+async function generateArticleImage(title: string, category: string): Promise<string | null> {
+  try {
+    const prompt = `Professional news photograph for article titled: "${title}". Category: ${category}. Photojournalistic style, realistic, high quality, editorial photo, no text overlays, no watermarks.`;
+    
+    const result = await generateImage({ prompt });
+    if (result?.url) {
+      // Download and re-upload to our S3
+      const response = await fetch(result.url);
+      if (response.ok) {
+        const buffer = Buffer.from(await response.arrayBuffer());
+        const key = `global-news/ai-${nanoid(12)}.jpg`;
+        const { url } = await storagePut(key, buffer, "image/jpeg");
+        return url;
+      }
+    }
+    return null;
+  } catch (err) {
+    console.error(`[GlobalNews] AI image generation error:`, err);
     return null;
   }
 }
@@ -284,6 +468,31 @@ function createSlug(title: string): string {
 }
 
 /**
+ * Create a CNN Short from a video article
+ */
+async function createShortFromArticle(articleId: number, title: string, videoUrl: string, thumbnailUrl: string | null, category: string) {
+  const db = await getDb();
+  if (!db) return;
+  
+  try {
+    await db.insert(shorts).values({
+      title: title.length > 80 ? title.substring(0, 77) + "..." : title,
+      videoUrl,
+      thumbnailUrl: thumbnailUrl || "",
+      category,
+      duration: 60,
+      likeCount: 0,
+      viewCount: 0,
+      status: "online",
+      publishedAt: new Date(),
+    });
+    console.log(`[GlobalNews] Created CNN Short from article: ${title}`);
+  } catch (err) {
+    console.error(`[GlobalNews] Short creation error:`, err);
+  }
+}
+
+/**
  * Main function: Fetch, scrape, rewrite, and publish global news
  */
 export async function fetchAndPublishGlobalNews(): Promise<{ imported: number; errors: number }> {
@@ -312,8 +521,8 @@ export async function fetchAndPublishGlobalNews(): Promise<{ imported: number; e
         const googleUrl = item.link || "";
         if (!googleUrl) continue;
 
-        // Resolve real URL
-        const realUrl = await resolveGoogleNewsUrl(googleUrl);
+        // Resolve real URL using decoder
+        const realUrl = await decodeGoogleNewsUrl(googleUrl);
 
         // Deduplication check
         if (await isAlreadyImported(realUrl) || await isAlreadyImported(googleUrl)) {
@@ -321,6 +530,7 @@ export async function fetchAndPublishGlobalNews(): Promise<{ imported: number; e
         }
 
         console.log(`[GlobalNews] Processing: ${item.title}`);
+        console.log(`[GlobalNews] Resolved URL: ${realUrl}`);
 
         // Scrape article
         const scraped = await scrapeArticle(realUrl);
@@ -328,7 +538,8 @@ export async function fetchAndPublishGlobalNews(): Promise<{ imported: number; e
         // Extract source name from URL
         let sourceName = "Fonte Internacional";
         try {
-          sourceName = new URL(realUrl).hostname.replace("www.", "").replace(".com.br", "").replace(".com", "");
+          sourceName = new URL(realUrl).hostname.replace("www.", "").split(".")[0];
+          sourceName = sourceName.charAt(0).toUpperCase() + sourceName.slice(1);
         } catch {}
 
         // If no content scraped, use RSS title/description
@@ -354,10 +565,16 @@ export async function fetchAndPublishGlobalNews(): Promise<{ imported: number; e
           continue;
         }
 
-        // Upload image to S3
+        // Upload image to S3 (with validation)
         let finalImageUrl: string | null = null;
         if (scraped.imageUrl) {
           finalImageUrl = await uploadImageToS3(scraped.imageUrl);
+        }
+        
+        // If no valid image, generate one with AI
+        if (!finalImageUrl) {
+          console.log(`[GlobalNews] No valid image found, generating with AI...`);
+          finalImageUrl = await generateArticleImage(rewritten.title, "GLOBAL");
         }
 
         // Create slug
@@ -375,7 +592,7 @@ export async function fetchAndPublishGlobalNews(): Promise<{ imported: number; e
             excerpt: rewritten.excerpt,
             content: contentWithSource,
             category: "GLOBAL",
-            imageUrl: finalImageUrl || scraped.imageUrl || "",
+            imageUrl: finalImageUrl || "",
             videoUrl: scraped.videoUrl || "",
             status: "online",
             isHero: false,
@@ -385,6 +602,17 @@ export async function fetchAndPublishGlobalNews(): Promise<{ imported: number; e
 
           const insertId = (result as any)[0]?.insertId;
 
+          // If article has video, create a CNN Short
+          if (scraped.videoUrl) {
+            await createShortFromArticle(
+              insertId,
+              rewritten.title,
+              scraped.videoUrl,
+              finalImageUrl,
+              "GLOBAL"
+            );
+          }
+
           // Cache the URL
           await cacheImportedUrl(realUrl, rewritten.title, sourceName);
           if (googleUrl !== realUrl) {
@@ -392,7 +620,7 @@ export async function fetchAndPublishGlobalNews(): Promise<{ imported: number; e
           }
 
           imported++;
-          console.log(`[GlobalNews] Published: ${rewritten.title}`);
+          console.log(`[GlobalNews] Published: ${rewritten.title} (image: ${finalImageUrl ? "YES" : "NO"})`);
         } catch (err) {
           console.error(`[GlobalNews] Insert error:`, err);
           errors++;
@@ -409,4 +637,58 @@ export async function fetchAndPublishGlobalNews(): Promise<{ imported: number; e
 
   console.log(`[GlobalNews] Cycle complete: ${imported} imported, ${errors} errors`);
   return { imported, errors };
+}
+
+/**
+ * Fix existing articles that have Google News logo as image
+ * Run once to update articles with AI-generated images
+ */
+export async function fixGlobalNewsImages(): Promise<number> {
+  console.log("[GlobalNews] Fixing existing article images...");
+  
+  const db = await getDb();
+  if (!db) return 0;
+  
+  try {
+    // Find articles with the Google News logo (all have same 12496 byte size)
+    const globalArticles = await db.select()
+      .from(articles)
+      .where(eq(articles.category, "GLOBAL"));
+    
+    let fixed = 0;
+    for (const article of globalArticles) {
+      const imgUrl = article.imageUrl || "";
+      if (!imgUrl || imgUrl.includes("global-news/")) {
+        // Check if this is a Google News logo by checking file size
+        try {
+          if (!imgUrl) continue;
+          const response = await fetch(imgUrl, { method: "HEAD" });
+          const size = parseInt(response.headers.get("content-length") || "0");
+          
+          if (size > 0 && size < 15000) {
+            // This is likely a logo, generate a new image
+            console.log(`[GlobalNews] Fixing image for article ${article.id}: ${article.title}`);
+            const newImage = await generateArticleImage(article.title, "GLOBAL");
+            
+            if (newImage) {
+              await db.update(articles)
+                .set({ imageUrl: newImage })
+                .where(eq(articles.id, article.id));
+              fixed++;
+              console.log(`[GlobalNews] Fixed image for article ${article.id}`);
+            }
+            
+            // Delay to avoid rate limiting
+            await new Promise(resolve => setTimeout(resolve, 3000));
+          }
+        } catch {}
+      }
+    }
+    
+    console.log(`[GlobalNews] Fixed ${fixed} article images`);
+    return fixed;
+  } catch (err) {
+    console.error(`[GlobalNews] Fix images error:`, err);
+    return 0;
+  }
 }

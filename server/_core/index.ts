@@ -65,7 +65,19 @@ async function startServer() {
   // ===== CRON: Auto-fetch global news every 30 minutes =====
   const FETCH_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
 
-  // Run first fetch after 60 seconds (let server stabilize)
+  // Fix existing images with Google News logos (one-time)
+  const { fixGlobalNewsImages } = await import("../globalNewsFetcher");
+  setTimeout(async () => {
+    console.log("[Cron] Fixing existing global news images...");
+    try {
+      const fixed = await fixGlobalNewsImages();
+      console.log(`[Cron] Fixed ${fixed} article images`);
+    } catch (err) {
+      console.error("[Cron] Image fix error:", err);
+    }
+  }, 30_000);
+
+  // Run first fetch after 120 seconds (let server stabilize + image fix)
   setTimeout(async () => {
     console.log("[Cron] Running initial global news fetch...");
     try {
