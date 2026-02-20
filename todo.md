@@ -126,3 +126,10 @@
 - [x] Animações: slideUp, slideRight, hero-zoom, marquee
 - [x] Tipografia: font-black, tracking-tighter, uppercase em títulos
 - [x] Shadow-2xl em todos os elementos principais
+
+## Sprint 8 - Importação WordPress
+
+- [x] Extrair e analisar backup WordPress (ZIP/WPRESS/WPVivid)
+- [x] Criar script de importação (SQL dump → banco de dados CNN BRA)
+- [x] Importar todas as postagens: 63 posts (49 online, 14 rascunhos), categorias mapeadas, imagens preservadas
+- [x] Verificar dados importados: 3 artigos hero definidos, distribuição por categoria OK

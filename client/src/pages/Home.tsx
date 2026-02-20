@@ -57,7 +57,7 @@ export default function Home() {
 
   // Fetch articles
   const { data: articlesData } = trpc.articles.list.useQuery({
-    status: "published",
+    status: "online",
     limit: 20,
   });
   const articles = articlesData ?? [];
