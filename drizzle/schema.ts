@@ -326,3 +326,87 @@ export const auditLogs = mysqlTable("audit_logs", {
 
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type InsertAuditLog = typeof auditLogs.$inferInsert;
+
+// ===== CNN SHORTS (Vídeos Curtos) =====
+export const shorts = mysqlTable("shorts", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 300 }).notNull(),
+  description: text("description"),
+  videoUrl: text("videoUrl").notNull(),
+  thumbnailUrl: text("thumbnailUrl"),
+  category: varchar("category", { length: 100 }).default("GERAL").notNull(),
+  duration: int("duration").default(0).notNull(), // seconds
+  authorId: int("authorId"),
+  authorName: varchar("authorName", { length: 200 }),
+  status: mysqlEnum("status", ["online", "draft", "review"]).default("draft").notNull(),
+  viewCount: int("viewCount").default(0).notNull(),
+  likeCount: int("likeCount").default(0).notNull(),
+  shareCount: int("shareCount").default(0).notNull(),
+  commentCount: int("commentCount").default(0).notNull(),
+  isHighlight: boolean("isHighlight").default(false).notNull(),
+  publishedAt: timestamp("publishedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Short = typeof shorts.$inferSelect;
+export type InsertShort = typeof shorts.$inferInsert;
+
+// ===== SHORTS COMMENTS =====
+export const shortComments = mysqlTable("short_comments", {
+  id: int("id").autoincrement().primaryKey(),
+  shortId: int("shortId").notNull(),
+  userId: int("userId"),
+  authorName: varchar("authorName", { length: 200 }),
+  content: text("content").notNull(),
+  likesCount: int("likesCount").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ShortComment = typeof shortComments.$inferSelect;
+export type InsertShortComment = typeof shortComments.$inferInsert;
+
+// ===== SHORTS LIKES (prevent duplicate likes) =====
+export const shortLikes = mysqlTable("short_likes", {
+  id: int("id").autoincrement().primaryKey(),
+  shortId: int("shortId").notNull(),
+  userId: int("userId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ShortLike = typeof shortLikes.$inferSelect;
+export type InsertShortLike = typeof shortLikes.$inferInsert;
+
+// ===== NEWSLETTER SUBSCRIBERS =====
+export const newsletterSubscribers = mysqlTable("newsletter_subscribers", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  status: mysqlEnum("status", ["active", "unsubscribed"]).default("active").notNull(),
+  source: varchar("source", { length: 100 }).default("website"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
+export type InsertNewsletterSubscriber = typeof newsletterSubscribers.$inferInsert;
+
+// ===== GLOBAL NEWS CACHE (auto-fetched & rewritten) =====
+export const globalNewsCache = mysqlTable("global_news_cache", {
+  id: int("id").autoincrement().primaryKey(),
+  originalTitle: varchar("originalTitle", { length: 500 }).notNull(),
+  originalSource: varchar("originalSource", { length: 300 }).notNull(),
+  originalUrl: text("originalUrl").notNull(),
+  rewrittenTitle: varchar("rewrittenTitle", { length: 500 }),
+  rewrittenExcerpt: text("rewrittenExcerpt"),
+  rewrittenContent: text("rewrittenContent"),
+  imageUrl: text("imageUrl"),
+  category: varchar("category", { length: 100 }).default("GLOBAL").notNull(),
+  isPublished: boolean("isPublished").default(false).notNull(),
+  fetchedAt: timestamp("fetchedAt").defaultNow().notNull(),
+  publishedAt: timestamp("publishedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type GlobalNewsItem = typeof globalNewsCache.$inferSelect;
+export type InsertGlobalNewsItem = typeof globalNewsCache.$inferInsert;

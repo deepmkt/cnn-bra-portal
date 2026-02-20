@@ -14,6 +14,7 @@ const SearchPage = lazy(() => import("./pages/SearchPage"));
 const SubmitContent = lazy(() => import("./pages/SubmitContent"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const Shorts = lazy(() => import("./pages/Shorts"));
 
 const LazyFallback = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -42,6 +43,9 @@ function Router() {
       </Route>
       <Route path={"/privacidade"}>
         <Suspense fallback={<LazyFallback />}><PrivacyPolicy /></Suspense>
+      </Route>
+      <Route path={"/shorts"}>
+        <Suspense fallback={<LazyFallback />}><Shorts /></Suspense>
       </Route>
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />

@@ -22,6 +22,11 @@ import {
   articleSimilarity, InsertArticleSimilarityEntry,
   userArticleInteractions, InsertUserArticleInteraction,
   auditLogs, InsertAuditLog,
+  shorts, InsertShort,
+  shortComments, InsertShortComment,
+  shortLikes, InsertShortLike,
+  newsletterSubscribers, InsertNewsletterSubscriber,
+  globalNewsCache, InsertGlobalNewsItem,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -921,4 +926,225 @@ export async function getAuditLogCount() {
   if (!db) return 0;
   const result = await db.select({ count: sql<number>`count(*)` }).from(auditLogs);
   return result[0]?.count ?? 0;
+}
+
+// ===== CNN SHORTS =====
+
+export async function getShorts(filters?: { status?: string; category?: string; limit?: number; isHighlight?: boolean }) {
+  const db = await getDb();
+  if (!db) return [];
+  let query = db.select().from(shorts);
+  const conditions: any[] = [];
+  if (filters?.status) conditions.push(eq(shorts.status, filters.status as any));
+  if (filters?.category) conditions.push(eq(shorts.category, filters.category));
+  if (filters?.isHighlight !== undefined) conditions.push(eq(shorts.isHighlight, filters.isHighlight));
+  if (conditions.length > 0) query = query.where(and(...conditions)) as any;
+  return query.orderBy(desc(shorts.createdAt)).limit(filters?.limit ?? 50);
+}
+
+export async function getShortById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(shorts).where(eq(shorts.id, id)).limit(1);
+  return result[0];
+}
+
+export async function createShort(data: Partial<InsertShort> & { title: string; videoUrl: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(shorts).values({
+    title: data.title,
+    description: data.description,
+    videoUrl: data.videoUrl,
+    thumbnailUrl: data.thumbnailUrl,
+    category: data.category || "GERAL",
+    duration: data.duration || 0,
+    authorId: data.authorId,
+    authorName: data.authorName,
+    status: data.status || "draft",
+    isHighlight: data.isHighlight || false,
+    publishedAt: data.status === "online" ? new Date() : undefined,
+  });
+  return result[0].insertId;
+}
+
+export async function updateShort(id: number, data: Partial<InsertShort>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(shorts).set(data).where(eq(shorts.id, id));
+}
+
+export async function deleteShort(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(shortComments).where(eq(shortComments.shortId, id));
+  await db.delete(shortLikes).where(eq(shortLikes.shortId, id));
+  await db.delete(shorts).where(eq(shorts.id, id));
+}
+
+export async function incrementShortView(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(shorts).set({ viewCount: sql`${shorts.viewCount} + 1` }).where(eq(shorts.id, id));
+}
+
+export async function toggleShortLike(shortId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return { liked: false };
+  // Check if already liked
+  const existing = await db.select().from(shortLikes)
+    .where(and(eq(shortLikes.shortId, shortId), eq(shortLikes.userId, userId)))
+    .limit(1);
+  if (existing.length > 0) {
+    // Unlike
+    await db.delete(shortLikes).where(and(eq(shortLikes.shortId, shortId), eq(shortLikes.userId, userId)));
+    await db.update(shorts).set({ likeCount: sql`GREATEST(${shorts.likeCount} - 1, 0)` }).where(eq(shorts.id, shortId));
+    return { liked: false };
+  } else {
+    // Like
+    await db.insert(shortLikes).values({ shortId, userId });
+    await db.update(shorts).set({ likeCount: sql`${shorts.likeCount} + 1` }).where(eq(shorts.id, shortId));
+    return { liked: true };
+  }
+}
+
+export async function incrementShortShare(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(shorts).set({ shareCount: sql`${shorts.shareCount} + 1` }).where(eq(shorts.id, id));
+}
+
+export async function getUserShortLikes(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const result = await db.select({ shortId: shortLikes.shortId }).from(shortLikes).where(eq(shortLikes.userId, userId));
+  return result.map(r => r.shortId);
+}
+
+// ===== SHORT COMMENTS =====
+
+export async function getShortComments(shortId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(shortComments).where(eq(shortComments.shortId, shortId)).orderBy(desc(shortComments.createdAt)).limit(100);
+}
+
+export async function createShortComment(data: { shortId: number; userId?: number; authorName?: string; content: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(shortComments).values({
+    shortId: data.shortId,
+    userId: data.userId,
+    authorName: data.authorName || "Anônimo",
+    content: data.content,
+  });
+  // Increment comment count
+  await db.update(shorts).set({ commentCount: sql`${shorts.commentCount} + 1` }).where(eq(shorts.id, data.shortId));
+  return result[0].insertId;
+}
+
+export async function deleteShortComment(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  const comment = await db.select().from(shortComments).where(eq(shortComments.id, id)).limit(1);
+  if (comment[0]) {
+    await db.update(shorts).set({ commentCount: sql`GREATEST(${shorts.commentCount} - 1, 0)` }).where(eq(shorts.id, comment[0].shortId));
+  }
+  await db.delete(shortComments).where(eq(shortComments.id, id));
+}
+
+export async function getShortCount(status?: string) {
+  const db = await getDb();
+  if (!db) return 0;
+  let query = db.select({ count: sql<number>`count(*)` }).from(shorts);
+  if (status) query = query.where(eq(shorts.status, status as any)) as any;
+  const result = await query;
+  return result[0]?.count ?? 0;
+}
+
+// ===== NEWSLETTER SUBSCRIBERS =====
+
+export async function subscribeNewsletter(data: { name: string; email: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Check if already exists
+  const existing = await db.select().from(newsletterSubscribers).where(eq(newsletterSubscribers.email, data.email)).limit(1);
+  if (existing.length > 0) {
+    // Reactivate if unsubscribed
+    if (existing[0].status === "unsubscribed") {
+      await db.update(newsletterSubscribers).set({ status: "active", name: data.name }).where(eq(newsletterSubscribers.id, existing[0].id));
+      return { id: existing[0].id, reactivated: true };
+    }
+    return { id: existing[0].id, alreadySubscribed: true };
+  }
+  const result = await db.insert(newsletterSubscribers).values({ name: data.name, email: data.email });
+  return { id: result[0].insertId, new: true };
+}
+
+export async function getNewsletterSubscribers(status?: string) {
+  const db = await getDb();
+  if (!db) return [];
+  let query = db.select().from(newsletterSubscribers);
+  if (status) query = query.where(eq(newsletterSubscribers.status, status as any)) as any;
+  return query.orderBy(desc(newsletterSubscribers.createdAt));
+}
+
+export async function getNewsletterCount() {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select({ count: sql<number>`count(*)` }).from(newsletterSubscribers).where(eq(newsletterSubscribers.status, "active"));
+  return result[0]?.count ?? 0;
+}
+
+export async function unsubscribeNewsletter(email: string) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(newsletterSubscribers).set({ status: "unsubscribed" }).where(eq(newsletterSubscribers.email, email));
+}
+
+// ===== GLOBAL NEWS CACHE =====
+
+export async function saveGlobalNews(items: Partial<InsertGlobalNewsItem>[]) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  for (const item of items) {
+    // Check if already exists by originalUrl
+    const existing = await db.select().from(globalNewsCache).where(eq(globalNewsCache.originalUrl, item.originalUrl!)).limit(1);
+    if (existing.length === 0) {
+      await db.insert(globalNewsCache).values(item as InsertGlobalNewsItem);
+    }
+  }
+}
+
+export async function getGlobalNews(limit = 20) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(globalNewsCache)
+    .where(eq(globalNewsCache.isPublished, true))
+    .orderBy(desc(globalNewsCache.fetchedAt))
+    .limit(limit);
+}
+
+export async function getGlobalNewsForRewrite(limit = 10) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(globalNewsCache)
+    .where(and(
+      eq(globalNewsCache.isPublished, false),
+      sql`${globalNewsCache.rewrittenTitle} IS NULL`
+    ))
+    .orderBy(desc(globalNewsCache.fetchedAt))
+    .limit(limit);
+}
+
+export async function updateGlobalNewsRewrite(id: number, data: { rewrittenTitle: string; rewrittenExcerpt: string; rewrittenContent: string }) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(globalNewsCache).set({ ...data, isPublished: true, publishedAt: new Date() }).where(eq(globalNewsCache.id, id));
+}
+
+export async function getAllGlobalNews(limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(globalNewsCache).orderBy(desc(globalNewsCache.fetchedAt)).limit(limit);
 }

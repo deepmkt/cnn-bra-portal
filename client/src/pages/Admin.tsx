@@ -8,10 +8,10 @@ import { toast } from "sonner";
 import {
   LayoutDashboard, FileText, MessageCircle, Users, Shield, Trophy, Megaphone,
   Plus, Trash2, Edit, Eye, EyeOff, Check, X, ArrowLeft, Star, StarOff,
-  Bell, Newspaper, Type, LogOut, BarChart3
+  Bell, Newspaper, Type, LogOut, BarChart3, PlayCircle, Video
 } from "lucide-react";
 
-type Tab = "dashboard" | "articles" | "ugc" | "comments" | "gamification" | "users" | "audit" | "ads" | "ticker";
+type Tab = "dashboard" | "articles" | "shorts" | "ugc" | "comments" | "gamification" | "users" | "audit" | "ads" | "ticker";
 
 const CATEGORIES = ["GERAL", "POLÍTICA", "ECONOMIA", "ESPORTES", "TECNOLOGIA", "SAÚDE", "ENTRETENIMENTO", "MUNDO", "BRASIL"];
 
@@ -51,6 +51,7 @@ export default function Admin() {
     { id: "gamification", label: "Gamificação", icon: Trophy },
     { id: "users", label: "Usuários", icon: Users },
     { id: "audit", label: "Auditoria", icon: Shield },
+    { id: "shorts", label: "Shorts", icon: PlayCircle },
     { id: "ads", label: "Anúncios", icon: Megaphone },
     { id: "ticker", label: "Ticker", icon: Type },
   ];
@@ -96,6 +97,7 @@ export default function Admin() {
       <div className="flex-1 p-6 pb-20 md:pb-6 overflow-auto">
         {activeTab === "dashboard" && <DashboardTab />}
         {activeTab === "articles" && <ArticlesTab />}
+        {activeTab === "shorts" && <ShortsTab />}
         {activeTab === "ugc" && <UGCTab />}
         {activeTab === "comments" && <CommentsTab />}
         {activeTab === "gamification" && <GamificationTab />}
@@ -528,6 +530,198 @@ function TickerTab() {
             <Button size="sm" variant="outline" className="text-red-500" onClick={() => deleteTicker.mutate({ id: item.id })}><Trash2 className="w-3 h-3" /></Button>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+
+// ===== SHORTS TAB =====
+function ShortsTab() {
+  const { data: shortsList, isLoading } = trpc.shorts.list.useQuery({});
+  const createShort = trpc.shorts.create.useMutation({ onSuccess: () => { utils.shorts.list.invalidate(); toast.success("Short criado!"); setShowForm(false); resetForm(); } });
+  const updateShort = trpc.shorts.update.useMutation({ onSuccess: () => { utils.shorts.list.invalidate(); toast.success("Short atualizado!"); setShowForm(false); resetForm(); } });
+  const deleteShort = trpc.shorts.delete.useMutation({ onSuccess: () => { utils.shorts.list.invalidate(); toast.success("Short excluído!"); } });
+  const utils = trpc.useUtils();
+
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [category, setCategory] = useState("GERAL");
+  const [duration, setDuration] = useState(0);
+  const [status, setStatus] = useState<"online" | "draft" | "review">("draft");
+  const [isHighlight, setIsHighlight] = useState(false);
+
+  const resetForm = () => {
+    setEditingId(null);
+    setTitle("");
+    setDescription("");
+    setVideoUrl("");
+    setThumbnailUrl("");
+    setCategory("GERAL");
+    setDuration(0);
+    setStatus("draft");
+    setIsHighlight(false);
+  };
+
+  const handleEdit = (s: any) => {
+    setEditingId(s.id);
+    setTitle(s.title);
+    setDescription(s.description || "");
+    setVideoUrl(s.videoUrl);
+    setThumbnailUrl(s.thumbnailUrl || "");
+    setCategory(s.category);
+    setDuration(s.duration);
+    setStatus(s.status);
+    setIsHighlight(s.isHighlight);
+    setShowForm(true);
+  };
+
+  const handleSubmit = () => {
+    if (!title.trim() || !videoUrl.trim()) {
+      toast.error("Título e URL do vídeo são obrigatórios");
+      return;
+    }
+    const data = { title: title.trim(), description: description.trim() || undefined, videoUrl: videoUrl.trim(), thumbnailUrl: thumbnailUrl.trim() || undefined, category, duration, status, isHighlight };
+    if (editingId) {
+      updateShort.mutate({ id: editingId, ...data });
+    } else {
+      createShort.mutate(data);
+    }
+  };
+
+  if (isLoading) return <div className="flex justify-center py-12"><div className="animate-spin w-8 h-8 border-4 border-[#001c56] border-t-transparent rounded-full" /></div>;
+
+  const shorts = shortsList || [];
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-black text-gray-800">CNN Shorts</h2>
+          <p className="text-sm text-gray-500">{shorts.length} vídeo(s) curto(s)</p>
+        </div>
+        <Button onClick={() => { resetForm(); setShowForm(true); }} className="bg-[#001c56]">
+          <Plus className="w-4 h-4 mr-2" /> Novo Short
+        </Button>
+      </div>
+
+      {/* Form */}
+      {showForm && (
+        <div className="bg-white rounded-xl p-6 shadow-sm mb-6 border">
+          <h3 className="font-bold text-lg mb-4">{editingId ? "Editar Short" : "Novo Short"}</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <label className="block text-sm font-semibold text-gray-600 mb-1">Título *</label>
+              <input value={title} onChange={e => setTitle(e.target.value)} className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="Título do short..." />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-semibold text-gray-600 mb-1">Descrição</label>
+              <textarea value={description} onChange={e => setDescription(e.target.value)} className="w-full border rounded-lg px-3 py-2 text-sm" rows={2} placeholder="Descrição breve..." />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-600 mb-1">URL do Vídeo *</label>
+              <input value={videoUrl} onChange={e => setVideoUrl(e.target.value)} className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="https://..." />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-600 mb-1">URL da Thumbnail</label>
+              <input value={thumbnailUrl} onChange={e => setThumbnailUrl(e.target.value)} className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="https://..." />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-600 mb-1">Categoria</label>
+              <select value={category} onChange={e => setCategory(e.target.value)} className="w-full border rounded-lg px-3 py-2 text-sm">
+                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-600 mb-1">Duração (segundos)</label>
+              <input type="number" value={duration} onChange={e => setDuration(Number(e.target.value))} className="w-full border rounded-lg px-3 py-2 text-sm" min={0} />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-600 mb-1">Status</label>
+              <select value={status} onChange={e => setStatus(e.target.value as any)} className="w-full border rounded-lg px-3 py-2 text-sm">
+                <option value="draft">Rascunho</option>
+                <option value="review">Em Revisão</option>
+                <option value="online">Publicado</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2 pt-6">
+              <input type="checkbox" checked={isHighlight} onChange={e => setIsHighlight(e.target.checked)} id="shortHighlight" className="w-4 h-4" />
+              <label htmlFor="shortHighlight" className="text-sm font-semibold text-gray-600">Destaque</label>
+            </div>
+          </div>
+          <div className="flex gap-3 mt-6">
+            <Button onClick={handleSubmit} className="bg-[#001c56]" disabled={createShort.isPending || updateShort.isPending}>
+              {editingId ? "Salvar Alterações" : "Criar Short"}
+            </Button>
+            <Button variant="outline" onClick={() => { setShowForm(false); resetForm(); }}>Cancelar</Button>
+          </div>
+        </div>
+      )}
+
+      {/* List */}
+      <div className="space-y-3">
+        {shorts.length === 0 ? (
+          <div className="bg-white rounded-xl p-12 text-center shadow-sm">
+            <Video className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-400 font-semibold">Nenhum short criado ainda</p>
+            <p className="text-gray-300 text-sm mt-1">Clique em "Novo Short" para começar</p>
+          </div>
+        ) : (
+          shorts.map((s: any) => (
+            <div key={s.id} className="bg-white rounded-xl p-4 shadow-sm flex items-center gap-4 border hover:shadow-md transition-shadow">
+              {/* Thumbnail */}
+              <div className="w-20 h-14 bg-gray-100 rounded-lg overflow-hidden shrink-0 relative">
+                {s.thumbnailUrl ? (
+                  <img src={s.thumbnailUrl} className="w-full h-full object-cover" alt={s.title} />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-600 to-pink-500">
+                    <PlayCircle className="w-6 h-6 text-white" />
+                  </div>
+                )}
+                {s.duration > 0 && (
+                  <span className="absolute bottom-0.5 right-0.5 bg-black/70 text-white text-[9px] px-1 rounded">
+                    {Math.floor(s.duration / 60)}:{(s.duration % 60).toString().padStart(2, "0")}
+                  </span>
+                )}
+              </div>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <h4 className="font-bold text-sm text-gray-800 truncate">{s.title}</h4>
+                <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
+                  <span className="bg-gray-100 px-2 py-0.5 rounded text-[10px] font-bold uppercase">{s.category}</span>
+                  <span>{s.viewCount} views</span>
+                  <span>{s.likeCount} likes</span>
+                  <span>{s.commentCount} comentários</span>
+                </div>
+              </div>
+
+              {/* Status badge */}
+              <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-full ${
+                s.status === "online" ? "bg-green-100 text-green-700" :
+                s.status === "review" ? "bg-yellow-100 text-yellow-700" :
+                "bg-gray-100 text-gray-500"
+              }`}>
+                {s.status === "online" ? "Publicado" : s.status === "review" ? "Revisão" : "Rascunho"}
+              </span>
+
+              {/* Highlight */}
+              <button onClick={() => updateShort.mutate({ id: s.id, isHighlight: !s.isHighlight })} className="p-1">
+                {s.isHighlight ? <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" /> : <StarOff className="w-4 h-4 text-gray-300" />}
+              </button>
+
+              {/* Actions */}
+              <div className="flex gap-1">
+                <Button size="sm" variant="outline" onClick={() => handleEdit(s)}><Edit className="w-3 h-3" /></Button>
+                <Button size="sm" variant="outline" className="text-red-500" onClick={() => { if (confirm("Excluir este short?")) deleteShort.mutate({ id: s.id }); }}><Trash2 className="w-3 h-3" /></Button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

@@ -10,7 +10,6 @@
 - [x] Frontend: Hero slider com notícias em destaque
 - [x] Frontend: Feed de notícias recentes com cards
 - [x] Frontend: Sidebar com WhatsApp CTA e redes sociais
-- [ ] Frontend: Seção Reels/Shorts estilo TikTok (futuro)
 - [x] Frontend: Footer completo
 - [x] Frontend: Menu mobile responsivo
 - [x] Frontend: Página de artigo individual
@@ -20,7 +19,7 @@
 - [ ] Acessibilidade: VLibras widget
 - [x] Compartilhamento via WhatsApp
 - [x] SEO dinâmico (título, meta description por categoria)
-- [x] Testes vitest para as rotas de API (61 testes passando)
+- [x] Testes vitest para as rotas de API (62 testes passando)
 
 ## Melhorias Avançadas - Sprint 2
 
@@ -42,7 +41,6 @@
 - [x] Lazy loading: imagens e componentes com IntersectionObserver
 - [x] Prefetch de artigos: precarregar próximos artigos para navegação instantânea
 - [x] Compressão de assets: gzip/brotli via Vite build
-- [x] Testes para os novos microserviços (61 testes)
 
 ## Sprint 3 - Funcionalidades Avançadas
 
@@ -66,13 +64,10 @@
 - [x] Workflow: pendente → aprovado → publicado / rejeitado
 - [x] Notificação ao usuário sobre status da submissão
 
-### Pendentes Sprint 2
-- [x] SearchPage: página de busca avançada
-
 ## Sprint 4 - Segurança e Compliance
 
 ### Autenticação e Segurança
-- [x] OAuth 2.0 via Manus Auth (já integrado) - documentar fluxo
+- [x] OAuth 2.0 via Manus Auth (já integrado)
 - [x] Schema: audit logs para monitoramento de segurança
 - [x] Sistema de auditoria: registrar ações administrativas (login, CRUD, moderação)
 - [x] Endpoint de logs de auditoria no admin
@@ -83,3 +78,28 @@
 - [x] Página de política de privacidade
 - [x] Persistência da escolha do usuário (localStorage)
 - [x] Opções: aceitar todos, rejeitar opcionais, personalizar
+
+## Sprint 5 - CNN Shorts (Vídeos Curtos)
+
+- [x] Schema: tabela de shorts (título, videoUrl, thumbnailUrl, duração, likes, views, etc.)
+- [x] API backend: CRUD de shorts (criar, listar, curtir, visualizar, deletar)
+- [x] Página /shorts: feed vertical estilo TikTok/Reels com swipe/scroll
+- [x] Player de vídeo fullscreen com autoplay e controles
+- [x] Interações: curtir, compartilhar, comentar em shorts
+- [x] Seção de shorts na Home page (link no header)
+- [x] Aba de gerenciamento de shorts no painel Admin
+
+## Sprint 6 - Redesign Fiel à Referência + Global News + Newsletter
+
+- [x] Header: logo CNN.BRA com ponto vermelho, nav limpa, botão Shorts, ícone busca
+- [x] Hero carrossel: imagem fullwidth com título sobreposto em branco, badge categoria vermelho
+- [x] Cards de notícia: layout horizontal (imagem esquerda, texto direita), hover com destaque/elevação
+- [x] WhatsApp CTA: card verde "Canal no WhatsApp" com animação bounce na logo
+- [x] Newsletter "Fique Atualizado": card azul escuro com campos Nome/Email, botão vermelho "Assinar Grátis"
+- [x] Schema: tabela newsletter_subscribers (nome, email, status)
+- [x] Backend: rota de inscrição newsletter + integração SendPulse
+- [x] Aba Global: fetch automático de notícias internacionais via Google News
+- [x] Aba Global: reescrita autoral das notícias via LLM com menção à fonte
+- [x] Integração SendPulse API (email marketing) - credenciais validadas (62 testes)
+- [x] Efeito hover nas notícias com destaque visual (elevação + scale na imagem)
+- [x] Testes para SendPulse e novas rotas (62 testes passando)

@@ -688,6 +688,282 @@ export const appRouter = router({
         };
       }),
   }),
+
+  // ===== CNN SHORTS =====
+  shorts: router({
+    list: publicProcedure
+      .input(z.object({
+        status: z.string().optional(),
+        category: z.string().optional(),
+        limit: z.number().optional(),
+        isHighlight: z.boolean().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return db.getShorts(input ?? undefined);
+      }),
+
+    getById: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return db.getShortById(input.id);
+      }),
+
+    feed: publicProcedure
+      .input(z.object({ limit: z.number().default(20) }).optional())
+      .query(async ({ input }) => {
+        return db.getShorts({ status: "online", limit: input?.limit ?? 20 });
+      }),
+
+    create: editorProcedure
+      .input(z.object({
+        title: z.string().min(1),
+        description: z.string().optional(),
+        videoUrl: z.string().min(1),
+        thumbnailUrl: z.string().optional(),
+        category: z.string().default("GERAL"),
+        duration: z.number().default(0),
+        status: z.enum(["online", "draft", "review"]).default("draft"),
+        isHighlight: z.boolean().default(false),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const id = await db.createShort({
+          ...input,
+          authorId: ctx.user.id,
+          authorName: ctx.user.name || "Editor",
+        });
+        return { id };
+      }),
+
+    update: editorProcedure
+      .input(z.object({
+        id: z.number(),
+        title: z.string().optional(),
+        description: z.string().optional(),
+        videoUrl: z.string().optional(),
+        thumbnailUrl: z.string().optional(),
+        category: z.string().optional(),
+        duration: z.number().optional(),
+        status: z.enum(["online", "draft", "review"]).optional(),
+        isHighlight: z.boolean().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        const updateData: any = { ...data };
+        if (data.status === "online") updateData.publishedAt = new Date();
+        await db.updateShort(id, updateData);
+        return { success: true };
+      }),
+
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.deleteShort(input.id);
+        return { success: true };
+      }),
+
+    incrementView: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.incrementShortView(input.id);
+        return { success: true };
+      }),
+
+    toggleLike: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        const result = await db.toggleShortLike(input.id, ctx.user.id);
+        return result;
+      }),
+
+    share: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.incrementShortShare(input.id);
+        return { success: true };
+      }),
+
+    myLikes: protectedProcedure.query(async ({ ctx }) => {
+      return db.getUserShortLikes(ctx.user.id);
+    }),
+
+    // Comments on shorts
+    comments: publicProcedure
+      .input(z.object({ shortId: z.number() }))
+      .query(async ({ input }) => {
+        return db.getShortComments(input.shortId);
+      }),
+
+    addComment: publicProcedure
+      .input(z.object({
+        shortId: z.number(),
+        content: z.string().min(1).max(500),
+        authorName: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const id = await db.createShortComment({
+          ...input,
+          userId: ctx.user?.id,
+          authorName: input.authorName || ctx.user?.name || "Anônimo",
+        });
+        return { id };
+      }),
+
+    deleteComment: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.deleteShortComment(input.id);
+        return { success: true };
+      }),
+
+    count: adminProcedure
+      .input(z.object({ status: z.string().optional() }).optional())
+      .query(async ({ input }) => {
+        return db.getShortCount(input?.status);
+      }),
+  }),
+
+  // ===== NEWSLETTER =====
+  newsletter: router({
+    subscribe: publicProcedure
+      .input(z.object({
+        name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+        email: z.string().email("Email inválido"),
+      }))
+      .mutation(async ({ input }) => {
+        // Save to local database
+        const result = await db.subscribeNewsletter(input);
+        
+        // Sync to SendPulse in background (don't block the response)
+        try {
+          const { addSubscriber } = await import("./sendpulse");
+          await addSubscriber(input.email, input.name);
+          console.log(`[SendPulse] Subscriber synced: ${input.email}`);
+        } catch (err: any) {
+          console.warn(`[SendPulse] Failed to sync subscriber: ${err.message}`);
+          // Don't fail the request - subscriber is saved locally
+        }
+        
+        return result;
+      }),
+
+    unsubscribe: publicProcedure
+      .input(z.object({ email: z.string().email() }))
+      .mutation(async ({ input }) => {
+        await db.unsubscribeNewsletter(input.email);
+        return { success: true };
+      }),
+
+    list: adminProcedure
+      .input(z.object({ status: z.string().optional() }).optional())
+      .query(async ({ input }) => {
+        return db.getNewsletterSubscribers(input?.status);
+      }),
+
+    count: adminProcedure.query(async () => {
+      return db.getNewsletterCount();
+    }),
+  }),
+
+  // ===== GLOBAL NEWS =====
+  globalNews: router({
+    list: publicProcedure
+      .input(z.object({ limit: z.number().default(20) }).optional())
+      .query(async ({ input }) => {
+        return db.getGlobalNews(input?.limit ?? 20);
+      }),
+
+    fetchAndRewrite: adminProcedure.mutation(async () => {
+      // 1. Fetch top world news using Google News RSS
+      const axios = (await import("axios")).default;
+      let newsItems: any[] = [];
+      try {
+        const rssUrl = "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx1YlY4U0FuQjBHZ0pDVWlnQVAB?hl=pt-BR&gl=BR&ceid=BR:pt-419";
+        const rssResponse = await axios.get(rssUrl, { timeout: 10000 });
+        const rssText = rssResponse.data;
+        // Parse RSS XML manually
+        const items = rssText.match(/<item>[\s\S]*?<\/item>/g) || [];
+        newsItems = items.slice(0, 10).map((item: string) => {
+          const titleMatch = item.match(/<title><!\[CDATA\[(.+?)\]\]><\/title>/) || item.match(/<title>(.+?)<\/title>/);
+          const linkMatch = item.match(/<link>(.+?)<\/link>/);
+          const sourceMatch = item.match(/<source[^>]*>(.+?)<\/source>/);
+          return {
+            originalTitle: titleMatch?.[1] || "Untitled",
+            originalSource: sourceMatch?.[1] || "Google News",
+            originalUrl: linkMatch?.[1] || "#",
+            imageUrl: null,
+            category: "GLOBAL",
+          };
+        });
+      } catch (e) {
+        console.error("Failed to fetch Google News RSS:", e);
+        return { fetched: 0, rewritten: 0 };
+      }
+
+      if (newsItems.length === 0) return { fetched: 0, rewritten: 0 };
+
+      await db.saveGlobalNews(newsItems);
+
+      // 3. Get unprocessed news for rewriting
+      const toRewrite = await db.getGlobalNewsForRewrite(5);
+
+      // 4. Rewrite each with LLM
+      const { invokeLLM } = await import("./_core/llm");
+      let rewrittenCount = 0;
+
+      for (const item of toRewrite) {
+        try {
+          const response = await invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content: "Você é um jornalista brasileiro experiente. Reescreva a notícia abaixo de forma autoral em português brasileiro, mantendo os fatos e mencionando a fonte original. Retorne um JSON com: title (título chamativo), excerpt (resumo de 1-2 frases), content (texto completo de 2-3 parágrafos)."
+              },
+              {
+                role: "user",
+                content: `Notícia original: \"${item.originalTitle}\"\nFonte: ${item.originalSource}\nURL: ${item.originalUrl}`
+              }
+            ],
+            response_format: {
+              type: "json_schema",
+              json_schema: {
+                name: "rewritten_news",
+                strict: true,
+                schema: {
+                  type: "object",
+                  properties: {
+                    title: { type: "string", description: "Título reescrito" },
+                    excerpt: { type: "string", description: "Resumo curto" },
+                    content: { type: "string", description: "Texto completo" }
+                  },
+                  required: ["title", "excerpt", "content"],
+                  additionalProperties: false
+                }
+              }
+            }
+          });
+
+          const rawContent = response.choices[0].message.content;
+          const parsed = JSON.parse((typeof rawContent === "string" ? rawContent : "") || "{}");
+          if (parsed.title) {
+            await db.updateGlobalNewsRewrite(item.id, {
+              rewrittenTitle: parsed.title,
+              rewrittenExcerpt: parsed.excerpt || "",
+              rewrittenContent: parsed.content || "",
+            });
+            rewrittenCount++;
+          }
+        } catch (e) {
+          console.error("Failed to rewrite news:", item.id, e);
+        }
+      }
+
+      return { fetched: newsItems.length, rewritten: rewrittenCount };
+    }),
+
+    adminList: adminProcedure.query(async () => {
+      return db.getAllGlobalNews(50);
+    }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
