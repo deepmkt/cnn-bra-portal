@@ -16,7 +16,7 @@
 - [x] Painel Admin: gerenciamento de notícias com persistência no banco
 - [x] Painel Admin: gerenciamento de anúncios
 - [x] Painel Admin: analytics básico
-- [ ] Acessibilidade: VLibras widget
+- [x] Acessibilidade: VLibras widget
 - [x] Compartilhamento via WhatsApp
 - [x] SEO dinâmico (título, meta description por categoria)
 - [x] Testes vitest para as rotas de API (62 testes passando)
@@ -103,3 +103,26 @@
 - [x] Integração SendPulse API (email marketing) - credenciais validadas (62 testes)
 - [x] Efeito hover nas notícias com destaque visual (elevação + scale na imagem)
 - [x] Testes para SendPulse e novas rotas (62 testes passando)
+
+## Sprint 7 - Fidelidade Total ao Design de Referência
+
+- [x] Ticker bar "De Última Hora" com dot vermelho pulsante + marquee animation (sticky top)
+- [x] Header sticky abaixo do ticker com logo CNN pill + red dot + BRA
+- [x] Menu Estados dropdown com grid 5 colunas (27 estados BR)
+- [x] Hero banner: cantos arredondados (2.5rem), 55-75vh, ZOOM animation (scale 1.15 em 10s)
+- [x] Hero: gradient overlay from-black/95, badge vermelho, título 7xl font-black
+- [x] Hero: auto-rotação a cada 10 segundos entre notícias destaque
+- [x] Cards notícia: imagem 420px 4/3 arredondada (2.5rem), hover scale-110 (2s)
+- [x] Cards: badge categoria vermelho overlay, título hover vermelho, "COMPARTILHAR NO WHATSAPP"
+- [x] Sidebar WhatsApp: gradiente verde, border-b-10, ícone rotate-12 hover, -translate-y-2
+- [x] Sidebar CNN Shorts vitrine: bg gray-900, grid 2 colunas, thumbnails 9:16 com play overlay
+- [x] Sidebar Newsletter: bg navy, círculo vermelho decorativo, "Fique por dentro"
+- [x] Footer: bg preto, border-t-8 navy, logo CNN BRA pill, social icons com hover colorido
+- [x] Shorts overlay fullscreen: snap-y scroll, cards fullscreen com gradient e botões like/share
+- [x] Exit intent popup: detecção mouseleave, captura WhatsApp, design navy+vermelho
+- [x] ArticlePage: "Ouvir Matéria" IA Voice player (SpeechSynthesis API)
+- [x] ArticlePage: blockquote com borda vermelha, "Recomendados para Si"
+- [x] VLibras widget integrado para acessibilidade
+- [x] Animações: slideUp, slideRight, hero-zoom, marquee
+- [x] Tipografia: font-black, tracking-tighter, uppercase em títulos
+- [x] Shadow-2xl em todos os elementos principais

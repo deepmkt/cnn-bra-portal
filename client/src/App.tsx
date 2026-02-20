@@ -6,7 +6,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { CookieConsent } from "./components/CookieConsent";
 import Home from "./pages/Home";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 
 const Admin = lazy(() => import("./pages/Admin"));
 const ArticlePage = lazy(() => import("./pages/ArticlePage"));
@@ -21,6 +21,43 @@ const LazyFallback = () => (
     <div className="animate-spin w-8 h-8 border-4 border-[#001c56] border-t-transparent rounded-full" />
   </div>
 );
+
+// VLibras Widget for accessibility
+function VLibrasWidget() {
+  useEffect(() => {
+    // Add VLibras widget div
+    const widgetDiv = document.createElement("div");
+    widgetDiv.setAttribute("vw", "");
+    widgetDiv.className = "enabled";
+    widgetDiv.innerHTML = `
+      <div vw-access-button class="active"></div>
+      <div vw-plugin-wrapper>
+        <div class="vw-plugin-top-wrapper"></div>
+      </div>
+    `;
+    document.body.appendChild(widgetDiv);
+
+    // Load VLibras script
+    const script = document.createElement("script");
+    script.src = "https://vlibras.gov.br/app/vlibras-plugin.js";
+    script.async = true;
+    script.onload = () => {
+      // @ts-ignore
+      if (window.VLibras) {
+        // @ts-ignore
+        new window.VLibras.Widget("https://vlibras.gov.br/app");
+      }
+    };
+    document.head.appendChild(script);
+
+    return () => {
+      if (widgetDiv.parentNode) widgetDiv.parentNode.removeChild(widgetDiv);
+      if (script.parentNode) script.parentNode.removeChild(script);
+    };
+  }, []);
+
+  return null;
+}
 
 function Router() {
   return (
@@ -61,6 +98,7 @@ function App() {
           <Toaster />
           <Router />
           <CookieConsent />
+          <VLibrasWidget />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

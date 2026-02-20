@@ -1,22 +1,20 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
-import { Search, Menu, X, ChevronLeft, ChevronRight, Clock, Share2, Globe, PlayCircle } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Search, X, Menu } from "lucide-react";
 
 // ===== CATEGORIES =====
 const NAV_ITEMS = [
-  { label: "Início", href: "/", category: undefined },
-  { label: "Política", href: "/?cat=POLÍTICA", category: "POLÍTICA" },
-  { label: "Dia a Dia", href: "/?cat=GERAL", category: "GERAL" },
-  { label: "Global", href: "/?cat=GLOBAL", category: "GLOBAL" },
-  { label: "Economia", href: "/?cat=ECONOMIA", category: "ECONOMIA" },
-  { label: "Esportes", href: "/?cat=ESPORTES", category: "ESPORTES" },
-  { label: "Tecnologia", href: "/?cat=TECNOLOGIA", category: "TECNOLOGIA" },
+  { label: "Início", category: "home" },
+  { label: "Política", category: "POLÍTICA" },
+  { label: "Dia a Dia", category: "GERAL" },
+  { label: "Global", category: "GLOBAL" },
+  { label: "Esportes", category: "ESPORTES" },
 ];
 
-// ===== TIME AGO HELPER =====
+const BR_STATES = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
+
+// ===== TIME AGO =====
 function timeAgo(date: Date | string) {
   const now = new Date();
   const d = new Date(date);
@@ -27,7 +25,13 @@ function timeAgo(date: Date | string) {
   return `Há ${Math.floor(diff / 86400)}d`;
 }
 
-// ===== WHATSAPP ICON SVG =====
+function shareOnWhatsApp(title: string) {
+  const url = window.location.href;
+  const text = encodeURIComponent(`*${title}*\n\nLeia agora no portal CNN BRA:\n${url}`);
+  window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+}
+
+// ===== WHATSAPP ICON =====
 function WhatsAppIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -38,564 +42,458 @@ function WhatsAppIcon({ className }: { className?: string }) {
 
 export default function Home() {
   const [, setLocation] = useLocation();
-  const [activeCategory, setActiveCategory] = useState<string | undefined>(undefined);
+  const [currentCategory, setCurrentCategory] = useState("home");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [heroIndex, setHeroIndex] = useState(0);
-
-  // Parse URL category
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const cat = params.get("cat");
-    setActiveCategory(cat || undefined);
-  }, []);
+  const [heroZoomed, setHeroZoomed] = useState(false);
+  const [statesOpen, setStatesOpen] = useState(false);
+  const [shortsOpen, setShortsOpen] = useState(false);
+  const [exitPopupShown, setExitPopupShown] = useState(false);
+  const [exitPopupVisible, setExitPopupVisible] = useState(false);
+  const [nlName, setNlName] = useState("");
+  const [nlEmail, setNlEmail] = useState("");
+  const [nlSuccess, setNlSuccess] = useState(false);
+  const [exitPhone, setExitPhone] = useState("");
 
   // Fetch articles
-  const { data: articlesData } = trpc.articles.list.useQuery({ category: activeCategory, limit: 30 });
+  const { data: articlesData } = trpc.articles.list.useQuery({
+    status: "published",
+    limit: 20,
+  });
+  const articles = articlesData ?? [];
+
+  // Fetch ticker items
   const { data: tickerData } = trpc.ticker.list.useQuery();
-  const { data: globalNewsData } = trpc.globalNews.list.useQuery({ limit: 20 });
+  const tickerItems = tickerData ?? [];
 
-  const articles = articlesData || [];
-  const tickerItems = tickerData || [];
-  const globalNews = globalNewsData || [];
+  // Fetch shorts
+  const { data: shortsData } = trpc.shorts.list.useQuery({ limit: 10 });
+  const shorts = shortsData ?? [];
 
-  // Hero articles (isHero or first 5)
-  const heroArticles = articles.filter((a: any) => a.isHero).length > 0
-    ? articles.filter((a: any) => a.isHero)
-    : articles.slice(0, 5);
+  // Newsletter mutation
+  const subscribeMutation = trpc.newsletter.subscribe.useMutation();
 
-  // Regular articles (non-hero)
-  const regularArticles = articles.filter((a: any) => !a.isHero);
+  // Filter articles by category
+  const filteredArticles = currentCategory === "home"
+    ? articles
+    : articles.filter(a => a.category === currentCategory);
 
-  // Auto-rotate hero
+  const heroArticles = filteredArticles.filter(a => a.isHero);
+  const currentHero = heroArticles.length > 0 ? heroArticles[heroIndex % heroArticles.length] : filteredArticles[0];
+
+  // Hero auto-rotation every 10s
   useEffect(() => {
     if (heroArticles.length <= 1) return;
-    const timer = setInterval(() => {
+    const interval = setInterval(() => {
       setHeroIndex(prev => (prev + 1) % heroArticles.length);
-    }, 6000);
-    return () => clearInterval(timer);
+      setHeroZoomed(false);
+    }, 10000);
+    return () => clearInterval(interval);
   }, [heroArticles.length]);
 
-  const handleSearch = () => {
-    if (searchQuery.trim()) {
-      setLocation(`/busca?q=${encodeURIComponent(searchQuery.trim())}`);
-    }
-  };
+  // Trigger zoom after hero render
+  useEffect(() => {
+    setHeroZoomed(false);
+    const timer = setTimeout(() => setHeroZoomed(true), 100);
+    return () => clearTimeout(timer);
+  }, [heroIndex, currentCategory]);
 
-  const handleCategoryClick = (cat: string | undefined) => {
-    setActiveCategory(cat);
+  // Exit intent popup
+  useEffect(() => {
+    const handleMouseLeave = (e: MouseEvent) => {
+      if (e.clientY <= 0 && !exitPopupShown) {
+        setExitPopupVisible(true);
+        setExitPopupShown(true);
+      }
+    };
+    document.addEventListener("mouseleave", handleMouseLeave);
+    return () => document.removeEventListener("mouseleave", handleMouseLeave);
+  }, [exitPopupShown]);
+
+  const changeCategory = (cat: string) => {
+    setCurrentCategory(cat);
+    setHeroIndex(0);
     setMobileMenuOpen(false);
-    if (cat) {
-      window.history.pushState({}, "", `/?cat=${cat}`);
-    } else {
-      window.history.pushState({}, "", "/");
-    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const isGlobal = activeCategory === "GLOBAL";
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await subscribeMutation.mutateAsync({ name: nlName, email: nlEmail });
+      setNlSuccess(true);
+      setNlName("");
+      setNlEmail("");
+    } catch {}
+  };
+
+  const tickerText = tickerItems.length > 0
+    ? tickerItems.map(t => t.text).join(" • ")
+    : "Acompanhe as últimas notícias do Brasil e do mundo no CNN BRA • Seu portal de notícias 24 horas";
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="bg-white text-gray-900 overflow-x-hidden">
+      {/* ===== TICKER BAR ===== */}
+      <div className="bg-cnn-blue text-white text-sm h-10 flex items-center w-full overflow-hidden sticky top-0 z-[60]">
+        <div className="font-bold uppercase px-4 h-full flex items-center bg-cnn-blue z-20 relative border-r border-white/20 shadow-xl whitespace-nowrap">
+          <span className="text-red-500 mr-2 animate-pulse">●</span> De Última Hora
+        </div>
+        <div className="flex-1 overflow-hidden relative h-full flex items-center">
+          <div className="animate-marquee whitespace-nowrap inline-block pl-4 font-medium">
+            {tickerText}
+          </div>
+        </div>
+      </div>
+
       {/* ===== HEADER ===== */}
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
-        <div className="max-w-[1320px] mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-0 shrink-0">
-              <span className="bg-[#001c56] text-white px-2.5 py-1 rounded font-black text-2xl tracking-tight">CNN</span>
-              <span className="text-[#cc0000] text-3xl font-black mx-0.5">.</span>
-              <span className="text-[#001c56] font-black text-2xl tracking-tight">BRA</span>
-            </Link>
+      <header className="border-b border-gray-200 bg-white z-50 sticky top-10 shadow-sm">
+        <div className="container mx-auto px-4 h-16 md:h-20 flex items-center justify-between">
+          {/* Mobile menu button */}
+          <button onClick={() => setMobileMenuOpen(true)} className="md:hidden p-2 text-gray-700 hover:text-red-600 transition-colors">
+            <Menu size={24} strokeWidth={2.5} />
+          </button>
 
-            {/* Desktop Nav */}
-            <nav className="hidden lg:flex items-center gap-1">
-              {NAV_ITEMS.map(item => (
-                <button
-                  key={item.label}
-                  onClick={() => handleCategoryClick(item.category)}
-                  className={`px-3 py-2 text-sm font-semibold transition-all relative ${
-                    activeCategory === item.category
-                      ? "text-[#001c56]"
-                      : "text-gray-600 hover:text-[#001c56]"
-                  }`}
-                >
-                  {item.label === "Global" && <Globe className="w-3.5 h-3.5 inline mr-1 -mt-0.5" />}
-                  {item.label}
-                  {activeCategory === item.category && (
-                    <motion.div layoutId="navUnderline" className="absolute bottom-0 left-3 right-3 h-[3px] bg-[#001c56] rounded-full" />
-                  )}
-                </button>
-              ))}
-            </nav>
-
-            {/* Right Actions */}
-            <div className="flex items-center gap-2">
-              <Link href="/shorts" className="hidden sm:flex items-center gap-1.5 bg-[#001c56] text-white px-4 py-2 rounded-full text-sm font-bold hover:bg-[#002a7a] transition-colors">
-                <PlayCircle className="w-4 h-4" />
-                Shorts
-              </Link>
-              <button onClick={() => setSearchOpen(!searchOpen)} className="p-2 text-gray-600 hover:text-[#001c56] transition-colors">
-                <Search className="w-5 h-5" />
-              </button>
-              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="lg:hidden p-2 text-gray-600">
-                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </button>
-            </div>
+          {/* LOGO */}
+          <div className="flex-1 md:flex-none flex justify-center md:justify-start">
+            <button onClick={() => changeCategory("home")} className="flex items-end group transition-transform active:scale-95">
+              <div className="bg-[#001c56] text-white px-3 py-1 rounded-3xl font-black text-3xl md:text-4xl tracking-tighter shadow-md">CNN</div>
+              <div className="w-3 h-3 md:w-4 md:h-4 bg-red-600 ml-1 mb-1.5 md:mb-2 rounded-sm"></div>
+              <span className="text-cnn-blue font-black text-3xl md:text-4xl ml-1 tracking-tighter uppercase">BRA</span>
+            </button>
           </div>
 
-          {/* Search Bar */}
-          <AnimatePresence>
-            {searchOpen && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden"
+          {/* DESKTOP NAV */}
+          <nav className="hidden md:flex items-center space-x-8 font-bold text-[14px] uppercase tracking-widest">
+            {NAV_ITEMS.map(item => (
+              <button
+                key={item.category}
+                onClick={() => changeCategory(item.category)}
+                className={`nav-btn py-4 border-b-2 transition-all ${
+                  currentCategory === item.category
+                    ? "border-[#001c56] text-cnn-blue"
+                    : "border-transparent hover:text-cnn-blue"
+                }`}
               >
-                <div className="py-3 flex gap-2">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    onKeyDown={e => e.key === "Enter" && handleSearch()}
-                    placeholder="Buscar notícias..."
-                    className="flex-1 border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#001c56]"
-                    autoFocus
-                  />
-                  <button onClick={handleSearch} className="bg-[#001c56] text-white px-6 py-2.5 rounded-lg text-sm font-bold">
-                    Buscar
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Mobile Menu */}
-        <AnimatePresence>
-          {mobileMenuOpen && (
-            <motion.div
-              initial={{ height: 0 }}
-              animate={{ height: "auto" }}
-              exit={{ height: 0 }}
-              className="lg:hidden overflow-hidden bg-white border-t"
-            >
-              <div className="px-4 py-3 space-y-1">
-                {NAV_ITEMS.map(item => (
-                  <button
-                    key={item.label}
-                    onClick={() => handleCategoryClick(item.category)}
-                    className={`block w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold ${
-                      activeCategory === item.category ? "bg-[#001c56] text-white" : "text-gray-700 hover:bg-gray-50"
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-                <Link href="/shorts" className="flex items-center gap-2 px-3 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-lg">
-                  <PlayCircle className="w-4 h-4" /> CNN Shorts
-                </Link>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </header>
-
-      {/* ===== TICKER ===== */}
-      {tickerItems.length > 0 && (
-        <div className="bg-[#cc0000] text-white overflow-hidden">
-          <div className="flex items-center">
-            <span className="bg-[#990000] px-4 py-2 text-xs font-black uppercase shrink-0">Urgente</span>
-            <div className="overflow-hidden flex-1">
-              <div className="animate-marquee whitespace-nowrap py-2 text-sm font-medium">
-                {tickerItems.map((t: any, i: number) => (
-                  <span key={t.id}>
-                    {t.text}
-                    {i < tickerItems.length - 1 && <span className="mx-6 text-white/50">•</span>}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ===== HERO CAROUSEL ===== */}
-      {!isGlobal && heroArticles.length > 0 && (
-        <section className="max-w-[1320px] mx-auto px-4 mt-6">
-          <div className="relative rounded-xl overflow-hidden aspect-[16/7] bg-gray-900">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={heroIndex}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.5 }}
-                className="absolute inset-0"
-              >
-                {heroArticles[heroIndex]?.imageUrl ? (
-                  <img
-                    src={heroArticles[heroIndex].imageUrl}
-                    alt={heroArticles[heroIndex].title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-[#001c56] to-[#003399]" />
-                )}
-                {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-
-                {/* Content */}
-                <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
-                  <span className="inline-block bg-[#cc0000] text-white text-xs font-black uppercase px-3 py-1 rounded mb-3">
-                    {heroArticles[heroIndex]?.category || "DESTAQUE"}
-                  </span>
-                  <Link href={`/artigo/${heroArticles[heroIndex]?.id}`}>
-                    <h1 className="text-white text-2xl md:text-4xl lg:text-5xl font-black leading-tight hover:underline decoration-2 underline-offset-4 cursor-pointer max-w-4xl">
-                      {heroArticles[heroIndex]?.title}
-                    </h1>
-                  </Link>
-                </div>
-              </motion.div>
-            </AnimatePresence>
-
-            {/* Carousel arrows */}
-            {heroArticles.length > 1 && (
-              <>
-                <button
-                  onClick={() => setHeroIndex(prev => (prev - 1 + heroArticles.length) % heroArticles.length)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 backdrop-blur-sm text-white p-2 rounded-full transition-colors"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setHeroIndex(prev => (prev + 1) % heroArticles.length)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 backdrop-blur-sm text-white p-2 rounded-full transition-colors"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-                {/* Dots */}
-                <div className="absolute bottom-3 right-6 flex gap-1.5">
-                  {heroArticles.map((_: any, i: number) => (
-                    <button
-                      key={i}
-                      onClick={() => setHeroIndex(i)}
-                      className={`w-2 h-2 rounded-full transition-all ${i === heroIndex ? "bg-white w-6" : "bg-white/50"}`}
-                    />
+                {item.label}
+              </button>
+            ))}
+            {/* Estados dropdown */}
+            <div className="relative" onMouseEnter={() => setStatesOpen(true)} onMouseLeave={() => setStatesOpen(false)}>
+              <button className="flex items-center hover:text-cnn-blue py-4">
+                Estados
+                <svg className="ml-1" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3"><path d="m2 4 4 4 4-4" /></svg>
+              </button>
+              {statesOpen && (
+                <div className="absolute top-full left-0 w-[420px] bg-white shadow-2xl border p-4 grid grid-cols-5 gap-2 rounded-b-2xl z-[100] animate-slide-up">
+                  {BR_STATES.map(s => (
+                    <a key={s} href={`https://${s.toLowerCase()}.cnnbra.com.br`} target="_blank" rel="noopener noreferrer"
+                      className="text-center py-2 hover:bg-cnn-blue hover:text-white rounded-lg text-xs font-black transition-all uppercase">
+                      {s}
+                    </a>
                   ))}
                 </div>
-              </>
-            )}
+              )}
+            </div>
+          </nav>
+
+          {/* HEADER ACTIONS */}
+          <div className="flex items-center space-x-4">
+            <button onClick={() => setShortsOpen(true)} className="hidden md:flex items-center text-sm font-black bg-black text-white px-5 py-2 rounded-full hover:bg-gray-800 shadow-xl transition-transform hover:scale-105 active:scale-95">
+              <span className="text-red-500 mr-2 text-lg">▶</span> SHORTS
+            </button>
+            <Link href="/busca">
+              <button className="p-2.5 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
+                <Search size={20} strokeWidth={2.5} />
+              </button>
+            </Link>
           </div>
-        </section>
+        </div>
+      </header>
+
+      {/* ===== MOBILE MENU ===== */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-[100]">
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
+          <div className="relative w-4/5 max-w-sm bg-white h-full flex flex-col shadow-2xl animate-slide-right p-8">
+            <div className="flex items-center justify-between mb-12 pb-4 border-b">
+              <span className="font-black text-2xl text-cnn-blue tracking-tighter uppercase">PORTAL CNN BRA</span>
+              <button onClick={() => setMobileMenuOpen(false)} className="p-3 bg-gray-100 rounded-full text-gray-500">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="space-y-8 font-black uppercase text-xl flex flex-col items-start text-gray-800 tracking-tighter">
+              {NAV_ITEMS.map(item => (
+                <button key={item.category} onClick={() => changeCategory(item.category)}>
+                  {item.label}
+                </button>
+              ))}
+              <Link href="/admin" className="mt-12 pt-10 border-t w-full text-red-600 flex items-center tracking-widest font-black italic">
+                ACESSO ADMINISTRATIVO
+              </Link>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ===== MAIN CONTENT ===== */}
-      <main className="max-w-[1320px] mx-auto px-4 mt-8 pb-16">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Left: News Feed */}
-          <div className="flex-1 min-w-0">
-            <h2 className="text-xl font-black text-[#001c56] uppercase tracking-tight mb-1">
-              {isGlobal ? "Notícias Globais" : `Últimas Notícias${activeCategory ? ` - ${activeCategory}` : " - Brasil"}`}
-            </h2>
-            <div className="w-16 h-[3px] bg-[#001c56] mb-6" />
+      <main className="container mx-auto px-4 py-8">
 
-            {/* Global News Feed */}
-            {isGlobal ? (
-              <div className="space-y-4">
-                {globalNews.length === 0 ? (
-                  <div className="text-center py-12 text-gray-400">
-                    <Globe className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                    <p className="font-semibold">Nenhuma notícia global disponível</p>
-                    <p className="text-sm mt-1">As notícias serão atualizadas pelo painel admin.</p>
-                  </div>
-                ) : (
-                  globalNews.map((news: any) => (
-                    <a
-                      key={news.id}
-                      href={news.originalUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group block bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg hover:border-gray-200 hover:-translate-y-0.5 transition-all duration-300"
-                    >
-                      <div className="flex flex-col sm:flex-row">
-                        {news.imageUrl && (
-                          <div className="sm:w-72 h-48 sm:h-auto shrink-0 overflow-hidden relative">
-                            <img src={news.imageUrl} alt={news.rewrittenTitle} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                            <span className="absolute top-3 left-3 bg-[#cc0000] text-white text-[10px] font-black uppercase px-2 py-0.5 rounded">
-                              GLOBAL
-                            </span>
-                          </div>
-                        )}
-                        <div className="p-5 flex flex-col justify-between flex-1">
-                          <div>
-                            <h3 className="text-lg font-black text-gray-900 leading-snug group-hover:text-[#001c56] transition-colors">
-                              {news.rewrittenTitle || news.originalTitle}
-                            </h3>
-                            {news.rewrittenExcerpt && (
-                              <p className="text-gray-500 text-sm mt-2 line-clamp-2">{news.rewrittenExcerpt}</p>
-                            )}
-                          </div>
-                          <div className="flex items-center justify-between mt-4 text-xs text-gray-400">
-                            <div className="flex items-center gap-3">
-                              <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {timeAgo(news.fetchedAt)}</span>
-                              <span className="text-gray-300">|</span>
-                              <span className="font-semibold text-gray-500">Fonte: {news.originalSource}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </a>
-                  ))
-                )}
-              </div>
-            ) : (
-              /* Regular News Feed */
-              <div className="space-y-4">
-                {regularArticles.length === 0 && heroArticles.length === 0 ? (
-                  <div className="text-center py-12 text-gray-400">
-                    <p className="font-semibold">Nenhuma notícia disponível</p>
-                    <p className="text-sm mt-1">Adicione notícias pelo painel admin.</p>
-                  </div>
-                ) : (
-                  regularArticles.map((article: any) => (
-                    <Link
-                      key={article.id}
-                      href={`/artigo/${article.id}`}
-                      className="group block bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg hover:border-gray-200 hover:-translate-y-0.5 transition-all duration-300"
-                    >
-                      <div className="flex flex-col sm:flex-row">
-                        {article.imageUrl && (
-                          <div className="sm:w-72 h-48 sm:h-auto shrink-0 overflow-hidden relative">
-                            <img src={article.imageUrl} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                            <span className="absolute top-3 left-3 bg-[#cc0000] text-white text-[10px] font-black uppercase px-2 py-0.5 rounded">
-                              {article.category}
-                            </span>
-                          </div>
-                        )}
-                        {!article.imageUrl && (
-                          <div className="sm:w-72 h-48 sm:h-auto shrink-0 bg-gradient-to-br from-[#001c56] to-[#003399] flex items-center justify-center relative">
-                            <span className="text-white/20 text-6xl font-black">CNN</span>
-                            <span className="absolute top-3 left-3 bg-[#cc0000] text-white text-[10px] font-black uppercase px-2 py-0.5 rounded">
-                              {article.category}
-                            </span>
-                          </div>
-                        )}
-                        <div className="p-5 flex flex-col justify-between flex-1">
-                          <div>
-                            <h3 className="text-lg font-black text-gray-900 leading-snug group-hover:text-[#001c56] transition-colors">
-                              {article.title}
-                            </h3>
-                            {article.excerpt && (
-                              <p className="text-gray-500 text-sm mt-2 line-clamp-2">{article.excerpt}</p>
-                            )}
-                          </div>
-                          <div className="flex items-center justify-between mt-4 text-xs text-gray-400">
-                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {timeAgo(article.publishedAt || article.createdAt)}</span>
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                const url = `${window.location.origin}/artigo/${article.id}`;
-                                window.open(`https://wa.me/?text=${encodeURIComponent(article.title + " " + url)}`, "_blank");
-                              }}
-                              className="flex items-center gap-1 text-gray-400 hover:text-green-600 transition-colors"
-                            >
-                              <WhatsAppIcon className="w-4 h-4" /> Enviar
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  ))
-                )}
+        {/* ===== HERO BANNER ===== */}
+        {currentHero && (
+          <section
+            className="relative w-full h-[55vh] md:h-[75vh] rounded-[2.5rem] overflow-hidden mb-14 shadow-2xl group cursor-pointer animate-slide-up"
+            onClick={() => setLocation(`/artigo/${currentHero.id}`)}
+          >
+            <div
+              className={`absolute inset-0 bg-cover bg-center hero-zoom ${heroZoomed ? "hero-active-zoom" : ""}`}
+              style={{ backgroundImage: `url('${currentHero.imageUrl || "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=1200&q=80"}')` }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-full p-8 md:p-16 text-white pointer-events-none">
+              <span className="bg-red-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase mb-6 inline-block tracking-[0.2em] shadow-xl">
+                {currentHero.category}
+              </span>
+              <h2 className="text-3xl md:text-7xl font-black leading-[1] mb-6 line-clamp-3 tracking-tighter drop-shadow-2xl">
+                {currentHero.title}
+              </h2>
+            </div>
+          </section>
+        )}
+
+        {/* ===== GRID ===== */}
+        <div className="flex flex-col lg:flex-row gap-12">
+
+          {/* ===== NEWS FEED (LEFT) ===== */}
+          <div className="w-full lg:w-2/3">
+            <div className="flex items-center justify-between border-b-4 border-cnn-blue pb-5 mb-12">
+              <h3 className="text-3xl font-black uppercase tracking-tighter text-cnn-blue">
+                {currentCategory === "home" ? "Manchetes Recentes" : currentCategory}
+              </h3>
+            </div>
+
+            {filteredArticles.length === 0 && (
+              <div className="text-center py-20 text-gray-400">
+                <p className="text-xl font-bold">Nenhuma notícia disponível</p>
+                <p className="text-sm mt-2">Adicione notícias pelo painel admin.</p>
               </div>
             )}
+
+            {filteredArticles.map(article => (
+              <article key={article.id} className="flex flex-col md:flex-row gap-10 group mb-16 animate-slide-up">
+                <div
+                  onClick={() => setLocation(`/artigo/${article.id}`)}
+                  className="w-full md:w-[420px] aspect-[4/3] overflow-hidden rounded-[2.5rem] relative cursor-pointer shadow-2xl flex-shrink-0"
+                >
+                  <img
+                    src={article.imageUrl || "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=800&q=80"}
+                    alt={article.title}
+                    className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-[2000ms]"
+                  />
+                  <div className="absolute top-5 left-5 bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded-lg uppercase shadow-xl">
+                    {article.category}
+                  </div>
+                </div>
+                <div className="flex-1 flex flex-col justify-between py-2">
+                  <div onClick={() => setLocation(`/artigo/${article.id}`)} className="cursor-pointer">
+                    <h4 className="text-3xl md:text-4xl font-black leading-[1.1] mb-5 group-hover:text-red-600 transition-colors tracking-tighter">
+                      {article.title}
+                    </h4>
+                    <p className="text-gray-500 line-clamp-2 font-medium text-lg leading-relaxed mb-8">
+                      {article.excerpt}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between pt-6 border-t border-gray-100">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                      {article.publishedAt ? timeAgo(article.publishedAt) : "Recente"}
+                    </span>
+                    <button
+                      onClick={() => shareOnWhatsApp(article.title)}
+                      className="flex items-center text-gray-400 hover:text-green-600 font-black uppercase text-[10px] tracking-[0.2em] transition-all"
+                    >
+                      COMPARTILHAR NO WHATSAPP
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
           </div>
 
-          {/* Right: Sidebar */}
-          <aside className="w-full lg:w-[340px] shrink-0 space-y-6">
+          {/* ===== SIDEBAR (RIGHT) ===== */}
+          <aside className="w-full lg:w-1/3 space-y-12">
+
             {/* WhatsApp CTA */}
-            <WhatsAppCTA />
+            <a href="#" className="block w-full bg-gradient-to-br from-green-500 to-green-700 rounded-[2rem] p-7 shadow-2xl group hover:-translate-y-2 transition-all border-b-[10px] border-green-900">
+              <div className="flex items-center text-white">
+                <div className="bg-white p-5 rounded-full mr-6 shadow-2xl group-hover:rotate-12 transition-transform">
+                  <WhatsAppIcon className="w-8 h-8 text-green-600 animate-whatsapp-bounce" />
+                </div>
+                <div>
+                  <span className="bg-green-400 text-green-900 text-[10px] font-black uppercase px-3 py-1 rounded-full mb-2 inline-block">Comunidade VIP</span>
+                  <h3 className="font-black text-2xl uppercase tracking-tighter leading-none">Receba no Zap</h3>
+                  <p className="text-xs text-green-100 font-bold uppercase mt-1 opacity-80">Giro de notícias em tempo real</p>
+                </div>
+              </div>
+            </a>
 
-            {/* Newsletter */}
-            <NewsletterWidget />
+            {/* CNN Shorts Vitrine */}
+            <div className="bg-gray-900 rounded-[2rem] p-7 shadow-2xl border border-gray-800">
+              <div className="flex items-center justify-between mb-8 border-b border-gray-800 pb-5">
+                <h3 className="text-white font-black text-xl flex items-center tracking-tighter uppercase">
+                  <span className="text-red-500 mr-2">▶</span> CNN Shorts
+                </h3>
+                <button onClick={() => setShortsOpen(true)} className="text-[11px] uppercase font-black text-gray-500 hover:text-white transition-colors border border-gray-800 px-3 py-1 rounded-full">
+                  Ver Tudo
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                {(shorts.length > 0 ? shorts.slice(0, 4) : [
+                  { id: 1, title: "Operação policial na madrugada", thumbnailUrl: "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=400&q=80" },
+                  { id: 2, title: "Protestos em Paris", thumbnailUrl: "https://images.unsplash.com/photo-1526470608268-f674ce90ebd4?auto=format&fit=crop&w=400&q=80" },
+                ]).map((s: any) => (
+                  <div key={s.id} onClick={() => setShortsOpen(true)} className="relative aspect-[9/16] rounded-2xl overflow-hidden group cursor-pointer border border-gray-800 shadow-2xl">
+                    <img src={s.thumbnailUrl || s.videoUrl} alt={s.title} className="w-full h-full object-cover opacity-60 group-hover:scale-125 transition-all duration-[2500ms]" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-4xl opacity-80 group-hover:opacity-100 group-hover:scale-125 transition-all">▶</div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-            {/* Gamification CTA */}
-            <Link href="/ranking" className="block bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl p-5 text-white hover:shadow-lg transition-shadow">
-              <h3 className="font-black text-lg">🏆 Ranking de Leitores</h3>
-              <p className="text-white/80 text-sm mt-1">Ganhe pontos lendo notícias e suba no ranking!</p>
-            </Link>
+            {/* Newsletter "Fique por dentro" */}
+            <div className="bg-cnn-blue rounded-[2rem] p-10 text-white relative overflow-hidden shadow-2xl border border-blue-900">
+              <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-red-600 rounded-full opacity-10" />
+              <h3 className="text-3xl font-black uppercase mb-2 relative z-10 leading-none tracking-tighter">Fique por dentro</h3>
+              <p className="text-xs text-blue-200 mb-10 relative z-10 font-bold uppercase tracking-widest opacity-80 italic">
+                Informativo diário gratuito no e-mail
+              </p>
+              {nlSuccess ? (
+                <div className="relative z-10 text-center py-8">
+                  <p className="text-2xl font-black">✓ Inscrito!</p>
+                  <p className="text-blue-200 text-sm mt-2">Você receberá nossas manchetes diárias.</p>
+                </div>
+              ) : (
+                <form onSubmit={handleNewsletterSubmit} className="space-y-4 relative z-10">
+                  <input
+                    placeholder="Nome Completo"
+                    value={nlName}
+                    onChange={e => setNlName(e.target.value)}
+                    className="w-full p-4 rounded-xl text-gray-900 text-sm font-bold outline-none border-0 shadow-inner"
+                    required
+                  />
+                  <input
+                    type="email"
+                    placeholder="Seu melhor E-mail"
+                    value={nlEmail}
+                    onChange={e => setNlEmail(e.target.value)}
+                    className="w-full p-4 rounded-xl text-gray-900 text-sm font-bold outline-none border-0 shadow-inner"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    disabled={subscribeMutation.isPending}
+                    className="w-full bg-red-600 hover:bg-red-700 text-white font-black py-5 rounded-xl shadow-xl transition-all uppercase tracking-[0.2em] text-xs disabled:opacity-50"
+                  >
+                    {subscribeMutation.isPending ? "Enviando..." : "Assinar Agora"}
+                  </button>
+                </form>
+              )}
+            </div>
 
-            {/* UGC CTA */}
-            <Link href="/enviar-conteudo" className="block bg-gradient-to-br from-purple-600 to-indigo-700 rounded-xl p-5 text-white hover:shadow-lg transition-shadow">
-              <h3 className="font-black text-lg">📱 Envie sua Notícia</h3>
-              <p className="text-white/80 text-sm mt-1">Tem uma história? Envie fotos e vídeos para nossa redação.</p>
-            </Link>
           </aside>
         </div>
       </main>
 
       {/* ===== FOOTER ===== */}
-      <footer className="bg-[#001c56] text-white">
-        <div className="max-w-[1320px] mx-auto px-4 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center gap-0 mb-4">
-                <span className="bg-white text-[#001c56] px-2 py-0.5 rounded font-black text-xl">CNN</span>
-                <span className="text-[#cc0000] text-2xl font-black mx-0.5">.</span>
-                <span className="text-white font-black text-xl">BRA</span>
-              </div>
-              <p className="text-blue-200 text-sm leading-relaxed">
-                Seu portal de notícias com informação de qualidade, 24 horas por dia.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-black text-sm uppercase mb-3">Editorias</h4>
-              <div className="space-y-2 text-sm text-blue-200">
-                {["Política", "Economia", "Esportes", "Tecnologia", "Saúde", "Entretenimento"].map(cat => (
-                  <button key={cat} onClick={() => handleCategoryClick(cat.toUpperCase())} className="block hover:text-white transition-colors">
-                    {cat}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <h4 className="font-black text-sm uppercase mb-3">Institucional</h4>
-              <div className="space-y-2 text-sm text-blue-200">
-                <Link href="/privacidade" className="block hover:text-white transition-colors">Política de Privacidade</Link>
-                <Link href="/enviar-conteudo" className="block hover:text-white transition-colors">Envie sua Notícia</Link>
-                <Link href="/ranking" className="block hover:text-white transition-colors">Ranking de Leitores</Link>
-                <Link href="/admin" className="block hover:text-white transition-colors">Painel Admin</Link>
-              </div>
-            </div>
-            <div>
-              <h4 className="font-black text-sm uppercase mb-3">Redes Sociais</h4>
-              <div className="space-y-2 text-sm text-blue-200">
-                <a href="#" className="block hover:text-white transition-colors">Instagram</a>
-                <a href="#" className="block hover:text-white transition-colors">Twitter / X</a>
-                <a href="#" className="block hover:text-white transition-colors">YouTube</a>
-                <a href="#" className="block hover:text-white transition-colors">TikTok</a>
-              </div>
-            </div>
+      <footer className="bg-black text-white py-24 mt-24 border-t-8 border-cnn-blue">
+        <div className="container mx-auto px-4 text-center">
+          <button onClick={() => changeCategory("home")} className="mb-14 transition-transform hover:scale-110">
+            <div className="bg-cnn-blue text-white px-8 py-4 rounded-[3rem] font-black text-5xl shadow-2xl tracking-tighter inline-block">CNN BRA</div>
+          </button>
+          <div className="flex flex-wrap justify-center gap-12 mb-16 font-black uppercase text-xs tracking-[0.3em] text-gray-500">
+            <button onClick={() => changeCategory("POLÍTICA")} className="hover:text-white transition-colors">Política</button>
+            <button onClick={() => changeCategory("GERAL")} className="hover:text-white transition-colors">Cotidiano</button>
+            <button onClick={() => changeCategory("GLOBAL")} className="hover:text-white transition-colors">Giro Global</button>
           </div>
-          <div className="border-t border-white/10 mt-8 pt-6 text-center text-xs text-blue-300">
-            © {new Date().getFullYear()} CNN BRA — Todos os direitos reservados.
+          <div className="flex justify-center space-x-10 mb-16">
+            <a href="#" className="bg-gray-900 p-5 rounded-full hover:bg-blue-600 hover:scale-110 transition-all shadow-xl text-sm font-black">FB</a>
+            <a href="#" className="bg-gray-900 p-5 rounded-full hover:bg-gray-800 hover:scale-110 transition-all shadow-xl border border-gray-800 text-sm font-black">X</a>
+            <a href="#" className="bg-gray-900 p-5 rounded-full hover:bg-pink-600 hover:scale-110 transition-all shadow-xl text-sm font-black">IG</a>
           </div>
+          <Link href="/admin">
+            <button className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600 hover:text-white bg-gray-950 px-8 py-4 rounded-xl border border-gray-900 mb-10 transition-all">
+              Painel Administrativo
+            </button>
+          </Link>
+          <p className="text-gray-800 text-[11px] font-black uppercase tracking-[0.5em] opacity-50">© 2026 CNN BRA. TODOS OS DIREITOS RESERVADOS.</p>
         </div>
       </footer>
 
-      {/* Marquee CSS */}
-      <style>{`
-        @keyframes marquee {
-          0% { transform: translateX(100%); }
-          100% { transform: translateX(-100%); }
-        }
-        .animate-marquee {
-          animation: marquee 30s linear infinite;
-        }
-      `}</style>
-    </div>
-  );
-}
-
-// ===== WHATSAPP CTA WITH ANIMATION =====
-function WhatsAppCTA() {
-  return (
-    <a
-      href="https://wa.me/"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group block bg-[#25D366] rounded-xl p-5 text-white hover:shadow-lg hover:shadow-green-200 transition-all overflow-hidden relative"
-    >
-      <div className="flex items-center gap-4">
-        <div className="relative">
-          <motion.div
-            animate={{
-              y: [0, -6, 0],
-              rotate: [0, -5, 5, 0],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          >
-            <WhatsAppIcon className="w-10 h-10 text-white" />
-          </motion.div>
-        </div>
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-white/80">Comunidade VIP</p>
-          <h3 className="font-black text-lg leading-tight">Canal no WhatsApp</h3>
-          <p className="text-white/80 text-xs mt-0.5">Toque para entrar no grupo oficial.</p>
-        </div>
-      </div>
-    </a>
-  );
-}
-
-// ===== NEWSLETTER WIDGET =====
-function NewsletterWidget() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-
-  const subscribe = trpc.newsletter.subscribe.useMutation({
-    onSuccess: () => {
-      setSubmitted(true);
-      setName("");
-      setEmail("");
-    },
-  });
-
-  return (
-    <div className="bg-[#001c56] rounded-xl p-6 text-white relative overflow-hidden">
-      {/* Decorative circle */}
-      <div className="absolute -top-4 -right-4 w-20 h-20 bg-purple-800/50 rounded-full" />
-
-      {submitted ? (
-        <div className="text-center py-4 relative z-10">
-          <p className="text-2xl mb-2">✉️</p>
-          <h3 className="font-black text-lg">Inscrição Confirmada!</h3>
-          <p className="text-blue-200 text-sm mt-1">Você receberá as melhores notícias no seu e-mail.</p>
-          <button onClick={() => setSubmitted(false)} className="mt-3 text-xs text-blue-300 underline">Inscrever outro e-mail</button>
-        </div>
-      ) : (
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-[#cc0000] text-xl">✉</span>
-            <h3 className="font-black text-lg uppercase tracking-tight">Fique Atualizado</h3>
+      {/* ===== SHORTS OVERLAY ===== */}
+      {shortsOpen && (
+        <div className="fixed inset-0 bg-black z-[100] flex flex-col animate-slide-up">
+          <div className="p-8 flex justify-between items-center text-white bg-gradient-to-b from-black/90 to-transparent absolute top-0 w-full z-20">
+            <button onClick={() => setShortsOpen(false)} className="text-4xl font-light">✕</button>
+            <span className="font-black tracking-[0.3em] uppercase text-xl">CNN SHORTS</span>
+            <div className="w-10" />
           </div>
-          <p className="text-blue-200 text-sm mb-4">
-            Fuja dos algoritmos. Receba os alertas mais importantes por E-mail.
-          </p>
-          <div className="space-y-3">
-            <input
-              type="text"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="Seu Nome"
-              className="w-full px-4 py-3 rounded-lg text-gray-800 text-sm font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#cc0000]"
-            />
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="Seu E-mail"
-              className="w-full px-4 py-3 rounded-lg text-gray-800 text-sm font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#cc0000]"
-            />
-            <button
-              onClick={() => {
-                if (name.trim().length >= 2 && email.includes("@")) {
-                  subscribe.mutate({ name: name.trim(), email: email.trim() });
-                }
-              }}
-              disabled={subscribe.isPending}
-              className="w-full bg-[#cc0000] hover:bg-[#aa0000] text-white font-black py-3 rounded-lg text-sm transition-colors disabled:opacity-50"
-            >
-              {subscribe.isPending ? "Inscrevendo..." : "Assinar Grátis"}
-            </button>
+          <div className="flex-1 overflow-y-scroll snap-y hide-scrollbar">
+            {(shorts.length > 0 ? shorts : [
+              { id: 1, title: "Operação Lei Seca na orla flagra motoristas", category: "POLÍCIA", thumbnailUrl: "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=800&q=80", likes: 12000 },
+              { id: 2, title: "Protestos tomam as ruas de Paris contra nova lei", category: "GLOBAL", thumbnailUrl: "https://images.unsplash.com/photo-1526470608268-f674ce90ebd4?auto=format&fit=crop&w=800&q=80", likes: 45000 },
+            ]).map((s: any) => (
+              <div key={s.id} className="w-full h-screen snap-start relative flex items-center justify-center bg-gray-950 border-b border-gray-900">
+                <img src={s.thumbnailUrl || s.videoUrl} alt={s.title} className="absolute inset-0 w-full h-full object-cover opacity-50" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent pointer-events-none" />
+                <div className="absolute bottom-28 left-8 right-24 text-white z-10 animate-slide-up">
+                  <span className="bg-red-600 px-4 py-1 rounded-full text-[10px] font-black uppercase mb-5 inline-block tracking-widest shadow-xl">
+                    {s.category || "CNN SHORTS"}
+                  </span>
+                  <h2 className="text-3xl md:text-5xl font-black leading-tight drop-shadow-2xl tracking-tighter italic">{s.title}</h2>
+                </div>
+                <div className="absolute bottom-28 right-8 flex flex-col space-y-10 items-center text-white z-20">
+                  <div className="flex flex-col items-center">
+                    <div className="p-5 bg-white/10 backdrop-blur-xl rounded-full mb-2 shadow-2xl border border-white/20">❤️</div>
+                    <span className="text-[10px] font-black">{s.likes ? `${Math.round(s.likes / 1000)}K` : "0"}</span>
+                  </div>
+                  <div onClick={() => shareOnWhatsApp(s.title)} className="flex flex-col items-center cursor-pointer group">
+                    <div className="p-5 bg-white/10 backdrop-blur-xl rounded-full mb-2 group-hover:bg-green-600 transition-colors border border-white/20">↗️</div>
+                    <span className="text-[10px] font-black uppercase">Enviar</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ===== EXIT INTENT POPUP ===== */}
+      {exitPopupVisible && (
+        <div className="fixed inset-0 bg-black/80 z-[200] flex items-center justify-center p-4 backdrop-blur-md">
+          <div className="bg-white rounded-[3rem] w-full max-w-lg overflow-hidden shadow-2xl animate-slide-up border-4 border-white">
+            <div className="bg-cnn-blue p-12 text-center text-white relative">
+              <div className="absolute -top-10 -left-10 w-32 h-32 bg-red-600 rounded-full opacity-20 blur-2xl" />
+              <h2 className="text-4xl font-black uppercase leading-none tracking-tighter mb-4">Espere um pouco!</h2>
+              <p className="text-blue-200 text-sm font-bold uppercase tracking-widest leading-relaxed">
+                Não saia sem receber as manchetes exclusivas no seu WhatsApp!
+              </p>
+            </div>
+            <div className="p-12">
+              <form onSubmit={(e) => { e.preventDefault(); setExitPopupVisible(false); alert("Cadastrado com sucesso!"); }} className="space-y-5">
+                <input
+                  placeholder="Digite o seu WhatsApp (DDD)"
+                  value={exitPhone}
+                  onChange={e => setExitPhone(e.target.value)}
+                  className="w-full p-5 border-2 border-gray-100 rounded-2xl outline-none focus:border-red-600 font-bold text-lg text-center"
+                  required
+                />
+                <button className="w-full bg-red-600 text-white font-black py-6 rounded-2xl shadow-2xl text-xl uppercase tracking-widest hover:bg-red-700 active:scale-95 transition-all">
+                  SIM! QUERO RECEBER AGORA
+                </button>
+                <button type="button" onClick={() => setExitPopupVisible(false)} className="w-full text-gray-400 text-xs uppercase font-black mt-4 hover:text-gray-800 transition-colors tracking-widest">
+                  Vou deixar para a próxima
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       )}
