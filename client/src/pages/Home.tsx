@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
 import { Search, X, Menu } from "lucide-react";
@@ -14,7 +14,6 @@ const NAV_ITEMS = [
 
 const BR_STATES = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
 
-// ===== TIME AGO =====
 function timeAgo(date: Date | string) {
   const now = new Date();
   const d = new Date(date);
@@ -31,7 +30,6 @@ function shareOnWhatsApp(title: string) {
   window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
 }
 
-// ===== WHATSAPP ICON =====
 function WhatsAppIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -56,13 +54,10 @@ export default function Home() {
   const [exitPhone, setExitPhone] = useState("");
 
   // Fetch articles
-  const { data: articlesData } = trpc.articles.list.useQuery({
-    status: "online",
-    limit: 20,
-  });
+  const { data: articlesData } = trpc.articles.list.useQuery({ status: "online", limit: 20 });
   const articles = articlesData ?? [];
 
-  // Fetch ticker items
+  // Fetch ticker
   const { data: tickerData } = trpc.ticker.list.useQuery();
   const tickerItems = tickerData ?? [];
 
@@ -70,10 +65,14 @@ export default function Home() {
   const { data: shortsData } = trpc.shorts.list.useQuery({ limit: 10 });
   const shorts = shortsData ?? [];
 
+  // Fetch trending articles
+  const { data: trendingData } = trpc.articles.trending.useQuery({ limit: 10 });
+  const trending = trendingData ?? [];
+
   // Newsletter mutation
   const subscribeMutation = trpc.newsletter.subscribe.useMutation();
 
-  // Filter articles by category
+  // Filter articles
   const filteredArticles = currentCategory === "home"
     ? articles
     : articles.filter(a => a.category === currentCategory);
@@ -81,7 +80,7 @@ export default function Home() {
   const heroArticles = filteredArticles.filter(a => a.isHero);
   const currentHero = heroArticles.length > 0 ? heroArticles[heroIndex % heroArticles.length] : filteredArticles[0];
 
-  // Hero auto-rotation every 10s
+  // Hero auto-rotation
   useEffect(() => {
     if (heroArticles.length <= 1) return;
     const interval = setInterval(() => {
@@ -91,14 +90,13 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [heroArticles.length]);
 
-  // Trigger zoom after hero render
   useEffect(() => {
     setHeroZoomed(false);
     const timer = setTimeout(() => setHeroZoomed(true), 100);
     return () => clearTimeout(timer);
   }, [heroIndex, currentCategory]);
 
-  // Exit intent popup
+  // Exit intent
   useEffect(() => {
     const handleMouseLeave = (e: MouseEvent) => {
       if (e.clientY <= 0 && !exitPopupShown) {
@@ -134,41 +132,40 @@ export default function Home() {
   return (
     <div className="bg-white text-gray-900 overflow-x-hidden">
       {/* ===== TICKER BAR ===== */}
-      <div className="bg-cnn-blue text-white text-sm h-10 flex items-center w-full overflow-hidden sticky top-0 z-[60]">
-        <div className="font-bold uppercase px-4 h-full flex items-center bg-cnn-blue z-20 relative border-r border-white/20 shadow-xl whitespace-nowrap">
-          <span className="text-red-500 mr-2 animate-pulse">●</span> De Última Hora
+      <div className="bg-cnn-blue text-white text-xs h-8 flex items-center w-full overflow-hidden sticky top-0 z-[60]">
+        <div className="font-bold uppercase px-3 h-full flex items-center bg-cnn-blue z-20 relative border-r border-white/20 shadow-lg whitespace-nowrap text-[11px]">
+          <span className="text-red-500 mr-1.5 animate-pulse">●</span> Última Hora
         </div>
         <div className="flex-1 overflow-hidden relative h-full flex items-center">
-          <div className="animate-marquee whitespace-nowrap inline-block pl-4 font-medium">
+          <div className="animate-marquee whitespace-nowrap inline-block pl-3 font-medium text-[11px]">
             {tickerText}
           </div>
         </div>
       </div>
 
       {/* ===== HEADER ===== */}
-      <header className="border-b border-gray-200 bg-white z-50 sticky top-10 shadow-sm">
-        <div className="container mx-auto px-4 h-16 md:h-20 flex items-center justify-between">
-          {/* Mobile menu button */}
-          <button onClick={() => setMobileMenuOpen(true)} className="md:hidden p-2 text-gray-700 hover:text-red-600 transition-colors">
-            <Menu size={24} strokeWidth={2.5} />
+      <header className="border-b border-gray-200 bg-white z-50 sticky top-8 shadow-sm">
+        <div className="container mx-auto px-4 h-14 flex items-center justify-between">
+          <button onClick={() => setMobileMenuOpen(true)} className="md:hidden p-1.5 text-gray-700 hover:text-red-600 transition-colors">
+            <Menu size={22} strokeWidth={2.5} />
           </button>
 
           {/* LOGO */}
           <div className="flex-1 md:flex-none flex justify-center md:justify-start">
             <button onClick={() => changeCategory("home")} className="flex items-end group transition-transform active:scale-95">
-              <div className="bg-[#001c56] text-white px-3 py-1 rounded-3xl font-black text-3xl md:text-4xl tracking-tighter shadow-md">CNN</div>
-              <div className="w-3 h-3 md:w-4 md:h-4 bg-red-600 ml-1 mb-1.5 md:mb-2 rounded-sm"></div>
-              <span className="text-cnn-blue font-black text-3xl md:text-4xl ml-1 tracking-tighter uppercase">BRA</span>
+              <div className="bg-[#001c56] text-white px-2.5 py-0.5 rounded-2xl font-black text-2xl tracking-tighter shadow-md">CNN</div>
+              <div className="w-2.5 h-2.5 bg-red-600 ml-0.5 mb-1 rounded-sm"></div>
+              <span className="text-cnn-blue font-black text-2xl ml-0.5 tracking-tighter uppercase">BRA</span>
             </button>
           </div>
 
           {/* DESKTOP NAV */}
-          <nav className="hidden md:flex items-center space-x-8 font-bold text-[14px] uppercase tracking-widest">
+          <nav className="hidden md:flex items-center space-x-6 font-semibold text-[13px] uppercase tracking-wider">
             {NAV_ITEMS.map(item => (
               <button
                 key={item.category}
                 onClick={() => changeCategory(item.category)}
-                className={`nav-btn py-4 border-b-2 transition-all ${
+                className={`py-3 border-b-2 transition-all ${
                   currentCategory === item.category
                     ? "border-[#001c56] text-cnn-blue"
                     : "border-transparent hover:text-cnn-blue"
@@ -177,17 +174,17 @@ export default function Home() {
                 {item.label}
               </button>
             ))}
-            {/* Estados dropdown */}
             <div className="relative" onMouseEnter={() => setStatesOpen(true)} onMouseLeave={() => setStatesOpen(false)}>
-              <button className="flex items-center hover:text-cnn-blue py-4">
+              <button className="flex items-center hover:text-cnn-blue py-3">
+                <svg className="mr-1" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="7" cy="7" r="5" /><path d="M7 2v10M2 7h10" /></svg>
                 Estados
-                <svg className="ml-1" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3"><path d="m2 4 4 4 4-4" /></svg>
+                <svg className="ml-1" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m2 3.5 3 3 3-3" /></svg>
               </button>
               {statesOpen && (
-                <div className="absolute top-full left-0 w-[420px] bg-white shadow-2xl border p-4 grid grid-cols-5 gap-2 rounded-b-2xl z-[100] animate-slide-up">
+                <div className="absolute top-full left-0 w-[380px] bg-white shadow-2xl border p-3 grid grid-cols-5 gap-1.5 rounded-b-xl z-[100] animate-slide-up">
                   {BR_STATES.map(s => (
                     <a key={s} href={`https://${s.toLowerCase()}.cnnbra.com.br`} target="_blank" rel="noopener noreferrer"
-                      className="text-center py-2 hover:bg-cnn-blue hover:text-white rounded-lg text-xs font-black transition-all uppercase">
+                      className="text-center py-1.5 hover:bg-cnn-blue hover:text-white rounded-md text-[11px] font-bold transition-all uppercase">
                       {s}
                     </a>
                   ))}
@@ -197,13 +194,13 @@ export default function Home() {
           </nav>
 
           {/* HEADER ACTIONS */}
-          <div className="flex items-center space-x-4">
-            <button onClick={() => setShortsOpen(true)} className="hidden md:flex items-center text-sm font-black bg-black text-white px-5 py-2 rounded-full hover:bg-gray-800 shadow-xl transition-transform hover:scale-105 active:scale-95">
-              <span className="text-red-500 mr-2 text-lg">▶</span> SHORTS
+          <div className="flex items-center space-x-3">
+            <button onClick={() => setShortsOpen(true)} className="hidden md:flex items-center text-[11px] font-bold bg-black text-white px-4 py-1.5 rounded-full hover:bg-gray-800 shadow-lg transition-transform hover:scale-105 active:scale-95">
+              <span className="text-red-500 mr-1.5">▶</span> Shorts
             </button>
             <Link href="/busca">
-              <button className="p-2.5 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
-                <Search size={20} strokeWidth={2.5} />
+              <button className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
+                <Search size={18} strokeWidth={2.5} />
               </button>
             </Link>
           </div>
@@ -214,21 +211,21 @@ export default function Home() {
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-[100]">
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
-          <div className="relative w-4/5 max-w-sm bg-white h-full flex flex-col shadow-2xl animate-slide-right p-8">
-            <div className="flex items-center justify-between mb-12 pb-4 border-b">
-              <span className="font-black text-2xl text-cnn-blue tracking-tighter uppercase">PORTAL CNN BRA</span>
-              <button onClick={() => setMobileMenuOpen(false)} className="p-3 bg-gray-100 rounded-full text-gray-500">
-                <X size={20} />
+          <div className="relative w-4/5 max-w-sm bg-white h-full flex flex-col shadow-2xl animate-slide-right p-6">
+            <div className="flex items-center justify-between mb-8 pb-3 border-b">
+              <span className="font-bold text-lg text-cnn-blue tracking-tight uppercase">CNN BRA</span>
+              <button onClick={() => setMobileMenuOpen(false)} className="p-2 bg-gray-100 rounded-full text-gray-500">
+                <X size={18} />
               </button>
             </div>
-            <div className="space-y-8 font-black uppercase text-xl flex flex-col items-start text-gray-800 tracking-tighter">
+            <div className="space-y-5 font-bold uppercase text-base flex flex-col items-start text-gray-800 tracking-tight">
               {NAV_ITEMS.map(item => (
-                <button key={item.category} onClick={() => changeCategory(item.category)}>
+                <button key={item.category} onClick={() => changeCategory(item.category)} className="hover:text-red-600 transition-colors">
                   {item.label}
                 </button>
               ))}
-              <Link href="/admin" className="mt-12 pt-10 border-t w-full text-red-600 flex items-center tracking-widest font-black italic">
-                ACESSO ADMINISTRATIVO
+              <Link href="/admin" className="mt-8 pt-6 border-t w-full text-red-600 text-sm">
+                Painel Admin
               </Link>
             </div>
           </div>
@@ -236,81 +233,104 @@ export default function Home() {
       )}
 
       {/* ===== MAIN CONTENT ===== */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-6">
 
         {/* ===== HERO BANNER ===== */}
         {currentHero && (
           <section
-            className="relative w-full h-[55vh] md:h-[75vh] rounded-[2.5rem] overflow-hidden mb-14 shadow-2xl group cursor-pointer animate-slide-up"
+            className="relative w-full h-[50vh] md:h-[65vh] rounded-2xl overflow-hidden mb-8 shadow-xl group cursor-pointer animate-slide-up"
             onClick={() => setLocation(`/artigo/${currentHero.id}`)}
           >
             <div
               className={`absolute inset-0 bg-cover bg-center hero-zoom ${heroZoomed ? "hero-active-zoom" : ""}`}
               style={{ backgroundImage: `url('${currentHero.imageUrl || "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=1200&q=80"}')` }}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-full p-8 md:p-16 text-white pointer-events-none">
-              <span className="bg-red-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase mb-6 inline-block tracking-[0.2em] shadow-xl">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-full p-6 md:p-12 text-white pointer-events-none">
+              <span className="bg-red-600 px-3 py-1 rounded-md text-[10px] font-bold uppercase mb-4 inline-block tracking-wider shadow-lg">
                 {currentHero.category}
               </span>
-              <h2 className="text-3xl md:text-7xl font-black leading-[1] mb-6 line-clamp-3 tracking-tighter drop-shadow-2xl">
+              <h2 className="text-2xl md:text-5xl font-black leading-[1.05] mb-3 line-clamp-3 tracking-tight drop-shadow-xl">
                 {currentHero.title}
               </h2>
+              {currentHero.excerpt && (
+                <p className="text-sm text-gray-200 line-clamp-2 max-w-2xl">{currentHero.excerpt}</p>
+              )}
             </div>
+            {/* Hero dots */}
+            {heroArticles.length > 1 && (
+              <div className="absolute bottom-4 right-6 flex gap-1.5">
+                {heroArticles.map((_, i) => (
+                  <button key={i} onClick={(e) => { e.stopPropagation(); setHeroIndex(i); }}
+                    className={`w-2 h-2 rounded-full transition-all ${i === heroIndex % heroArticles.length ? "bg-white w-6" : "bg-white/40"}`} />
+                ))}
+              </div>
+            )}
           </section>
         )}
 
-        {/* ===== GRID ===== */}
-        <div className="flex flex-col lg:flex-row gap-12">
+        {/* ===== AD BANNER (below hero) ===== */}
+        <div className="w-full flex justify-center mb-8">
+          <div className="w-full max-w-[728px] h-[90px] bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-xs font-medium">
+            <span>PUBLICIDADE — 728×90</span>
+          </div>
+        </div>
+
+        {/* ===== SECTION TITLE ===== */}
+        <div className="flex items-center border-b-2 border-cnn-blue pb-3 mb-8">
+          <h3 className="text-lg font-bold uppercase tracking-tight text-cnn-blue">
+            Últimas Notícias — {currentCategory === "home" ? "Brasil" : currentCategory}
+          </h3>
+        </div>
+
+        {/* ===== GRID: NEWS + SIDEBAR ===== */}
+        <div className="flex flex-col lg:flex-row gap-8">
 
           {/* ===== NEWS FEED (LEFT) ===== */}
           <div className="w-full lg:w-2/3">
-            <div className="flex items-center justify-between border-b-4 border-cnn-blue pb-5 mb-12">
-              <h3 className="text-3xl font-black uppercase tracking-tighter text-cnn-blue">
-                {currentCategory === "home" ? "Manchetes Recentes" : currentCategory}
-              </h3>
-            </div>
-
             {filteredArticles.length === 0 && (
-              <div className="text-center py-20 text-gray-400">
-                <p className="text-xl font-bold">Nenhuma notícia disponível</p>
-                <p className="text-sm mt-2">Adicione notícias pelo painel admin.</p>
+              <div className="text-center py-16 text-gray-400">
+                <p className="text-base font-semibold">Nenhuma notícia disponível</p>
+                <p className="text-xs mt-1">Adicione notícias pelo painel admin.</p>
               </div>
             )}
 
             {filteredArticles.map(article => (
-              <article key={article.id} className="flex flex-col md:flex-row gap-10 group mb-16 animate-slide-up">
+              <article key={article.id} className="flex flex-col md:flex-row gap-5 group mb-8 pb-8 border-b border-gray-100 last:border-0 animate-slide-up hover:bg-gray-50 rounded-xl transition-colors p-3 -mx-3">
                 <div
                   onClick={() => setLocation(`/artigo/${article.id}`)}
-                  className="w-full md:w-[420px] aspect-[4/3] overflow-hidden rounded-[2.5rem] relative cursor-pointer shadow-2xl flex-shrink-0"
+                  className="w-full md:w-[280px] aspect-[4/3] overflow-hidden rounded-xl relative cursor-pointer shadow-md flex-shrink-0"
                 >
                   <img
                     src={article.imageUrl || "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=800&q=80"}
                     alt={article.title}
-                    className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-[2000ms]"
+                    className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700"
+                    loading="lazy"
                   />
-                  <div className="absolute top-5 left-5 bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded-lg uppercase shadow-xl">
+                  <div className="absolute top-3 left-3 bg-red-600 text-white text-[9px] font-bold px-2 py-0.5 rounded uppercase shadow-md">
                     {article.category}
                   </div>
                 </div>
-                <div className="flex-1 flex flex-col justify-between py-2">
+                <div className="flex-1 flex flex-col justify-between py-1">
                   <div onClick={() => setLocation(`/artigo/${article.id}`)} className="cursor-pointer">
-                    <h4 className="text-3xl md:text-4xl font-black leading-[1.1] mb-5 group-hover:text-red-600 transition-colors tracking-tighter">
+                    <h4 className="text-lg md:text-xl font-bold leading-snug mb-2 group-hover:text-red-600 transition-colors tracking-tight">
                       {article.title}
                     </h4>
-                    <p className="text-gray-500 line-clamp-2 font-medium text-lg leading-relaxed mb-8">
+                    <p className="text-gray-500 line-clamp-2 text-sm leading-relaxed mb-4">
                       {article.excerpt}
                     </p>
                   </div>
-                  <div className="flex items-center justify-between pt-6 border-t border-gray-100">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider flex items-center">
+                      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
                       {article.publishedAt ? timeAgo(article.publishedAt) : "Recente"}
                     </span>
                     <button
                       onClick={() => shareOnWhatsApp(article.title)}
-                      className="flex items-center text-gray-400 hover:text-green-600 font-black uppercase text-[10px] tracking-[0.2em] transition-all"
+                      className="flex items-center text-gray-400 hover:text-green-600 text-[10px] font-semibold tracking-wider transition-all"
                     >
-                      COMPARTILHAR NO WHATSAPP
+                      <WhatsAppIcon className="w-3.5 h-3.5 mr-1" />
+                      Enviar
                     </button>
                   </div>
                 </div>
@@ -319,84 +339,134 @@ export default function Home() {
           </div>
 
           {/* ===== SIDEBAR (RIGHT) ===== */}
-          <aside className="w-full lg:w-1/3 space-y-12">
+          <aside className="w-full lg:w-1/3 space-y-6">
 
             {/* WhatsApp CTA */}
-            <a href="#" className="block w-full bg-gradient-to-br from-green-500 to-green-700 rounded-[2rem] p-7 shadow-2xl group hover:-translate-y-2 transition-all border-b-[10px] border-green-900">
+            <a href="#" className="block w-full bg-gradient-to-br from-green-500 to-green-700 rounded-xl p-5 shadow-lg group hover:-translate-y-1 transition-all border-b-4 border-green-900">
               <div className="flex items-center text-white">
-                <div className="bg-white p-5 rounded-full mr-6 shadow-2xl group-hover:rotate-12 transition-transform">
-                  <WhatsAppIcon className="w-8 h-8 text-green-600 animate-whatsapp-bounce" />
+                <div className="bg-white p-3 rounded-full mr-4 shadow-lg group-hover:rotate-12 transition-transform">
+                  <WhatsAppIcon className="w-6 h-6 text-green-600 animate-whatsapp-bounce" />
                 </div>
                 <div>
-                  <span className="bg-green-400 text-green-900 text-[10px] font-black uppercase px-3 py-1 rounded-full mb-2 inline-block">Comunidade VIP</span>
-                  <h3 className="font-black text-2xl uppercase tracking-tighter leading-none">Receba no Zap</h3>
-                  <p className="text-xs text-green-100 font-bold uppercase mt-1 opacity-80">Giro de notícias em tempo real</p>
+                  <span className="bg-green-400 text-green-900 text-[9px] font-bold uppercase px-2 py-0.5 rounded-full mb-1 inline-block">Comunidade VIP</span>
+                  <h3 className="font-bold text-lg leading-none">Canal no WhatsApp</h3>
+                  <p className="text-[11px] text-green-100 mt-0.5 opacity-80">Toque para entrar no grupo oficial.</p>
                 </div>
               </div>
             </a>
 
-            {/* CNN Shorts Vitrine */}
-            <div className="bg-gray-900 rounded-[2rem] p-7 shadow-2xl border border-gray-800">
-              <div className="flex items-center justify-between mb-8 border-b border-gray-800 pb-5">
-                <h3 className="text-white font-black text-xl flex items-center tracking-tighter uppercase">
-                  <span className="text-red-500 mr-2">▶</span> CNN Shorts
+            {/* AD 300x250 */}
+            <div className="w-full flex justify-center">
+              <div className="w-[300px] h-[250px] bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-xs font-medium">
+                <span>PUBLICIDADE — 300×250</span>
+              </div>
+            </div>
+
+            {/* TRENDING TOPICS */}
+            <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+              <div className="bg-cnn-blue px-5 py-3">
+                <h3 className="text-white font-bold text-sm uppercase tracking-wider flex items-center">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                  Mais Lidas
                 </h3>
-                <button onClick={() => setShortsOpen(true)} className="text-[11px] uppercase font-black text-gray-500 hover:text-white transition-colors border border-gray-800 px-3 py-1 rounded-full">
+              </div>
+              <div className="divide-y divide-gray-100">
+                {trending.length === 0 && (
+                  <div className="p-4 text-center text-gray-400 text-xs">Nenhuma matéria ranqueada ainda.</div>
+                )}
+                {trending.map((article, i) => (
+                  <Link key={article.id} href={`/artigo/${article.id}`}>
+                    <div className="flex items-start gap-3 p-4 hover:bg-gray-50 transition-colors cursor-pointer group">
+                      <span className={`text-2xl font-black leading-none ${i < 3 ? "text-red-600" : "text-gray-300"}`}>
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-semibold leading-snug line-clamp-2 group-hover:text-red-600 transition-colors">
+                          {article.title}
+                        </h4>
+                        <div className="flex items-center mt-1.5 text-[10px] text-gray-400">
+                          <span className="uppercase font-semibold text-red-600 mr-2">{article.category}</span>
+                          <span>{article.viewCount?.toLocaleString("pt-BR") || 0} visualizações</span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* CNN Shorts Vitrine */}
+            <div className="bg-gray-900 rounded-xl p-5 shadow-lg border border-gray-800">
+              <div className="flex items-center justify-between mb-5 border-b border-gray-800 pb-3">
+                <h3 className="text-white font-bold text-sm flex items-center tracking-tight uppercase">
+                  <span className="text-red-500 mr-1.5">▶</span> CNN Shorts
+                </h3>
+                <button onClick={() => setShortsOpen(true)} className="text-[10px] uppercase font-semibold text-gray-500 hover:text-white transition-colors border border-gray-700 px-2.5 py-1 rounded-full">
                   Ver Tudo
                 </button>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 {(shorts.length > 0 ? shorts.slice(0, 4) : [
                   { id: 1, title: "Operação policial na madrugada", thumbnailUrl: "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=400&q=80" },
                   { id: 2, title: "Protestos em Paris", thumbnailUrl: "https://images.unsplash.com/photo-1526470608268-f674ce90ebd4?auto=format&fit=crop&w=400&q=80" },
                 ]).map((s: any) => (
-                  <div key={s.id} onClick={() => setShortsOpen(true)} className="relative aspect-[9/16] rounded-2xl overflow-hidden group cursor-pointer border border-gray-800 shadow-2xl">
-                    <img src={s.thumbnailUrl || s.videoUrl} alt={s.title} className="w-full h-full object-cover opacity-60 group-hover:scale-125 transition-all duration-[2500ms]" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-4xl opacity-80 group-hover:opacity-100 group-hover:scale-125 transition-all">▶</div>
+                  <div key={s.id} onClick={() => setShortsOpen(true)} className="relative aspect-[9/16] rounded-lg overflow-hidden group cursor-pointer border border-gray-800 shadow-lg">
+                    <img src={s.thumbnailUrl || s.videoUrl} alt={s.title} className="w-full h-full object-cover opacity-60 group-hover:scale-110 transition-all duration-1000" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-2xl opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all">▶</div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Newsletter "Fique por dentro" */}
-            <div className="bg-cnn-blue rounded-[2rem] p-10 text-white relative overflow-hidden shadow-2xl border border-blue-900">
-              <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-red-600 rounded-full opacity-10" />
-              <h3 className="text-3xl font-black uppercase mb-2 relative z-10 leading-none tracking-tighter">Fique por dentro</h3>
-              <p className="text-xs text-blue-200 mb-10 relative z-10 font-bold uppercase tracking-widest opacity-80 italic">
-                Informativo diário gratuito no e-mail
+            {/* Newsletter "Fique Atualizado" */}
+            <div className="bg-cnn-blue rounded-xl p-6 text-white relative overflow-hidden shadow-lg border border-blue-900">
+              <div className="absolute top-0 right-0 -mt-8 -mr-8 w-28 h-28 bg-red-600 rounded-full opacity-15" />
+              <div className="flex items-center mb-1 relative z-10">
+                <svg className="w-5 h-5 mr-2 text-red-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                <h3 className="text-lg font-bold uppercase leading-none tracking-tight">Fique Atualizado</h3>
+              </div>
+              <p className="text-[11px] text-blue-200 mb-6 relative z-10 opacity-80">
+                Fuja dos algoritmos. Receba os alertas mais importantes por E-mail.
               </p>
               {nlSuccess ? (
-                <div className="relative z-10 text-center py-8">
-                  <p className="text-2xl font-black">✓ Inscrito!</p>
-                  <p className="text-blue-200 text-sm mt-2">Você receberá nossas manchetes diárias.</p>
+                <div className="relative z-10 text-center py-4">
+                  <p className="text-lg font-bold">✓ Inscrito!</p>
+                  <p className="text-blue-200 text-xs mt-1">Você receberá nossas manchetes diárias.</p>
                 </div>
               ) : (
-                <form onSubmit={handleNewsletterSubmit} className="space-y-4 relative z-10">
+                <form onSubmit={handleNewsletterSubmit} className="space-y-3 relative z-10">
                   <input
-                    placeholder="Nome Completo"
+                    placeholder="Seu Nome"
                     value={nlName}
                     onChange={e => setNlName(e.target.value)}
-                    className="w-full p-4 rounded-xl text-gray-900 text-sm font-bold outline-none border-0 shadow-inner"
+                    className="w-full p-3 rounded-lg text-gray-900 text-sm outline-none border-0 shadow-inner"
                     required
                   />
                   <input
                     type="email"
-                    placeholder="Seu melhor E-mail"
+                    placeholder="Seu E-mail"
                     value={nlEmail}
                     onChange={e => setNlEmail(e.target.value)}
-                    className="w-full p-4 rounded-xl text-gray-900 text-sm font-bold outline-none border-0 shadow-inner"
+                    className="w-full p-3 rounded-lg text-gray-900 text-sm outline-none border-0 shadow-inner"
                     required
                   />
                   <button
                     type="submit"
                     disabled={subscribeMutation.isPending}
-                    className="w-full bg-red-600 hover:bg-red-700 text-white font-black py-5 rounded-xl shadow-xl transition-all uppercase tracking-[0.2em] text-xs disabled:opacity-50"
+                    className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg shadow-lg transition-all uppercase tracking-wider text-xs disabled:opacity-50"
                   >
-                    {subscribeMutation.isPending ? "Enviando..." : "Assinar Agora"}
+                    {subscribeMutation.isPending ? "Enviando..." : "Assinar Grátis"}
                   </button>
                 </form>
               )}
+            </div>
+
+            {/* AD 300x250 (second) */}
+            <div className="w-full flex justify-center">
+              <div className="w-[300px] h-[250px] bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-xs font-medium">
+                <span>PUBLICIDADE — 300×250</span>
+              </div>
             </div>
 
           </aside>
@@ -404,37 +474,44 @@ export default function Home() {
       </main>
 
       {/* ===== FOOTER ===== */}
-      <footer className="bg-black text-white py-24 mt-24 border-t-8 border-cnn-blue">
+      <footer className="bg-black text-white py-16 mt-16 border-t-4 border-cnn-blue">
         <div className="container mx-auto px-4 text-center">
-          <button onClick={() => changeCategory("home")} className="mb-14 transition-transform hover:scale-110">
-            <div className="bg-cnn-blue text-white px-8 py-4 rounded-[3rem] font-black text-5xl shadow-2xl tracking-tighter inline-block">CNN BRA</div>
+          <button onClick={() => changeCategory("home")} className="mb-8 transition-transform hover:scale-105">
+            <div className="bg-cnn-blue text-white px-6 py-2.5 rounded-2xl font-black text-3xl shadow-xl tracking-tighter inline-block">CNN BRA</div>
           </button>
-          <div className="flex flex-wrap justify-center gap-12 mb-16 font-black uppercase text-xs tracking-[0.3em] text-gray-500">
+          <div className="flex flex-wrap justify-center gap-8 mb-10 font-semibold uppercase text-[11px] tracking-wider text-gray-500">
             <button onClick={() => changeCategory("POLÍTICA")} className="hover:text-white transition-colors">Política</button>
             <button onClick={() => changeCategory("GERAL")} className="hover:text-white transition-colors">Cotidiano</button>
             <button onClick={() => changeCategory("GLOBAL")} className="hover:text-white transition-colors">Giro Global</button>
+            <Link href="/leaderboard" className="hover:text-white transition-colors">Ranking</Link>
+            <Link href="/enviar-conteudo" className="hover:text-white transition-colors">Enviar Conteúdo</Link>
           </div>
-          <div className="flex justify-center space-x-10 mb-16">
-            <a href="#" className="bg-gray-900 p-5 rounded-full hover:bg-blue-600 hover:scale-110 transition-all shadow-xl text-sm font-black">FB</a>
-            <a href="#" className="bg-gray-900 p-5 rounded-full hover:bg-gray-800 hover:scale-110 transition-all shadow-xl border border-gray-800 text-sm font-black">X</a>
-            <a href="#" className="bg-gray-900 p-5 rounded-full hover:bg-pink-600 hover:scale-110 transition-all shadow-xl text-sm font-black">IG</a>
+          <div className="flex justify-center space-x-6 mb-10">
+            <a href="#" className="bg-gray-900 p-3 rounded-full hover:bg-blue-600 hover:scale-110 transition-all shadow-lg text-xs font-bold">FB</a>
+            <a href="#" className="bg-gray-900 p-3 rounded-full hover:bg-gray-800 hover:scale-110 transition-all shadow-lg border border-gray-800 text-xs font-bold">X</a>
+            <a href="#" className="bg-gray-900 p-3 rounded-full hover:bg-pink-600 hover:scale-110 transition-all shadow-lg text-xs font-bold">IG</a>
           </div>
           <Link href="/admin">
-            <button className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600 hover:text-white bg-gray-950 px-8 py-4 rounded-xl border border-gray-900 mb-10 transition-all">
+            <button className="text-[10px] font-semibold uppercase tracking-wider text-gray-600 hover:text-white bg-gray-950 px-5 py-2.5 rounded-lg border border-gray-900 mb-6 transition-all">
               Painel Administrativo
             </button>
           </Link>
-          <p className="text-gray-800 text-[11px] font-black uppercase tracking-[0.5em] opacity-50">© 2026 CNN BRA. TODOS OS DIREITOS RESERVADOS.</p>
+          <div className="flex justify-center gap-4 text-[10px] text-gray-600 mb-4">
+            <Link href="/privacidade" className="hover:text-white transition-colors">Política de Privacidade</Link>
+            <span>•</span>
+            <span>LGPD</span>
+          </div>
+          <p className="text-[10px] text-gray-700 mt-2">© {new Date().getFullYear()} CNN BRA — Portal de Notícias. Todos os direitos reservados.</p>
         </div>
       </footer>
 
       {/* ===== SHORTS OVERLAY ===== */}
       {shortsOpen && (
         <div className="fixed inset-0 bg-black z-[100] flex flex-col animate-slide-up">
-          <div className="p-8 flex justify-between items-center text-white bg-gradient-to-b from-black/90 to-transparent absolute top-0 w-full z-20">
-            <button onClick={() => setShortsOpen(false)} className="text-4xl font-light">✕</button>
-            <span className="font-black tracking-[0.3em] uppercase text-xl">CNN SHORTS</span>
-            <div className="w-10" />
+          <div className="p-6 flex justify-between items-center text-white bg-gradient-to-b from-black/90 to-transparent absolute top-0 w-full z-20">
+            <button onClick={() => setShortsOpen(false)} className="text-2xl font-light">✕</button>
+            <span className="font-bold tracking-wider uppercase text-sm">CNN SHORTS</span>
+            <div className="w-8" />
           </div>
           <div className="flex-1 overflow-y-scroll snap-y hide-scrollbar">
             {(shorts.length > 0 ? shorts : [
@@ -444,20 +521,20 @@ export default function Home() {
               <div key={s.id} className="w-full h-screen snap-start relative flex items-center justify-center bg-gray-950 border-b border-gray-900">
                 <img src={s.thumbnailUrl || s.videoUrl} alt={s.title} className="absolute inset-0 w-full h-full object-cover opacity-50" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent pointer-events-none" />
-                <div className="absolute bottom-28 left-8 right-24 text-white z-10 animate-slide-up">
-                  <span className="bg-red-600 px-4 py-1 rounded-full text-[10px] font-black uppercase mb-5 inline-block tracking-widest shadow-xl">
+                <div className="absolute bottom-24 left-6 right-20 text-white z-10 animate-slide-up">
+                  <span className="bg-red-600 px-3 py-0.5 rounded text-[10px] font-bold uppercase mb-3 inline-block tracking-wider shadow-lg">
                     {s.category || "CNN SHORTS"}
                   </span>
-                  <h2 className="text-3xl md:text-5xl font-black leading-tight drop-shadow-2xl tracking-tighter italic">{s.title}</h2>
+                  <h2 className="text-2xl md:text-4xl font-bold leading-tight drop-shadow-xl tracking-tight">{s.title}</h2>
                 </div>
-                <div className="absolute bottom-28 right-8 flex flex-col space-y-10 items-center text-white z-20">
+                <div className="absolute bottom-24 right-6 flex flex-col space-y-6 items-center text-white z-20">
                   <div className="flex flex-col items-center">
-                    <div className="p-5 bg-white/10 backdrop-blur-xl rounded-full mb-2 shadow-2xl border border-white/20">❤️</div>
-                    <span className="text-[10px] font-black">{s.likes ? `${Math.round(s.likes / 1000)}K` : "0"}</span>
+                    <div className="p-3 bg-white/10 backdrop-blur-xl rounded-full mb-1 shadow-lg border border-white/20">❤️</div>
+                    <span className="text-[10px] font-semibold">{s.likes ? `${Math.round(s.likes / 1000)}K` : "0"}</span>
                   </div>
                   <div onClick={() => shareOnWhatsApp(s.title)} className="flex flex-col items-center cursor-pointer group">
-                    <div className="p-5 bg-white/10 backdrop-blur-xl rounded-full mb-2 group-hover:bg-green-600 transition-colors border border-white/20">↗️</div>
-                    <span className="text-[10px] font-black uppercase">Enviar</span>
+                    <div className="p-3 bg-white/10 backdrop-blur-xl rounded-full mb-1 group-hover:bg-green-600 transition-colors border border-white/20">↗️</div>
+                    <span className="text-[10px] font-semibold uppercase">Enviar</span>
                   </div>
                 </div>
               </div>
@@ -469,28 +546,28 @@ export default function Home() {
       {/* ===== EXIT INTENT POPUP ===== */}
       {exitPopupVisible && (
         <div className="fixed inset-0 bg-black/80 z-[200] flex items-center justify-center p-4 backdrop-blur-md">
-          <div className="bg-white rounded-[3rem] w-full max-w-lg overflow-hidden shadow-2xl animate-slide-up border-4 border-white">
-            <div className="bg-cnn-blue p-12 text-center text-white relative">
-              <div className="absolute -top-10 -left-10 w-32 h-32 bg-red-600 rounded-full opacity-20 blur-2xl" />
-              <h2 className="text-4xl font-black uppercase leading-none tracking-tighter mb-4">Espere um pouco!</h2>
-              <p className="text-blue-200 text-sm font-bold uppercase tracking-widest leading-relaxed">
-                Não saia sem receber as manchetes exclusivas no seu WhatsApp!
+          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-slide-up">
+            <div className="bg-cnn-blue p-8 text-center text-white relative">
+              <div className="absolute -top-8 -left-8 w-24 h-24 bg-red-600 rounded-full opacity-20 blur-xl" />
+              <h2 className="text-2xl font-bold uppercase leading-none tracking-tight mb-2">Espere!</h2>
+              <p className="text-blue-200 text-xs">
+                Receba as manchetes exclusivas no seu WhatsApp.
               </p>
             </div>
-            <div className="p-12">
-              <form onSubmit={(e) => { e.preventDefault(); setExitPopupVisible(false); alert("Cadastrado com sucesso!"); }} className="space-y-5">
+            <div className="p-8">
+              <form onSubmit={(e) => { e.preventDefault(); setExitPopupVisible(false); }} className="space-y-4">
                 <input
-                  placeholder="Digite o seu WhatsApp (DDD)"
+                  placeholder="Seu WhatsApp (com DDD)"
                   value={exitPhone}
                   onChange={e => setExitPhone(e.target.value)}
-                  className="w-full p-5 border-2 border-gray-100 rounded-2xl outline-none focus:border-red-600 font-bold text-lg text-center"
+                  className="w-full p-4 border border-gray-200 rounded-xl outline-none focus:border-red-600 text-sm text-center"
                   required
                 />
-                <button className="w-full bg-red-600 text-white font-black py-6 rounded-2xl shadow-2xl text-xl uppercase tracking-widest hover:bg-red-700 active:scale-95 transition-all">
-                  SIM! QUERO RECEBER AGORA
+                <button className="w-full bg-red-600 text-white font-bold py-4 rounded-xl shadow-lg text-sm uppercase tracking-wider hover:bg-red-700 active:scale-95 transition-all">
+                  Quero Receber Agora
                 </button>
-                <button type="button" onClick={() => setExitPopupVisible(false)} className="w-full text-gray-400 text-xs uppercase font-black mt-4 hover:text-gray-800 transition-colors tracking-widest">
-                  Vou deixar para a próxima
+                <button type="button" onClick={() => setExitPopupVisible(false)} className="w-full text-gray-400 text-[11px] uppercase mt-2 hover:text-gray-800 transition-colors tracking-wider">
+                  Não, obrigado
                 </button>
               </form>
             </div>

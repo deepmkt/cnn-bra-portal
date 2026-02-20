@@ -133,3 +133,32 @@
 - [x] Criar script de importação (SQL dump → banco de dados CNN BRA)
 - [x] Importar todas as postagens: 63 posts (49 online, 14 rascunhos), categorias mapeadas, imagens preservadas
 - [x] Verificar dados importados: 3 artigos hero definidos, distribuição por categoria OK
+
+## Sprint 9 - Minimalismo, Publicidade e Trending Topics
+
+- [x] Reduzir fontes do site inteiro para visual mais minimalista
+- [x] Ajustar tipografia: títulos menores, espaçamento mais limpo
+- [x] Área de publicidade (banner 728x90) abaixo do hero carrossel
+- [x] Sidebar: área de publicidade 300x250 junto com WhatsApp e Shorts
+- [x] Trending Topics: ranking das matérias mais lidas (automático via viewCount)
+- [x] Trending Topics: links clicáveis para as matérias
+- [x] Garantir layout sidebar alinhada com botões "Receba no Zap" e "CNN Shorts"
+
+## Sprint 10 - Notícias Globais Automáticas + Visual Minimalista
+
+### Notícias Globais Automáticas
+- [x] Fetch automático do Google News RSS (notícias internacionais)
+- [x] Scraping de conteúdo completo dos artigos (título, texto, imagens, vídeos)
+- [x] Reescrita autoral via LLM (IA) mantendo fidelidade à informação
+- [x] Citação obrigatória das fontes originais em cada artigo
+- [x] Extração e upload de imagens/vídeos para CDN
+- [x] Publicação automática na categoria GLOBAL
+- [x] Cron job no servidor rodando a cada 30 minutos (5 artigos importados no primeiro ciclo)
+- [x] Deduplicação: não republicar notícias já importadas
+
+### Visual Minimalista
+- [x] Reduzir fontes do site inteiro (títulos, body, badges)
+- [x] Área de publicidade abaixo do hero carrossel (banner horizontal 728x90)
+- [x] Sidebar: área de publicidade 300x250
+- [x] Trending Topics: ranking automático das matérias mais lidas (viewCount)
+- [x] Trending Topics: links clicáveis para as matérias

@@ -7,6 +7,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { fetchAndPublishGlobalNews } from "../globalNewsFetcher";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -60,6 +61,31 @@ async function startServer() {
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
   });
+
+  // ===== CRON: Auto-fetch global news every 30 minutes =====
+  const FETCH_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
+
+  // Run first fetch after 60 seconds (let server stabilize)
+  setTimeout(async () => {
+    console.log("[Cron] Running initial global news fetch...");
+    try {
+      const result = await fetchAndPublishGlobalNews();
+      console.log(`[Cron] Initial fetch: ${result.imported} imported, ${result.errors} errors`);
+    } catch (err) {
+      console.error("[Cron] Initial fetch error:", err);
+    }
+
+    // Then run every 30 minutes
+    setInterval(async () => {
+      console.log("[Cron] Running scheduled global news fetch...");
+      try {
+        const result = await fetchAndPublishGlobalNews();
+        console.log(`[Cron] Scheduled fetch: ${result.imported} imported, ${result.errors} errors`);
+      } catch (err) {
+        console.error("[Cron] Scheduled fetch error:", err);
+      }
+    }, FETCH_INTERVAL_MS);
+  }, 60_000);
 }
 
 startServer().catch(console.error);

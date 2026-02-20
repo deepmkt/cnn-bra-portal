@@ -53,6 +53,12 @@ export const appRouter = router({
         return db.getArticleBySlug(input.slug);
       }),
 
+    trending: publicProcedure
+      .input(z.object({ limit: z.number().optional() }).optional())
+      .query(async ({ input }) => {
+        return db.getTrendingArticles(input?.limit ?? 10);
+      }),
+
     incrementView: publicProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {

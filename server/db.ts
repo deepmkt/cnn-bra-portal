@@ -180,6 +180,17 @@ export async function incrementShareCount(id: number) {
   await db.update(articles).set({ shareCount: sql`${articles.shareCount} + 1` }).where(eq(articles.id, id));
 }
 
+export async function getTrendingArticles(limit: number = 10) {
+  const db = await getDb();
+  if (!db) return [];
+  const result = await db.select()
+    .from(articles)
+    .where(eq(articles.status, "online"))
+    .orderBy(desc(articles.viewCount))
+    .limit(limit);
+  return result;
+}
+
 // ===== ARTICLE REVISIONS =====
 
 export async function createRevision(revision: InsertArticleRevision) {
