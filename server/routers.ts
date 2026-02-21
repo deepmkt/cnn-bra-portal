@@ -1004,6 +1004,12 @@ export const appRouter = router({
       const fixed = await fixGlobalNewsImages();
       return { fixed };
     }),
+
+    fixSourceLinks: adminProcedure.mutation(async () => {
+      const { fixAllSourceLinks } = await import("./fixSourceLinks");
+      const fixed = await fixAllSourceLinks();
+      return { fixed };
+    }),
   }),
 });
 

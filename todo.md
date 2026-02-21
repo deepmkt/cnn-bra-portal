@@ -220,3 +220,10 @@
 
 - [x] Corrigir contraste dos campos de entrada na seção "Fique Atualizado"
 - [x] Garantir que os inputs sejam visíveis sobre o fundo azul escuro (borda azul clara, placeholder cinza escuro, focus vermelho)
+
+## Sprint 15 — CRÍTICO: Corrigir URLs da Fonte
+
+- [x] Investigar por que URLs do Google News ainda aparecem no conteúdo dos artigos (decoder falhando)
+- [x] Remover URLs do Google News de 115 artigos existentes (substituído por "Fonte: Agência Internacional")
+- [x] Criar novo módulo decodeGoogleNewsUrl.ts com lógica melhorada
+- [x] Novos artigos usarão URLs reais quando possível (redirect-following)

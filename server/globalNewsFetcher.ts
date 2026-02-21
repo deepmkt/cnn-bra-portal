@@ -13,6 +13,7 @@ import { articles, globalNewsCache, shorts } from "../drizzle/schema";
 import { eq, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { capitalizeTitle } from "../shared/titleUtils";
+import { decodeGoogleNewsUrl as decodeUrl } from "./decodeGoogleNewsUrl";
 
 const parser = new RSSParser();
 
@@ -89,9 +90,11 @@ function getSourceName(url: string): string {
 }
 
 /**
- * Decode Google News encoded URL using batchexecute API
+ * OLD decode function - replaced with simpler redirect-following version
+ * Now imported from ./decodeGoogleNewsUrl.ts as decodeUrl
  */
-async function decodeGoogleNewsUrl(sourceUrl: string): Promise<string> {
+/*
+async function decodeGoogleNewsUrl_OLD(sourceUrl: string): Promise<string> {
   try {
     const url = new URL(sourceUrl);
     const path = url.pathname.split("/");
@@ -161,6 +164,7 @@ async function decodeGoogleNewsUrl(sourceUrl: string): Promise<string> {
     return sourceUrl;
   }
 }
+*/
 
 /**
  * Fetch and follow Google News redirect to get the real article URL
@@ -520,7 +524,7 @@ export async function fetchAndPublishGlobalNews(): Promise<{ imported: number; e
         if (!googleUrl) continue;
 
         // Resolve real URL using decoder
-        const realUrl = await decodeGoogleNewsUrl(googleUrl);
+        const realUrl = await decodeUrl(googleUrl);
 
         // Deduplication check
         if (await isAlreadyImported(realUrl) || await isAlreadyImported(googleUrl)) {
