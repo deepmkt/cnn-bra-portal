@@ -454,7 +454,7 @@ export default function Home() {
           <aside className="w-full lg:w-1/3 space-y-6">
 
             {/* WhatsApp CTA */}
-            <a href="#" className="block w-full bg-gradient-to-br from-green-500 to-green-700 rounded-xl p-5 shadow-lg group hover:-translate-y-1 transition-all border-b-4 border-green-900">
+            <a href="https://chat.whatsapp.com/JkINsZPG80d7YZewPeiGQp" target="_blank" rel="noopener noreferrer" className="block w-full bg-gradient-to-br from-green-500 to-green-700 rounded-xl p-5 shadow-lg group hover:-translate-y-1 transition-all border-b-4 border-green-900">
               <div className="flex items-center text-white">
                 <div className="bg-white p-3 rounded-full mr-4 shadow-lg group-hover:rotate-12 transition-transform">
                   <WhatsAppIcon className="w-6 h-6 text-green-600 animate-whatsapp-bounce" />
