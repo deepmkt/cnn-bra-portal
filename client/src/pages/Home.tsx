@@ -3,6 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
 import { Search, X, Menu } from "lucide-react";
 import { capitalizeTitle } from "@shared/titleUtils";
+import { getAdByRotation } from "@shared/adConfig";
 
 // ===== CATEGORIES =====
 const NAV_ITEMS = [
@@ -436,12 +437,12 @@ export default function Home() {
                 {/* Intercalated Ad Banner — appears after every 4th article */}
                 {(index + 1) % 4 === 0 && index < filteredArticles.length - 1 && (
                   <div className="w-full flex justify-center my-6 px-2">
-                    <div className="w-full max-w-full aspect-[728/90] bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-xs font-medium shadow-sm">
-                      <div className="flex flex-col items-center gap-1">
-                        <span className="text-[10px] uppercase tracking-widest text-gray-300 font-bold">Publicidade</span>
-                        <span className="hidden sm:inline text-gray-400">ESPAÇO PUBLICITÁRIO — BANNER RESPONSIVO</span>
-                        <span className="sm:hidden text-gray-400">PUBLICIDADE</span>
-                      </div>
+                    <div className="w-full max-w-full aspect-[728/90] flex items-center justify-center">
+                      <img
+                        src={getAdByRotation('horizontal', 0).url}
+                        alt={getAdByRotation('horizontal', 0).alt}
+                        className="w-full h-auto max-w-[728px] rounded-lg shadow-sm"
+                      />
                     </div>
                   </div>
                 )}
@@ -468,9 +469,11 @@ export default function Home() {
 
             {/* AD 300x250 — Responsive */}
             <div className="w-full flex justify-center">
-              <div className="w-full max-w-[300px] aspect-[300/250] bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-xs font-medium">
-                <span>PUBLICIDADE — 300×250</span>
-              </div>
+              <img
+                src={getAdByRotation('sidebar', 0).url}
+                alt={getAdByRotation('sidebar', 0).alt}
+                className="w-full max-w-[300px] h-auto rounded-lg shadow-sm"
+              />
             </div>
 
             {/* TRENDING TOPICS */}
@@ -575,9 +578,11 @@ export default function Home() {
 
             {/* AD 300x250 (second) */}
             <div className="w-full flex justify-center">
-              <div className="w-[300px] h-[250px] bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-xs font-medium">
-                <span>PUBLICIDADE — 300×250</span>
-              </div>
+              <img
+                src={getAdByRotation('sidebar', 1).url}
+                alt={getAdByRotation('sidebar', 1).alt}
+                className="w-full max-w-[300px] h-auto rounded-lg shadow-sm"
+              />
             </div>
 
           </aside>

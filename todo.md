@@ -287,3 +287,12 @@
 - [x] Implementar decoder robusto: decodeGoogleNewsUrl.ts com HTML parsing
 - [x] Cache agora salva rewrittenTitle para matching futuro
 - [x] Novos artigos usarão imagens reais (decoder + validateImageUrl)
+
+## Sprint 20 — Publicidade Real
+
+- [x] Fazer upload dos 5 banners GIF fornecidos para o CDN (manuscdn.com)
+- [x] Substituir placeholders de publicidade pelos banners reais
+- [x] Configurar rotação de banners 728x90 (3 banners horizontais: Câmara Maceió, Saúde Fica, Esqueci Dinheiro)
+- [x] Configurar rotação de banners 300x250 (2 banners sidebar: Saúde Fica, Câmara Maceió)
+- [x] Criar adConfig.ts com funções getAdByRotation() e getRandomAd()
+- [x] Garantir que os GIFs animados funcionem corretamente
