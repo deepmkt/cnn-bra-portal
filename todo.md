@@ -190,3 +190,28 @@
 
 - [x] Ocultar/remover todas as referências visuais ao "Manus" (botões, logos, diálogos, links)
 - [x] Garantir que nenhuma marca Manus apareça para o usuário final (textos do ManusDialog traduzidos para PT-BR, sem menção ao Manus)
+
+## Sprint 13 — Correções de Imagem, Fonte, Títulos e WhatsApp
+
+### Imagens
+- [x] Remover geração de imagens por IA no scraper (removido generateArticleImage)
+- [x] Usar imagem original da matéria (baixar ou usar link direto da og:image do artigo real)
+- [x] Indexar imagem original na matéria publicada no CNN BRA (upload S3 ou URL direta)
+
+### Fonte / Link Original
+- [x] Resolver URL real do artigo (decoder Google News + fallback redirect)
+- [x] Link da "Fonte" deve ser clicável e levar ao artigo original
+- [x] Exibir "Fonte: Nome do Veículo" como link clicável (mapa de 30+ fontes conhecidas)
+
+### Títulos
+- [x] Corrigir capitalização: primeira letra maiúscula, restante minúscula (capitalizeTitle)
+- [x] Respeitar exceções: nomes próprios, siglas, regras do português (80+ siglas, preposições)
+- [x] Aplicar capitalizeTitle no frontend (Home.tsx hero + feed + ArticlePage)
+
+### WhatsApp Mobile
+- [x] Corrigir botão de compartilhar no WhatsApp que fica cortado no mobile (padding responsivo)
+- [x] Adicionar ícone WhatsApp SVG e texto adaptativo (sm:inline)
+- [x] Corrigir share bar inferior para mobile (flex-wrap + padding responsivo)
+
+### Testes
+- [x] 93 testes passando (16 novos para Sprint 13)

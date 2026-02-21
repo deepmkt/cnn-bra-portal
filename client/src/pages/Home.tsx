@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
 import { Search, X, Menu } from "lucide-react";
+import { capitalizeTitle } from "@shared/titleUtils";
 
 // ===== CATEGORIES =====
 const NAV_ITEMS = [
@@ -251,7 +252,7 @@ export default function Home() {
                 {currentHero.category}
               </span>
               <h2 className="text-2xl md:text-5xl font-black leading-[1.05] mb-3 line-clamp-3 tracking-tight drop-shadow-xl">
-                {currentHero.title}
+                {capitalizeTitle(currentHero.title)}
               </h2>
               {currentHero.excerpt && (
                 <p className="text-sm text-gray-200 line-clamp-2 max-w-2xl">{currentHero.excerpt}</p>
@@ -320,7 +321,7 @@ export default function Home() {
                   <div className="flex-1 flex flex-col justify-between py-1">
                     <div onClick={() => setLocation(`/artigo/${article.id}`)} className="cursor-pointer">
                       <h4 className="text-lg md:text-xl font-bold leading-snug mb-2 group-hover:text-red-600 transition-colors tracking-tight">
-                        {article.title}
+                        {capitalizeTitle(article.title)}
                       </h4>
                       <p className="text-gray-500 line-clamp-2 text-sm leading-relaxed mb-4">
                         {article.excerpt}
@@ -402,7 +403,7 @@ export default function Home() {
                       </span>
                       <div className="flex-1 min-w-0">
                         <h4 className="text-sm font-semibold leading-snug line-clamp-2 group-hover:text-red-600 transition-colors">
-                          {article.title}
+                          {capitalizeTitle(article.title)}
                         </h4>
                         <div className="flex items-center mt-1.5 text-[10px] text-gray-400">
                           <span className="uppercase font-semibold text-red-600 mr-2">{article.category}</span>

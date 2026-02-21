@@ -7,12 +7,12 @@
 import RSSParser from "rss-parser";
 import * as cheerio from "cheerio";
 import { invokeLLM } from "./_core/llm";
-import { generateImage } from "./_core/imageGeneration";
 import { storagePut } from "./storage";
 import { getDb } from "./db";
 import { articles, globalNewsCache, shorts } from "../drizzle/schema";
 import { eq, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
+import { capitalizeTitle } from "../shared/titleUtils";
 
 const parser = new RSSParser();
 
@@ -33,6 +33,59 @@ interface ScrapedArticle {
   source: string;
   sourceUrl: string;
   publishedAt: Date;
+}
+
+// ===== Well-known Brazilian news source names =====
+const SOURCE_NAME_MAP: Record<string, string> = {
+  "folha": "Folha de S.Paulo",
+  "uol": "UOL",
+  "g1": "G1",
+  "globo": "O Globo",
+  "oglobo": "O Globo",
+  "estadao": "Estadão",
+  "terra": "Terra",
+  "r7": "R7",
+  "band": "Band",
+  "cnn": "CNN",
+  "bbc": "BBC",
+  "reuters": "Reuters",
+  "bloomberg": "Bloomberg",
+  "nytimes": "The New York Times",
+  "washingtonpost": "The Washington Post",
+  "theguardian": "The Guardian",
+  "elpais": "El País",
+  "infomoney": "InfoMoney",
+  "valor": "Valor Econômico",
+  "exame": "Exame",
+  "veja": "Veja",
+  "cartacapital": "Carta Capital",
+  "correio": "Correio Braziliense",
+  "gazetadopovo": "Gazeta do Povo",
+  "metropoles": "Metrópoles",
+  "poder360": "Poder360",
+  "cnnbrasil": "CNN Brasil",
+  "sbt": "SBT",
+  "record": "Record",
+  "jovempan": "Jovem Pan",
+  "revistaoeste": "Revista Oeste",
+};
+
+/**
+ * Get a friendly source name from a URL hostname
+ */
+function getSourceName(url: string): string {
+  try {
+    const hostname = new URL(url).hostname.replace("www.", "").toLowerCase();
+    // Try known sources first
+    for (const [key, name] of Object.entries(SOURCE_NAME_MAP)) {
+      if (hostname.includes(key)) return name;
+    }
+    // Fallback: capitalize the domain name
+    const domain = hostname.split(".")[0];
+    return domain.charAt(0).toUpperCase() + domain.slice(1);
+  } catch {
+    return "Fonte Internacional";
+  }
 }
 
 /**
@@ -130,44 +183,9 @@ async function resolveGoogleNewsUrl(googleUrl: string): Promise<string> {
 }
 
 /**
- * Validate if an image URL is a real article image (not a logo/icon)
- */
-async function isValidArticleImage(imageUrl: string): Promise<boolean> {
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
-    
-    const response = await fetch(imageUrl, {
-      method: "HEAD",
-      headers: { "User-Agent": USER_AGENT },
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-    
-    if (!response.ok) return false;
-    
-    const contentLength = parseInt(response.headers.get("content-length") || "0");
-    const contentType = response.headers.get("content-type") || "";
-    
-    // Reject images that are too small (likely logos/icons)
-    if (contentLength > 0 && contentLength < 15000) return false;
-    
-    // Reject non-image content types
-    if (!contentType.startsWith("image/")) return false;
-    
-    // Reject known logo/icon patterns
-    const lowerUrl = imageUrl.toLowerCase();
-    if (lowerUrl.includes("logo") || lowerUrl.includes("favicon") || lowerUrl.includes("icon")) return false;
-    if (lowerUrl.includes("google.com/images") || lowerUrl.includes("gstatic.com")) return false;
-    
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Scrape article content, images, and videos from a URL
+ * Scrape article content, images, and videos from a URL.
+ * Uses the original image from the article (og:image, twitter:image, etc.)
+ * Does NOT generate AI images — uses original source images only.
  */
 async function scrapeArticle(url: string): Promise<{ content: string; imageUrl: string | null; videoUrl: string | null }> {
   try {
@@ -188,16 +206,16 @@ async function scrapeArticle(url: string): Promise<{ content: string; imageUrl: 
     // Remove unwanted elements
     $("script, style, nav, footer, header, aside, .ads, .advertisement, .social-share, .comments, iframe[src*='ads']").remove();
 
-    // Extract main image - try multiple strategies
+    // Extract main image - try multiple strategies (use ORIGINAL image from article)
     let imageUrl: string | null = null;
     
     // Strategy 1: og:image (most reliable for news sites)
     const ogImage = $('meta[property="og:image"]').attr("content");
     // Strategy 2: twitter:image
-    const twitterImage = $('meta[name="twitter:image"]').attr("content");
+    const twitterImage = $('meta[name="twitter:image"]').attr("content") || $('meta[name="twitter:image:src"]').attr("content");
     // Strategy 3: First large image in article body
     const articleImages: string[] = [];
-    $("article img, .article-body img, .post-content img, .entry-content img, main img, .materia img, .content img").each((_, el) => {
+    $("article img, .article-body img, .post-content img, .entry-content img, main img, .materia img, .content img, .c-image img, figure img").each((_, el) => {
       const src = $(el).attr("src") || $(el).attr("data-src") || $(el).attr("data-lazy-src");
       if (src) articleImages.push(src);
     });
@@ -224,15 +242,14 @@ async function scrapeArticle(url: string): Promise<{ content: string; imageUrl: 
       }
       
       // Skip Google News logos and other known bad patterns
-      if (absoluteUrl.includes("news.google.com") || absoluteUrl.includes("gstatic.com")) continue;
+      if (absoluteUrl.includes("news.google.com")) continue;
+      if (absoluteUrl.includes("gstatic.com")) continue;
       if (absoluteUrl.includes("google.com/images/branding")) continue;
       if (absoluteUrl.includes("play-lh.googleusercontent.com")) continue;
       
-      // Validate the image
-      if (await isValidArticleImage(absoluteUrl)) {
-        imageUrl = absoluteUrl;
-        break;
-      }
+      // Accept the first valid-looking image URL (no HEAD request needed for og:image)
+      imageUrl = absoluteUrl;
+      break;
     }
 
     // Extract video
@@ -290,7 +307,10 @@ async function uploadImageToS3(imageUrl: string): Promise<string | null> {
     const timeout = setTimeout(() => controller.abort(), 10000);
 
     const response = await fetch(imageUrl, {
-      headers: { "User-Agent": USER_AGENT },
+      headers: { 
+        "User-Agent": USER_AGENT,
+        "Referer": new URL(imageUrl).origin,
+      },
       signal: controller.signal,
     });
     clearTimeout(timeout);
@@ -299,9 +319,9 @@ async function uploadImageToS3(imageUrl: string): Promise<string | null> {
 
     const buffer = Buffer.from(await response.arrayBuffer());
     
-    // Validate: reject images smaller than 15KB (likely logos/icons)
-    if (buffer.length < 15000) {
-      console.log(`[GlobalNews] Image too small (${buffer.length} bytes), likely a logo. Skipping.`);
+    // Only reject truly tiny images (favicons, 1px trackers)
+    if (buffer.length < 2000) {
+      console.log(`[GlobalNews] Image too small (${buffer.length} bytes), likely a tracker. Skipping.`);
       return null;
     }
     
@@ -318,32 +338,8 @@ async function uploadImageToS3(imageUrl: string): Promise<string | null> {
 }
 
 /**
- * Generate an AI image for an article when no real image is available
- */
-async function generateArticleImage(title: string, category: string): Promise<string | null> {
-  try {
-    const prompt = `Professional news photograph for article titled: "${title}". Category: ${category}. Photojournalistic style, realistic, high quality, editorial photo, no text overlays, no watermarks.`;
-    
-    const result = await generateImage({ prompt });
-    if (result?.url) {
-      // Download and re-upload to our S3
-      const response = await fetch(result.url);
-      if (response.ok) {
-        const buffer = Buffer.from(await response.arrayBuffer());
-        const key = `global-news/ai-${nanoid(12)}.jpg`;
-        const { url } = await storagePut(key, buffer, "image/jpeg");
-        return url;
-      }
-    }
-    return null;
-  } catch (err) {
-    console.error(`[GlobalNews] AI image generation error:`, err);
-    return null;
-  }
-}
-
-/**
- * Rewrite article content using LLM
+ * Rewrite article content using LLM.
+ * The sourceUrl passed here MUST be the real article URL (not Google News).
  */
 async function rewriteWithAI(title: string, content: string, source: string, sourceUrl: string): Promise<{ title: string; excerpt: string; content: string } | null> {
   try {
@@ -351,24 +347,25 @@ async function rewriteWithAI(title: string, content: string, source: string, sou
 Mantenha a fidelidade aos fatos, mas use suas próprias palavras. O texto deve ser informativo, claro e envolvente.
 
 REGRAS:
-1. Reescreva o título de forma atraente e jornalística
+1. Reescreva o título de forma atraente e jornalística. Use capitalização correta: primeira letra maiúscula, restante em minúsculas, exceto nomes próprios e siglas.
 2. Crie um excerpt/resumo de 1-2 frases
 3. Reescreva o conteúdo completo em 3-6 parágrafos
-4. NO FINAL do conteúdo, SEMPRE adicione: "Fonte: [nome da fonte](URL da fonte)"
+4. NÃO inclua a fonte no conteúdo (será adicionada automaticamente pelo sistema)
 5. NÃO copie o texto original, reescreva com suas palavras
 6. Use linguagem jornalística profissional brasileira
 7. Mantenha os fatos e dados precisos
+8. NÃO use títulos em CAIXA ALTA. Use capitalização normal.
 
 NOTÍCIA ORIGINAL:
 Título: ${title}
-Fonte: ${source} (${sourceUrl})
+Fonte: ${source}
 Conteúdo: ${content}
 
 Responda APENAS em JSON com este formato exato:
 {
   "title": "título reescrito",
   "excerpt": "resumo de 1-2 frases",
-  "content": "conteúdo reescrito completo em HTML com <p> tags, incluindo fonte no final"
+  "content": "conteúdo reescrito completo em HTML com <p> tags, SEM incluir fonte"
 }`;
 
     const result = await invokeLLM({
@@ -403,10 +400,11 @@ Responda APENAS em JSON com este formato exato:
     
     const parsed = JSON.parse(text);
     
-    // Ensure source is cited
-    if (!parsed.content.includes("Fonte:")) {
-      parsed.content += `\n<p class="text-sm text-gray-500 mt-4 border-t pt-4"><strong>Fonte:</strong> <a href="${sourceUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">${source}</a></p>`;
-    }
+    // Apply proper capitalization to the title
+    parsed.title = capitalizeTitle(parsed.title);
+    
+    // Remove any source the LLM might have added (we add it ourselves)
+    parsed.content = parsed.content.replace(/<p[^>]*>.*?Fonte:.*?<\/p>/gi, "");
     
     return parsed;
   } catch (err) {
@@ -532,15 +530,11 @@ export async function fetchAndPublishGlobalNews(): Promise<{ imported: number; e
         console.log(`[GlobalNews] Processing: ${item.title}`);
         console.log(`[GlobalNews] Resolved URL: ${realUrl}`);
 
-        // Scrape article
+        // Scrape article from the REAL URL (not Google News)
         const scraped = await scrapeArticle(realUrl);
         
-        // Extract source name from URL
-        let sourceName = "Fonte Internacional";
-        try {
-          sourceName = new URL(realUrl).hostname.replace("www.", "").split(".")[0];
-          sourceName = sourceName.charAt(0).toUpperCase() + sourceName.slice(1);
-        } catch {}
+        // Get proper source name
+        const sourceName = getSourceName(realUrl);
 
         // If no content scraped, use RSS title/description
         const contentForAI = scraped.content.length > 100 
@@ -552,7 +546,7 @@ export async function fetchAndPublishGlobalNews(): Promise<{ imported: number; e
           continue;
         }
 
-        // Rewrite with AI
+        // Rewrite with AI (pass real URL, not Google News URL)
         const rewritten = await rewriteWithAI(
           item.title || "",
           contentForAI,
@@ -565,26 +559,32 @@ export async function fetchAndPublishGlobalNews(): Promise<{ imported: number; e
           continue;
         }
 
-        // Upload image to S3 (with validation)
+        // Upload original image to S3 (NO AI generation fallback)
         let finalImageUrl: string | null = null;
         if (scraped.imageUrl) {
           finalImageUrl = await uploadImageToS3(scraped.imageUrl);
+          
+          // If S3 upload fails, use the original URL directly as fallback
+          if (!finalImageUrl) {
+            console.log(`[GlobalNews] S3 upload failed, using original image URL directly`);
+            finalImageUrl = scraped.imageUrl;
+          }
         }
         
-        // If no valid image, generate one with AI
+        // If no image at all, use a generic news placeholder from Unsplash
         if (!finalImageUrl) {
-          console.log(`[GlobalNews] No valid image found, generating with AI...`);
-          finalImageUrl = await generateArticleImage(rewritten.title, "GLOBAL");
+          console.log(`[GlobalNews] No image found for article, using placeholder`);
+          finalImageUrl = "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=1200&q=80";
         }
 
         // Create slug
         const slug = createSlug(rewritten.title) + "-" + nanoid(6);
 
-        // Insert article
+        // Insert article with proper source link
         try {
-          // Add source info to the content
-          const contentWithSource = rewritten.content + 
-            `\n<p class="text-sm text-gray-500 mt-6 pt-4 border-t border-gray-200"><strong>Fonte original:</strong> <a href="${realUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">${sourceName}</a></p>`;
+          // Build the source tag — clickable link to the REAL article URL
+          const sourceTag = `<p class="text-sm text-gray-500 mt-6 pt-4 border-t border-gray-200"><strong>Fonte:</strong> <a href="${realUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">${sourceName}</a></p>`;
+          const contentWithSource = rewritten.content + "\n" + sourceTag;
 
           const result = await db.insert(articles).values({
             title: rewritten.title,
@@ -640,17 +640,17 @@ export async function fetchAndPublishGlobalNews(): Promise<{ imported: number; e
 }
 
 /**
- * Fix existing articles that have Google News logo as image
- * Run once to update articles with AI-generated images
+ * Fix existing articles: re-scrape original images and fix source links.
+ * Replaces AI-generated images with original article images.
+ * Fixes source links to point to real URLs instead of Google News.
  */
 export async function fixGlobalNewsImages(): Promise<number> {
-  console.log("[GlobalNews] Fixing existing article images...");
+  console.log("[GlobalNews] Fixing existing article images and source links...");
   
   const db = await getDb();
   if (!db) return 0;
   
   try {
-    // Find articles with the Google News logo (all have same 12496 byte size)
     const globalArticles = await db.select()
       .from(articles)
       .where(eq(articles.category, "GLOBAL"));
@@ -658,37 +658,83 @@ export async function fixGlobalNewsImages(): Promise<number> {
     let fixed = 0;
     for (const article of globalArticles) {
       const imgUrl = article.imageUrl || "";
-      if (!imgUrl || imgUrl.includes("global-news/")) {
-        // Check if this is a Google News logo by checking file size
-        try {
-          if (!imgUrl) continue;
-          const response = await fetch(imgUrl, { method: "HEAD" });
-          const size = parseInt(response.headers.get("content-length") || "0");
-          
-          if (size > 0 && size < 15000) {
-            // This is likely a logo, generate a new image
-            console.log(`[GlobalNews] Fixing image for article ${article.id}: ${article.title}`);
-            const newImage = await generateArticleImage(article.title, "GLOBAL");
-            
-            if (newImage) {
-              await db.update(articles)
-                .set({ imageUrl: newImage })
-                .where(eq(articles.id, article.id));
-              fixed++;
-              console.log(`[GlobalNews] Fixed image for article ${article.id}`);
+      const content = article.content || "";
+      let needsUpdate = false;
+      const updates: { imageUrl?: string; content?: string } = {};
+      
+      // Fix 1: Check if image is an AI-generated one or Google News logo
+      if (imgUrl.includes("global-news/ai-") || !imgUrl || imgUrl.includes("gstatic.com")) {
+        // Try to find the original URL from the cache
+        const cached = await db.select()
+          .from(globalNewsCache)
+          .where(eq(globalNewsCache.originalTitle, article.title))
+          .limit(1);
+        
+        if (cached.length > 0) {
+          const originalUrl = cached[0].originalUrl;
+          if (originalUrl && !originalUrl.includes("news.google.com")) {
+            // Re-scrape to get the original image
+            const scraped = await scrapeArticle(originalUrl);
+            if (scraped.imageUrl) {
+              const newImg = await uploadImageToS3(scraped.imageUrl);
+              if (newImg) {
+                updates.imageUrl = newImg;
+                needsUpdate = true;
+                console.log(`[GlobalNews] Fixed image for article ${article.id}: original image from ${originalUrl}`);
+              } else {
+                // Use the original URL directly
+                updates.imageUrl = scraped.imageUrl;
+                needsUpdate = true;
+              }
             }
-            
-            // Delay to avoid rate limiting
-            await new Promise(resolve => setTimeout(resolve, 3000));
           }
-        } catch {}
+        }
+      }
+      
+      // Fix 2: Check if source link points to Google News instead of real URL
+      if (content.includes("news.google.com")) {
+        const cached = await db.select()
+          .from(globalNewsCache)
+          .where(eq(globalNewsCache.originalTitle, article.title))
+          .limit(1);
+        
+        if (cached.length > 0) {
+          const originalUrl = cached[0].originalUrl;
+          const sourceName = getSourceName(originalUrl);
+          
+          // Replace Google News URLs in source links with real URLs
+          let fixedContent = content.replace(
+            /href="https?:\/\/news\.google\.com[^"]*"/g,
+            `href="${originalUrl}"`
+          );
+          
+          // Also fix the source name if it's generic
+          const sourceTag = `<p class="text-sm text-gray-500 mt-6 pt-4 border-t border-gray-200"><strong>Fonte:</strong> <a href="${originalUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">${sourceName}</a></p>`;
+          
+          // Remove old source tags and add new one
+          fixedContent = fixedContent.replace(/<p[^>]*>.*?<strong>Fonte[^<]*<\/strong>.*?<\/p>/gi, "");
+          fixedContent = fixedContent + "\n" + sourceTag;
+          
+          updates.content = fixedContent;
+          needsUpdate = true;
+        }
+      }
+      
+      if (needsUpdate) {
+        await db.update(articles)
+          .set(updates)
+          .where(eq(articles.id, article.id));
+        fixed++;
+        
+        // Delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 2000));
       }
     }
     
-    console.log(`[GlobalNews] Fixed ${fixed} article images`);
+    console.log(`[GlobalNews] Fixed ${fixed} articles`);
     return fixed;
   } catch (err) {
-    console.error(`[GlobalNews] Fix images error:`, err);
+    console.error(`[GlobalNews] Fix error:`, err);
     return 0;
   }
 }
