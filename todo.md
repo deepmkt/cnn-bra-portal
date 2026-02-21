@@ -185,3 +185,8 @@
 ### Correções
 - [x] Cookie consent: botões com event handling robusto (preventDefault + stopPropagation)
 - [x] 77 testes passando (incluindo 15 novos para Sprint 11)
+
+## Sprint 12 — Ocultar Marca Manus
+
+- [x] Ocultar/remover todas as referências visuais ao "Manus" (botões, logos, diálogos, links)
+- [x] Garantir que nenhuma marca Manus apareça para o usuário final (textos do ManusDialog traduzidos para PT-BR, sem menção ao Manus)
