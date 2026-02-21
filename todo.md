@@ -253,3 +253,21 @@
 - [x] Categorizar automaticamente notícias por 17 tópicos via LLM (economia, saúde, tecnologia, política, esportes, educação, meio-ambiente, cultura, internacional, ciência, segurança, justiça, transporte, energia, agronegócio, turismo, entretenimento)
 - [x] Criar navegação por tags no frontend (dropdown "Tópicos" no header)
 - [x] Filtrar artigos por tag selecionada (selectedTag state)
+
+## Sprint 17 — Shorts Mobile, Imagens e Relevância Brasil
+
+### CNN Shorts Mobile
+- [x] Adicionar botão "Shorts" no menu mobile (botão preto com play vermelho)
+- [x] Garantir que o botão seja visível e acessível em telas pequenas
+
+### Correção Definitiva de Imagens
+- [x] Melhorar validação de imagens para rejeitar logos do Google News (gstatic.com, googleusercontent.com)
+- [x] Detectar imagens genéricas: tamanho < 20KB, content-type inválido
+- [x] Usar apenas imagens reais dos artigos originais (validateImageUrl)
+- [x] Fallback para placeholder temático Unsplash quando não encontrar imagem válida
+
+### Redução de Frequência e Filtro Brasil
+- [x] Ajustar cron job de 30min para 1 hora (1 postagem/hora = 24/dia)
+- [x] Adicionar filtro de relevância: checkBrazilRelevance() via LLM
+- [x] Usar LLM para avaliar se notícia é relevante para contexto Brasil
+- [x] Rejeitar notícias sem impacto/interesse para público brasileiro (fail-open em caso de erro)

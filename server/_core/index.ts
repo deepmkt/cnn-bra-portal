@@ -62,8 +62,8 @@ async function startServer() {
     console.log(`Server running on http://localhost:${port}/`);
   });
 
-  // ===== CRON: Auto-fetch global news every 30 minutes =====
-  const FETCH_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
+  // ===== CRON: Auto-fetch global news every 1 hour =====
+  const FETCH_INTERVAL_MS = 60 * 60 * 1000; // 1 hour (24 posts/day)
 
   // Fix existing images with Google News logos (one-time)
   const { fixGlobalNewsImages } = await import("../globalNewsFetcher");
@@ -87,7 +87,7 @@ async function startServer() {
       console.error("[Cron] Initial fetch error:", err);
     }
 
-    // Then run every 30 minutes
+    // Then run every 1 hour
     setInterval(async () => {
       console.log("[Cron] Running scheduled global news fetch...");
       try {

@@ -308,6 +308,12 @@ async function scrapeArticle(url: string): Promise<{ content: string; imageUrl: 
  */
 async function validateImageUrl(imageUrl: string): Promise<string | null> {
   try {
+    // Reject Google News logos immediately
+    if (imageUrl.includes("gstatic.com") || imageUrl.includes("googleusercontent.com")) {
+      console.log(`[GlobalNews] Rejected Google logo/icon: ${imageUrl}`);
+      return null;
+    }
+    
     // Check if URL is valid and has acceptable image extension
     const url = new URL(imageUrl);
     const validExtensions = [".jpg", ".jpeg", ".png", ".webp", ".avif"];
@@ -321,7 +327,7 @@ async function validateImageUrl(imageUrl: string): Promise<string | null> {
       return null;
     }
     
-    // Quick HEAD request to verify image is accessible (with short timeout)
+    // Quick HEAD request to verify image is accessible and check size
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
     
@@ -337,9 +343,17 @@ async function validateImageUrl(imageUrl: string): Promise<string | null> {
       return null;
     }
     
-    const contentType = response.headers.get("content-type") || "";
-    if (!contentType.startsWith("image/")) {
-      console.log(`[GlobalNews] URL is not an image (${contentType}): ${imageUrl}`);
+    // Reject images smaller than 20KB (likely logos/icons)
+    const contentLength = response.headers.get("content-length");
+    if (contentLength && parseInt(contentLength) < 20000) {
+      console.log(`[GlobalNews] Image too small (${contentLength} bytes), likely a logo: ${imageUrl}`);
+      return null;
+    }
+    
+    // Verify content-type is actually an image
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.startsWith("image/")) {
+      console.log(`[GlobalNews] Invalid content-type (${contentType}): ${imageUrl}`);
       return null;
     }
     
@@ -508,7 +522,52 @@ async function createShortFromArticle(articleId: number, title: string, videoUrl
 }
 
 /**
- * Main function: Fetch, scrape, rewrite, and publish global news
+ * Check if a news article is relevant for Brazilian audience using LLM
+ */
+async function checkBrazilRelevance(title: string, snippet: string): Promise<boolean> {
+  try {
+    const prompt = `Você é um editor de notícias do portal CNN BRA. Avalie se a seguinte notícia é relevante e interessante para o público brasileiro.
+
+Critérios de relevância:
+- Notícias sobre Brasil (política, economia, sociedade)
+- Eventos internacionais com impacto direto no Brasil
+- Grandes acontecimentos mundiais de interesse geral (guerras, desastres, descobertas científicas)
+- Personalidades ou temas que interessam brasileiros
+
+NÃO É RELEVANTE:
+- Notícias locais de outros países sem impacto no Brasil
+- Política interna de países pequenos/distantes
+- Eventos culturais/esportivos regionais sem brasileiros envolvidos
+- Notícias muito específicas de outros países
+
+NOTÍCIA:
+Título: ${title}
+Resumo: ${snippet}
+
+Responda APENAS "SIM" se for relevante para brasileiros, ou "NÃO" se não for.`;
+
+    const result = await invokeLLM({
+      messages: [
+        { role: "system", content: "Você é um editor de notícias. Responda apenas SIM ou NÃO." },
+        { role: "user", content: prompt },
+      ],
+    });
+
+    const content = result.choices[0]?.message?.content;
+    const answer = (typeof content === "string" ? content.trim() : "").toUpperCase();
+    const isRelevant = answer.includes("SIM");
+    
+    console.log(`[GlobalNews] Relevance check: ${isRelevant ? "YES" : "NO"} — ${title}`);
+    return isRelevant;
+  } catch (err) {
+    console.error("[GlobalNews] Relevance check error:", err);
+    // On error, assume relevant (fail-open)
+    return true;
+  }
+}
+
+/**
+ * Main function: fetch, scrape, rewrite, and publish global news
  */
 export async function fetchAndPublishGlobalNews(): Promise<{ imported: number; errors: number }> {
   console.log("[GlobalNews] Starting auto-fetch cycle...");
@@ -546,6 +605,13 @@ export async function fetchAndPublishGlobalNews(): Promise<{ imported: number; e
 
         console.log(`[GlobalNews] Processing: ${item.title}`);
         console.log(`[GlobalNews] Resolved URL: ${realUrl}`);
+
+        // ===== RELEVANCE FILTER: Check if news is relevant for Brazilian audience =====
+        const isRelevant = await checkBrazilRelevance(item.title || "", item.contentSnippet || "");
+        if (!isRelevant) {
+          console.log(`[GlobalNews] Skipped (not relevant for Brazil): ${item.title}`);
+          continue;
+        }
 
         // Scrape article from the REAL URL (not Google News)
         const scraped = await scrapeArticle(realUrl);

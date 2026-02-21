@@ -270,6 +270,12 @@ export default function Home() {
                   {item.label}
                 </button>
               ))}
+              <button 
+                onClick={() => { setShortsOpen(true); setMobileMenuOpen(false); }} 
+                className="flex items-center bg-black text-white px-4 py-2 rounded-full hover:bg-gray-800 transition-all mt-4"
+              >
+                <span className="text-red-500 mr-2">▶</span> CNN Shorts
+              </button>
               <Link href="/admin" className="mt-8 pt-6 border-t w-full text-red-600 text-sm">
                 Painel Admin
               </Link>
