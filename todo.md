@@ -215,3 +215,8 @@
 
 ### Testes
 - [x] 93 testes passando (16 novos para Sprint 13)
+
+## Sprint 14 — Acessibilidade Newsletter
+
+- [x] Corrigir contraste dos campos de entrada na seção "Fique Atualizado"
+- [x] Garantir que os inputs sejam visíveis sobre o fundo azul escuro (borda azul clara, placeholder cinza escuro, focus vermelho)

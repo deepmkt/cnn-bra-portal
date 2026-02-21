@@ -461,7 +461,7 @@ export default function Home() {
                     placeholder="Seu Nome"
                     value={nlName}
                     onChange={e => setNlName(e.target.value)}
-                    className="w-full p-3 rounded-lg text-gray-900 text-sm outline-none border-0 shadow-inner"
+                    className="w-full p-3 rounded-lg bg-white text-gray-900 text-sm outline-none border-2 border-blue-300 focus:border-red-500 shadow-sm placeholder:text-gray-500 font-medium"
                     required
                   />
                   <input
@@ -469,7 +469,7 @@ export default function Home() {
                     placeholder="Seu E-mail"
                     value={nlEmail}
                     onChange={e => setNlEmail(e.target.value)}
-                    className="w-full p-3 rounded-lg text-gray-900 text-sm outline-none border-0 shadow-inner"
+                    className="w-full p-3 rounded-lg bg-white text-gray-900 text-sm outline-none border-2 border-blue-300 focus:border-red-500 shadow-sm placeholder:text-gray-500 font-medium"
                     required
                   />
                   <button
