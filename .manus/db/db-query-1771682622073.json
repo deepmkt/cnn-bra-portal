@@ -1,0 +1,35 @@
+{
+  "query": "SELECT id, title, imageUrl FROM articles WHERE category = 'GLOBAL' ORDER BY createdAt DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AGjn9SpCJUmEG7Z.root --database 6wzLmWaAhQKjEBEoadSqJc --execute SELECT id, title, imageUrl FROM articles WHERE category = 'GLOBAL' ORDER BY createdAt DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "600017",
+      "title": "Rio Grande do Sul SE Prepara para Fim de Semana de Tempo Instável com Alerta de Tempestades",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/0WIfLVzTxZRR.webp"
+    },
+    {
+      "id": "600016",
+      "title": "Rio Grande do Sul SE Prepara para Fim de Semana com Instabilidade e Alerta de Temporais",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/RTLfXybeydCS.webp"
+    },
+    {
+      "id": "600015",
+      "title": "Nestlé Anuncia Saída do Mercado de Sorvetes no Brasil e Foca em Rentabilidade",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/kAMJeAhwZhs1.webp"
+    },
+    {
+      "id": "600014",
+      "title": "Fotógrafo Revela Detalhes da Imagem Icônica do Ex-príncipe Andrew que Chocou o Mundo",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/ATKEU6XDn7kf.webp"
+    },
+    {
+      "id": "600013",
+      "title": "Decisão de Bolsonaro sobre o Senado em SC Provoca Ameaça de Rompimento de Ciro Nogueira com o PL",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/1KEdcG3yYitO.webp"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\timageUrl\n600017\tRio Grande do Sul SE Prepara para Fim de Semana de Tempo Instável com Alerta de Tempestades\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/0WIfLVzTxZRR.webp\n600016\tRio Grande do Sul SE Prepara para Fim de Semana com Instabilidade e Alerta de Temporais\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/RTLfXybeydCS.webp\n600015\tNestlé Anuncia Saída do Mercado de Sorvetes no Brasil e Foca em Rentabilidade\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/kAMJeAhwZhs1.webp\n600014\tFotógrafo Revela Detalhes da Imagem Icônica do Ex-príncipe Andrew que Chocou o Mundo\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/ATKEU6XDn7kf.webp\n600013\tDecisão de Bolsonaro sobre o Senado em SC Provoca Ameaça de Rompimento de Ciro Nogueira com o PL\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/1KEdcG3yYitO.webp\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}

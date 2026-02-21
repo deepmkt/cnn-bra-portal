@@ -227,3 +227,29 @@
 - [x] Remover URLs do Google News de 115 artigos existentes (substituído por "Fonte: Agência Internacional")
 - [x] Criar novo módulo decodeGoogleNewsUrl.ts com lógica melhorada
 - [x] Novos artigos usarão URLs reais quando possível (redirect-following)
+
+## Sprint 16 — Qualidade, Relevância e UX
+
+### Filtro de Relevância
+- [x] Reduzir quantidade de notícias importadas de 5 para 3 por ciclo (economia de créditos)
+- [x] Google News RSS já fornece notícias relevantes (top stories)
+- [x] Menos artigos = menos rewrites LLM = menos custos
+
+### Correção Definitiva de Imagens
+- [x] Validar formatos de imagem (.jpg, .png, .webp, .jpeg, .avif)
+- [x] Garantir que imageUrl seja sempre uma URL válida via validateImageUrl()
+- [x] Testar se imagens são acessíveis antes de salvar (HEAD request)
+- [x] Usar URLs originais diretamente (sem upload S3 que retornava 403)
+- [x] Fallback para Unsplash placeholder se imagem não encontrada
+
+### Layout Hero + Sidebar
+- [x] Reduzir hero para 2/3 da largura (lg:w-2/3)
+- [x] Criar sidebar com lista de 5 posts mais relevantes (lg:w-1/3)
+- [x] Garantir responsividade (mobile: hero full width + sidebar abaixo, desktop: lado a lado)
+- [x] Sidebar com thumbnails, títulos e timestamps
+
+### Sistema de Tags
+- [x] Campo tags já existe na tabela articles
+- [x] Categorizar automaticamente notícias por 17 tópicos via LLM (economia, saúde, tecnologia, política, esportes, educação, meio-ambiente, cultura, internacional, ciência, segurança, justiça, transporte, energia, agronegócio, turismo, entretenimento)
+- [x] Criar navegação por tags no frontend (dropdown "Tópicos" no header)
+- [x] Filtrar artigos por tag selecionada (selectedTag state)

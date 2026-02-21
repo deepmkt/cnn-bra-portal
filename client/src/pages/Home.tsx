@@ -15,6 +15,12 @@ const NAV_ITEMS = [
 
 const BR_STATES = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
 
+const TOPIC_TAGS = [
+  'economia', 'saúde', 'tecnologia', 'política', 'esportes', 'educação',
+  'meio-ambiente', 'cultura', 'internacional', 'ciência', 'segurança', 'justiça',
+  'transporte', 'energia', 'agronegócio', 'turismo', 'entretenimento'
+];
+
 function timeAgo(date: Date | string) {
   const now = new Date();
   const d = new Date(date);
@@ -46,6 +52,8 @@ export default function Home() {
   const [heroIndex, setHeroIndex] = useState(0);
   const [heroZoomed, setHeroZoomed] = useState(false);
   const [statesOpen, setStatesOpen] = useState(false);
+  const [tagsOpen, setTagsOpen] = useState(false);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [shortsOpen, setShortsOpen] = useState(false);
   const [exitPopupShown, setExitPopupShown] = useState(false);
   const [exitPopupVisible, setExitPopupVisible] = useState(false);
@@ -73,10 +81,17 @@ export default function Home() {
   // Newsletter mutation
   const subscribeMutation = trpc.newsletter.subscribe.useMutation();
 
-  // Filter articles
-  const filteredArticles = currentCategory === "home"
+  // Filter articles by category and tag
+  let filteredArticles = currentCategory === "home"
     ? articles
     : articles.filter(a => a.category === currentCategory);
+  
+  // Apply tag filter if selected
+  if (selectedTag) {
+    filteredArticles = filteredArticles.filter(a => 
+      a.tags?.toLowerCase().includes(selectedTag.toLowerCase())
+    );
+  }
 
   const heroArticles = filteredArticles.filter(a => a.isHero);
   const currentHero = heroArticles.length > 0 ? heroArticles[heroIndex % heroArticles.length] : filteredArticles[0];
@@ -192,6 +207,36 @@ export default function Home() {
                 </div>
               )}
             </div>
+            <div className="relative" onMouseEnter={() => setTagsOpen(true)} onMouseLeave={() => setTagsOpen(false)}>
+              <button className="flex items-center hover:text-cnn-blue py-3">
+                <svg className="mr-1" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 2h10v10H2z"/><path d="M2 6h10M6 2v10"/></svg>
+                Tópicos
+                <svg className="ml-1" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m2 3.5 3 3 3-3" /></svg>
+              </button>
+              {tagsOpen && (
+                <div className="absolute top-full left-0 w-[280px] bg-white shadow-2xl border p-3 grid grid-cols-2 gap-1.5 rounded-b-xl z-[100] animate-slide-up">
+                  {TOPIC_TAGS.map(tag => (
+                    <button
+                      key={tag}
+                      onClick={() => { setSelectedTag(tag); setTagsOpen(false); }}
+                      className={`text-left py-1.5 px-2 rounded-md text-[11px] font-bold transition-all capitalize ${
+                        selectedTag === tag ? "bg-cnn-blue text-white" : "hover:bg-gray-100"
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                  {selectedTag && (
+                    <button
+                      onClick={() => { setSelectedTag(null); setTagsOpen(false); }}
+                      className="col-span-2 text-center py-1.5 px-2 rounded-md text-[11px] font-bold bg-red-600 text-white hover:bg-red-700"
+                    >
+                      Limpar Filtro
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </nav>
 
           {/* HEADER ACTIONS */}
@@ -236,39 +281,78 @@ export default function Home() {
       {/* ===== MAIN CONTENT ===== */}
       <main className="container mx-auto px-4 py-6">
 
-        {/* ===== HERO BANNER ===== */}
-        {currentHero && (
-          <section
-            className="relative w-full h-[50vh] md:h-[65vh] rounded-2xl overflow-hidden mb-8 shadow-xl group cursor-pointer animate-slide-up"
-            onClick={() => setLocation(`/artigo/${currentHero.id}`)}
-          >
-            <div
-              className={`absolute inset-0 bg-cover bg-center hero-zoom ${heroZoomed ? "hero-active-zoom" : ""}`}
-              style={{ backgroundImage: `url('${currentHero.imageUrl || "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=1200&q=80"}')` }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-full p-6 md:p-12 text-white pointer-events-none">
-              <span className="bg-red-600 px-3 py-1 rounded-md text-[10px] font-bold uppercase mb-4 inline-block tracking-wider shadow-lg">
-                {currentHero.category}
-              </span>
-              <h2 className="text-2xl md:text-5xl font-black leading-[1.05] mb-3 line-clamp-3 tracking-tight drop-shadow-xl">
-                {capitalizeTitle(currentHero.title)}
-              </h2>
-              {currentHero.excerpt && (
-                <p className="text-sm text-gray-200 line-clamp-2 max-w-2xl">{currentHero.excerpt}</p>
+        {/* ===== HERO SECTION: 2/3 Banner + 1/3 Sidebar ===== */}
+        <div className="flex flex-col lg:flex-row gap-6 mb-8">
+          {/* Hero Banner (2/3 width on desktop) */}
+          {currentHero && (
+            <section
+              className="relative w-full lg:w-2/3 h-[50vh] md:h-[65vh] rounded-2xl overflow-hidden shadow-xl group cursor-pointer animate-slide-up"
+              onClick={() => setLocation(`/artigo/${currentHero.id}`)}
+            >
+              <div
+                className={`absolute inset-0 bg-cover bg-center hero-zoom ${heroZoomed ? "hero-active-zoom" : ""}`}
+                style={{ backgroundImage: `url('${currentHero.imageUrl || "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=1200&q=80"}')` }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-full p-6 md:p-12 text-white pointer-events-none">
+                <span className="bg-red-600 px-3 py-1 rounded-md text-[10px] font-bold uppercase mb-4 inline-block tracking-wider shadow-lg">
+                  {currentHero.category}
+                </span>
+                <h2 className="text-2xl md:text-4xl lg:text-5xl font-black leading-[1.05] mb-3 line-clamp-3 tracking-tight drop-shadow-xl">
+                  {capitalizeTitle(currentHero.title)}
+                </h2>
+                {currentHero.excerpt && (
+                  <p className="text-sm text-gray-200 line-clamp-2 max-w-2xl">{currentHero.excerpt}</p>
+                )}
+              </div>
+              {/* Hero dots */}
+              {heroArticles.length > 1 && (
+                <div className="absolute bottom-4 right-6 flex gap-1.5">
+                  {heroArticles.map((_, i) => (
+                    <button key={i} onClick={(e) => { e.stopPropagation(); setHeroIndex(i); }}
+                      className={`w-2 h-2 rounded-full transition-all ${i === heroIndex % heroArticles.length ? "bg-white w-6" : "bg-white/40"}`} />
+                  ))}
+                </div>
               )}
-            </div>
-            {/* Hero dots */}
-            {heroArticles.length > 1 && (
-              <div className="absolute bottom-4 right-6 flex gap-1.5">
-                {heroArticles.map((_, i) => (
-                  <button key={i} onClick={(e) => { e.stopPropagation(); setHeroIndex(i); }}
-                    className={`w-2 h-2 rounded-full transition-all ${i === heroIndex % heroArticles.length ? "bg-white w-6" : "bg-white/40"}`} />
+            </section>
+          )}
+
+          {/* Sidebar: Recent/Trending Posts (1/3 width on desktop) */}
+          <aside className="w-full lg:w-1/3 flex flex-col gap-4">
+            <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+              <h3 className="text-lg font-bold text-gray-900 mb-4 pb-3 border-b border-gray-200">
+                📌 Mais Relevantes
+              </h3>
+              <div className="space-y-4">
+                {trending.slice(0, 5).map((article) => (
+                  <Link
+                    key={article.id}
+                    href={`/artigo/${article.id}`}
+                    className="block group hover:bg-gray-50 -mx-2 px-2 py-2 rounded-lg transition-colors"
+                  >
+                    <div className="flex gap-3">
+                      {article.imageUrl && (
+                        <img
+                          src={article.imageUrl}
+                          alt={article.title}
+                          className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-semibold text-gray-900 line-clamp-2 group-hover:text-red-600 transition-colors">
+                          {capitalizeTitle(article.title)}
+                        </h4>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {timeAgo(article.publishedAt || article.createdAt)}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
                 ))}
               </div>
-            )}
-          </section>
-        )}
+            </div>
+          </aside>
+        </div>
 
         {/* ===== AD BANNER (below hero) — Responsive ===== */}
         <div className="w-full flex justify-center mb-8 px-4">

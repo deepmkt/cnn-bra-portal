@@ -303,40 +303,50 @@ async function scrapeArticle(url: string): Promise<{ content: string; imageUrl: 
 }
 
 /**
- * Download an image and upload to S3
+ * Validate image URL format and accessibility
+ * Returns the original URL if valid, null otherwise
  */
-async function uploadImageToS3(imageUrl: string): Promise<string | null> {
+async function validateImageUrl(imageUrl: string): Promise<string | null> {
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
-
-    const response = await fetch(imageUrl, {
-      headers: { 
-        "User-Agent": USER_AGENT,
-        "Referer": new URL(imageUrl).origin,
-      },
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-
-    if (!response.ok) return null;
-
-    const buffer = Buffer.from(await response.arrayBuffer());
+    // Check if URL is valid and has acceptable image extension
+    const url = new URL(imageUrl);
+    const validExtensions = [".jpg", ".jpeg", ".png", ".webp", ".avif"];
+    const hasValidExt = validExtensions.some(ext => url.pathname.toLowerCase().endsWith(ext));
     
-    // Only reject truly tiny images (favicons, 1px trackers)
-    if (buffer.length < 2000) {
-      console.log(`[GlobalNews] Image too small (${buffer.length} bytes), likely a tracker. Skipping.`);
+    // Also accept URLs with image query params (e.g., ?format=jpg)
+    const hasImageParam = url.searchParams.has("format") || url.searchParams.has("auto");
+    
+    if (!hasValidExt && !hasImageParam) {
+      console.log(`[GlobalNews] Image URL has invalid extension: ${imageUrl}`);
       return null;
     }
     
-    const contentType = response.headers.get("content-type") || "image/jpeg";
-    const ext = contentType.includes("png") ? "png" : contentType.includes("webp") ? "webp" : "jpg";
-    const key = `global-news/${nanoid(12)}.${ext}`;
-
-    const { url } = await storagePut(key, buffer, contentType);
-    return url;
+    // Quick HEAD request to verify image is accessible (with short timeout)
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    
+    const response = await fetch(imageUrl, {
+      method: "HEAD",
+      headers: { "User-Agent": USER_AGENT },
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    
+    if (!response.ok) {
+      console.log(`[GlobalNews] Image URL not accessible (${response.status}): ${imageUrl}`);
+      return null;
+    }
+    
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.startsWith("image/")) {
+      console.log(`[GlobalNews] URL is not an image (${contentType}): ${imageUrl}`);
+      return null;
+    }
+    
+    console.log(`[GlobalNews] Image validated: ${imageUrl}`);
+    return imageUrl;
   } catch (err) {
-    console.error(`[GlobalNews] Image upload error:`, err);
+    console.error(`[GlobalNews] Image validation error:`, err);
     return null;
   }
 }
@@ -345,7 +355,7 @@ async function uploadImageToS3(imageUrl: string): Promise<string | null> {
  * Rewrite article content using LLM.
  * The sourceUrl passed here MUST be the real article URL (not Google News).
  */
-async function rewriteWithAI(title: string, content: string, source: string, sourceUrl: string): Promise<{ title: string; excerpt: string; content: string } | null> {
+async function rewriteWithAI(title: string, content: string, source: string, sourceUrl: string): Promise<{ title: string; excerpt: string; content: string; tags: string } | null> {
   try {
     const prompt = `Você é um jornalista do portal CNN BRA. Reescreva a seguinte notícia de forma autoral, profissional e em português brasileiro. 
 Mantenha a fidelidade aos fatos, mas use suas próprias palavras. O texto deve ser informativo, claro e envolvente.
@@ -354,11 +364,12 @@ REGRAS:
 1. Reescreva o título de forma atraente e jornalística. Use capitalização correta: primeira letra maiúscula, restante em minúsculas, exceto nomes próprios e siglas.
 2. Crie um excerpt/resumo de 1-2 frases
 3. Reescreva o conteúdo completo em 3-6 parágrafos
-4. NÃO inclua a fonte no conteúdo (será adicionada automaticamente pelo sistema)
-5. NÃO copie o texto original, reescreva com suas palavras
-6. Use linguagem jornalística profissional brasileira
-7. Mantenha os fatos e dados precisos
-8. NÃO use títulos em CAIXA ALTA. Use capitalização normal.
+4. Identifique até 3 tags/tópicos principais da notícia (escolha entre: economia, saúde, tecnologia, política, esportes, educação, meio-ambiente, cultura, internacional, ciência, segurança, justiça, transporte, energia, agronegócio, turismo, entretenimento)
+5. NÃO inclua a fonte no conteúdo (será adicionada automaticamente pelo sistema)
+6. NÃO copie o texto original, reescreva com suas palavras
+7. Use linguagem jornalística profissional brasileira
+8. Mantenha os fatos e dados precisos
+9. NÃO use títulos em CAIXA ALTA. Use capitalização normal.
 
 NOTÍCIA ORIGINAL:
 Título: ${title}
@@ -369,7 +380,8 @@ Responda APENAS em JSON com este formato exato:
 {
   "title": "título reescrito",
   "excerpt": "resumo de 1-2 frases",
-  "content": "conteúdo reescrito completo em HTML com <p> tags, SEM incluir fonte"
+  "content": "conteúdo reescrito completo em HTML com <p> tags, SEM incluir fonte",
+  "tags": "tag1,tag2,tag3" (separadas por vírgula, minúsculas)
 }`;
 
     const result = await invokeLLM({
@@ -388,8 +400,9 @@ Responda APENAS em JSON com este formato exato:
               title: { type: "string", description: "Título reescrito" },
               excerpt: { type: "string", description: "Resumo de 1-2 frases" },
               content: { type: "string", description: "Conteúdo reescrito em HTML" },
+              tags: { type: "string", description: "Tags separadas por vírgula" },
             },
-            required: ["title", "excerpt", "content"],
+            required: ["title", "excerpt", "content", "tags"],
             additionalProperties: false,
           },
         },
@@ -508,7 +521,7 @@ export async function fetchAndPublishGlobalNews(): Promise<{ imported: number; e
 
   let imported = 0;
   let errors = 0;
-  const maxPerCycle = 5; // Max articles per cycle to avoid overload
+  const maxPerCycle = 3; // Max articles per cycle (focus on quality over quantity)
 
   for (const feedUrl of RSS_FEEDS) {
     if (imported >= maxPerCycle) break;
@@ -563,14 +576,14 @@ export async function fetchAndPublishGlobalNews(): Promise<{ imported: number; e
           continue;
         }
 
-        // Upload original image to S3 (NO AI generation fallback)
+        // Validate and use original image URL directly (no S3 upload)
         let finalImageUrl: string | null = null;
         if (scraped.imageUrl) {
-          finalImageUrl = await uploadImageToS3(scraped.imageUrl);
+          finalImageUrl = await validateImageUrl(scraped.imageUrl);
           
-          // If S3 upload fails, use the original URL directly as fallback
+          // If validation fails, try using the URL anyway as fallback
           if (!finalImageUrl) {
-            console.log(`[GlobalNews] S3 upload failed, using original image URL directly`);
+            console.log(`[GlobalNews] Image validation failed, using original URL anyway`);
             finalImageUrl = scraped.imageUrl;
           }
         }
@@ -600,7 +613,7 @@ export async function fetchAndPublishGlobalNews(): Promise<{ imported: number; e
             videoUrl: scraped.videoUrl || "",
             status: "online",
             isHero: false,
-            tags: "global,internacional",
+            tags: `global,internacional,${rewritten.tags}`,
             publishedAt: item.pubDate ? new Date(item.pubDate) : new Date(),
           });
 
@@ -680,7 +693,7 @@ export async function fixGlobalNewsImages(): Promise<number> {
             // Re-scrape to get the original image
             const scraped = await scrapeArticle(originalUrl);
             if (scraped.imageUrl) {
-              const newImg = await uploadImageToS3(scraped.imageUrl);
+              const newImg = await validateImageUrl(scraped.imageUrl);
               if (newImg) {
                 updates.imageUrl = newImg;
                 needsUpdate = true;
