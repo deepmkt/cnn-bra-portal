@@ -276,3 +276,14 @@
 
 - [x] Ajustar contador de visualizações para mostrar mínimo 5.000 + aleatório até 3.000 (5k-8k)
 - [x] Dar credibilidade ao portal com números realistas de leitores
+
+## Sprint 19 — CRÍTICO: Corrigir Imagens Definitivamente
+
+- [x] Investigar por que favicon do Google News ainda está sendo capturado (Google News não redireciona via HTTP)
+- [x] Melhorar scraping para extrair imagem real da matéria (og:image do artigo original)
+- [x] Validar que imagens têm dimensões adequadas via validateImageUrl (HEAD request)
+- [x] Rejeitar imagens pequenas (favicons, logos < 20KB, gstatic.com, googleusercontent.com)
+- [x] Atualizar artigos existentes: 7 artigos com logos Google substituídos por placeholders Unsplash
+- [x] Implementar decoder robusto: decodeGoogleNewsUrl.ts com HTML parsing
+- [x] Cache agora salva rewrittenTitle para matching futuro
+- [x] Novos artigos usarão imagens reais (decoder + validateImageUrl)

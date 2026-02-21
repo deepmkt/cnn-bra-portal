@@ -465,14 +465,15 @@ async function isAlreadyImported(sourceUrl: string): Promise<boolean> {
 /**
  * Cache the imported article URL
  */
-async function cacheImportedUrl(sourceUrl: string, title: string, source: string) {
+async function cacheImportedUrl(sourceUrl: string, rewrittenTitle: string, originalTitle: string, source: string) {
   const db = await getDb();
   if (!db) return;
   
   try {
     await db.insert(globalNewsCache).values({
       originalUrl: sourceUrl,
-      originalTitle: title,
+      originalTitle: originalTitle,
+      rewrittenTitle: rewrittenTitle,
       originalSource: source,
       isPublished: true,
       fetchedAt: new Date(),
@@ -697,9 +698,9 @@ export async function fetchAndPublishGlobalNews(): Promise<{ imported: number; e
           }
 
           // Cache the URL
-          await cacheImportedUrl(realUrl, rewritten.title, sourceName);
+          await cacheImportedUrl(realUrl, rewritten.title, item.title || "", sourceName);
           if (googleUrl !== realUrl) {
-            await cacheImportedUrl(googleUrl, rewritten.title, sourceName);
+            await cacheImportedUrl(googleUrl, rewritten.title, item.title || "", sourceName);
           }
 
           imported++;

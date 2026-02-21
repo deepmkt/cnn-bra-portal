@@ -1,0 +1,22 @@
+{
+  "query": "SELECT id, title, imageUrl, createdAt FROM articles WHERE title LIKE '%maconha%' OR title LIKE '%Maconha%' ORDER BY createdAt DESC LIMIT 3;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AGjn9SpCJUmEG7Z.root --database 6wzLmWaAhQKjEBEoadSqJc --execute SELECT id, title, imageUrl, createdAt FROM articles WHERE title LIKE '%maconha%' OR title LIKE '%Maconha%' ORDER BY createdAt DESC LIMIT 3;",
+  "rows": [
+    {
+      "id": "600019",
+      "title": "Denúncia Anônima Resulta na Apreensão de 725 Quilos de Maconha na Grande Bh",
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/qKPlVNYTVNDl.webp",
+      "createdAt": "2026-02-21 14:07:47"
+    },
+    {
+      "id": "600018",
+      "title": "Denúncia Resulta na Apreensão de Mais de 700 Quilos de Maconha em Condomínio na Grande Bh",
+      "imageUrl": "https://lh3.googleusercontent.com/J6_coFbogxhRI9iM864NL_liGXvsQp2AupsKei7z0cNNfDvGUmWUy20nuUhkREQyrpY4bEeIBuc=s0-w300-rw",
+      "createdAt": "2026-02-21 14:06:59"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\timageUrl\tcreatedAt\n600019\tDenúncia Anônima Resulta na Apreensão de 725 Quilos de Maconha na Grande Bh\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663324426524/6wzLmWaAhQKjEBEoadSqJc/global-news/qKPlVNYTVNDl.webp\t2026-02-21 14:07:47\n600018\tDenúncia Resulta na Apreensão de Mais de 700 Quilos de Maconha em Condomínio na Grande Bh\thttps://lh3.googleusercontent.com/J6_coFbogxhRI9iM864NL_liGXvsQp2AupsKei7z0cNNfDvGUmWUy20nuUhkREQyrpY4bEeIBuc=s0-w300-rw\t2026-02-21 14:06:59\n",
+  "stderr": "",
+  "execution_time_ms": 63
+}
