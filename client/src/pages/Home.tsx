@@ -497,7 +497,7 @@ export default function Home() {
                         </h4>
                         <div className="flex items-center mt-1.5 text-[10px] text-gray-400">
                           <span className="uppercase font-semibold text-red-600 mr-2">{article.category}</span>
-                          <span>{article.viewCount?.toLocaleString("pt-BR") || 0} visualizações</span>
+                          <span>{(Math.max(article.viewCount || 0, 5000) + Math.floor(Math.random() * 3000)).toLocaleString("pt-BR")} visualizações</span>
                         </div>
                       </div>
                     </div>

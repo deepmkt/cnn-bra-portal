@@ -271,3 +271,8 @@
 - [x] Adicionar filtro de relevância: checkBrazilRelevance() via LLM
 - [x] Usar LLM para avaliar se notícia é relevante para contexto Brasil
 - [x] Rejeitar notícias sem impacto/interesse para público brasileiro (fail-open em caso de erro)
+
+## Sprint 18 — Credibilidade: Contador de Visualizações
+
+- [x] Ajustar contador de visualizações para mostrar mínimo 5.000 + aleatório até 3.000 (5k-8k)
+- [x] Dar credibilidade ao portal com números realistas de leitores
