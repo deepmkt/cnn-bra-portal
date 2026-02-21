@@ -363,10 +363,11 @@ export default function Home() {
 
         {/* ===== AD BANNER (below hero) — Responsive ===== */}
         <div className="w-full flex justify-center mb-8 px-4">
-          <div className="w-full max-w-[728px] aspect-[728/90] bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-xs font-medium">
-            <span className="hidden sm:inline">PUBLICIDADE — 728×90</span>
-            <span className="sm:hidden">PUBLICIDADE — BANNER</span>
-          </div>
+          <img
+            src={getAdByRotation('horizontal', 1).url}
+            alt={getAdByRotation('horizontal', 1).alt}
+            className="w-full max-w-[728px] h-auto rounded-lg shadow-sm"
+          />
         </div>
 
         {/* ===== SECTION TITLE ===== */}

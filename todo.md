@@ -296,3 +296,7 @@
 - [x] Configurar rotação de banners 300x250 (2 banners sidebar: Saúde Fica, Câmara Maceió)
 - [x] Criar adConfig.ts com funções getAdByRotation() e getRandomAd()
 - [x] Garantir que os GIFs animados funcionem corretamente
+
+## Sprint 21 — Banner de Publicidade Abaixo do Hero
+
+- [x] Substituir placeholder "PUBLICIDADE --- 728×90" abaixo do hero principal por banner real com rotação
