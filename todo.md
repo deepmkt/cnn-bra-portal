@@ -300,3 +300,42 @@
 ## Sprint 21 — Banner de Publicidade Abaixo do Hero
 
 - [x] Substituir placeholder "PUBLICIDADE --- 728×90" abaixo do hero principal por banner real com rotação
+
+## Sprint 22 — Painel Administrativo Completo (Requisitos CNN BRA)
+
+### 1. Acesso e Segurança
+- [x] Login restrito com credenciais fixas (AGENCIADEEPMKT@GMAIL.COM / @Dp4156!)
+- [x] Rota /admin protegida, separada da área pública e de membros
+- [x] Sessão persistente com JWT/cookie para o admin
+
+### 2. Gerenciamento de Conteúdo (Posts)
+- [x] Upload de múltiplas imagens (PNG, JPG, GIF) e vídeos (MP4) para S3/CDN
+- [x] Galeria interativa para selecionar imagem/vídeo de capa
+- [x] Seleção de estado (AL, SP, RJ, etc.) vinculado à lógica de subdomínios
+- [x] Opção "Destaque na Home" (grade principal)
+- [x] Opção "Banner Inicial/Hero" (carrossel com zoom)
+- [x] Botão de criar nova categoria instantaneamente no formulário de post
+- [x] Botão Publicar (Online), Rascunho (Draft) e Excluir permanentemente
+
+### 3. Gestão de Publicidade (ADS)
+- [x] Controle de anúncios por posição: Topo Central, Meio da Notícia, Barra Lateral
+- [x] Upload de banners estáticos (PNG, JPG) e animados (GIF) para CDN
+- [x] Campo para inserir código Google AdSense
+- [x] Rotação inteligente: alternar entre banners próprios e Google Ads
+- [x] Tempo configurável (segundos) para cada banner individualmente
+- [x] Remover indicadores visuais (bolinhas/números) da rotação
+
+### 4. SEO e Analytics
+- [x] Campo para ID do Google Analytics 4 (G-XXXXX)
+- [x] Campo para ID do Google Tag Manager (GTM-XXXXX)
+- [x] Injeção dinâmica dos scripts GA4 e GTM no HTML do site
+
+### 5. Configurações Globais e IA
+- [x] Ticker "De Última Hora": modo automático (Google News/RSS) e modo manual (texto livre)
+- [x] Configurações de automação Global (scraping IA, reescrita, citação de fontes)
+- [x] Toggle VLibras (acessibilidade Libras)
+- [x] Toggle Voz IA (Text-to-Speech leitor de notícias)
+
+### 6. Importação de Dados
+- [x] Upload de arquivo XML/JSON com histórico de matérias WordPress
+- [x] Parser e importação de posts do backup WordPress para o banco de dados

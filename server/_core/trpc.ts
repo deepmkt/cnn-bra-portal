@@ -27,11 +27,18 @@ const requireUser = t.middleware(async opts => {
 
 export const protectedProcedure = t.procedure.use(requireUser);
 
+// Session key for fixed-credentials admin login (CNN BRA editorial panel)
+const CNN_ADMIN_SESSION_KEY = "cnn_admin_session";
+
 export const adminProcedure = t.procedure.use(
   t.middleware(async opts => {
     const { ctx, next } = opts;
 
-    if (!ctx.user || ctx.user.role !== 'admin') {
+    // Accept either: Manus OAuth admin user OR fixed-credentials admin session cookie
+    const hasOAuthAdmin = ctx.user && ctx.user.role === 'admin';
+    const hasCookieAdmin = (ctx.req as any).cookies?.[CNN_ADMIN_SESSION_KEY] === "authenticated";
+
+    if (!hasOAuthAdmin && !hasCookieAdmin) {
       throw new TRPCError({ code: "FORBIDDEN", message: NOT_ADMIN_ERR_MSG });
     }
 

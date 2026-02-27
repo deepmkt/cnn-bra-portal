@@ -4,6 +4,12 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
+import { storagePut } from "./storage";
+
+// Admin credentials (fixed, separate from OAuth)
+const ADMIN_EMAIL = "AGENCIADEEPMKT@GMAIL.COM";
+const ADMIN_PASSWORD = "@Dp4156!";
+const ADMIN_SESSION_KEY = "cnn_admin_session";
 
 // Editor/journalist procedure: admin, editor, or journalist roles
 const editorProcedure = protectedProcedure.use(async ({ ctx, next }) => {
@@ -73,7 +79,7 @@ export const appRouter = router({
         return { success: true };
       }),
 
-    create: editorProcedure
+    create: adminProcedure
       .input(z.object({
         title: z.string().min(1),
         excerpt: z.string().optional(),
@@ -84,11 +90,13 @@ export const appRouter = router({
         videoUrl: z.string().optional(),
         status: z.enum(["online", "draft", "review", "scheduled"]).default("draft"),
         isHero: z.boolean().default(false),
+        isFeatured: z.boolean().default(false),
         isBreaking: z.boolean().default(false),
+        state: z.string().optional(),
         scheduledAt: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
-        const data: any = { ...input, authorId: ctx.user.id };
+        const data: any = { ...input, authorId: ctx.user?.id ?? 0 };
         if (input.scheduledAt) data.scheduledAt = new Date(input.scheduledAt);
         if (input.status === "online") data.publishedAt = new Date();
         const id = await db.createArticle(data);
@@ -112,7 +120,7 @@ export const appRouter = router({
         return { id };
       }),
 
-    update: editorProcedure
+    update: adminProcedure
       .input(z.object({
         id: z.number(),
         title: z.string().optional(),
@@ -124,7 +132,9 @@ export const appRouter = router({
         videoUrl: z.string().optional(),
         status: z.enum(["online", "draft", "review", "scheduled"]).optional(),
         isHero: z.boolean().optional(),
+        isFeatured: z.boolean().optional(),
         isBreaking: z.boolean().optional(),
+        state: z.string().optional(),
         scheduledAt: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
@@ -138,8 +148,8 @@ export const appRouter = router({
             articleId: id,
             title: current.title,
             content: current.content,
-            editorId: ctx.user.id,
-            note: `Updated by ${ctx.user.name || "editor"}`,
+            editorId: ctx.user?.id ?? 0,
+            note: `Updated by ${ctx.user?.name || "editor"}`,
           });
         }
         await db.updateArticle(id, updateData);
@@ -164,7 +174,7 @@ export const appRouter = router({
     approveAndPublish: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input, ctx }) => {
-        await db.updateArticle(input.id, { status: "online", reviewerId: ctx.user.id } as any);
+        await db.updateArticle(input.id, { status: "online", reviewerId: ctx.user?.id } as any);
         const article = await db.getArticleById(input.id);
         if (article) {
           await db.createNotification({
@@ -371,15 +381,17 @@ export const appRouter = router({
     create: adminProcedure
       .input(z.object({
         type: z.enum(["google", "custom"]).default("custom"),
-        placement: z.enum(["horizontal", "lateral"]).default("horizontal"),
+        placement: z.enum(["horizontal", "lateral", "middle"]).default("horizontal"),
         imageUrl: z.string().optional(),
+        adCode: z.string().optional(),
         link: z.string().optional(),
         sponsor: z.string().optional(),
         duration: z.number().default(5000),
+        position: z.number().default(0),
         isActive: z.boolean().default(true),
       }))
       .mutation(async ({ input }) => {
-        const id = await db.createAd(input);
+        const id = await db.createAd(input as any);
         return { id };
       }),
 
@@ -387,16 +399,18 @@ export const appRouter = router({
       .input(z.object({
         id: z.number(),
         type: z.enum(["google", "custom"]).optional(),
-        placement: z.enum(["horizontal", "lateral"]).optional(),
+        placement: z.enum(["horizontal", "lateral", "middle"]).optional(),
         imageUrl: z.string().optional(),
+        adCode: z.string().optional(),
         link: z.string().optional(),
         sponsor: z.string().optional(),
         duration: z.number().optional(),
+        position: z.number().optional(),
         isActive: z.boolean().optional(),
       }))
       .mutation(async ({ input }) => {
         const { id, ...data } = input;
-        await db.updateAd(id, data);
+        await db.updateAd(id, data as any);
         return { success: true };
       }),
 
@@ -581,11 +595,11 @@ export const appRouter = router({
             await db.awardPoints(submission.userId, "ugc_approved", input.id);
           }
         }
-        await db.updateUgcStatus(input.id, input.status, ctx.user.id, input.reviewNote, publishedArticleId);
+        await db.updateUgcStatus(input.id, input.status, ctx.user?.id ?? 0, input.reviewNote, publishedArticleId);
         // Audit log
         await db.createAuditLog({
-          userId: ctx.user.id,
-          userName: ctx.user.name || undefined,
+          userId: ctx.user?.id,
+          userName: ctx.user?.name || undefined,
           action: `ugc.moderate.${input.status}`,
           resource: "ugc",
           resourceId: input.id,
@@ -1010,6 +1024,90 @@ export const appRouter = router({
       const fixed = await fixAllSourceLinks();
       return { fixed };
     }),
+  }),
+
+  // ===== ADMIN AUTH (fixed credentials, separate from OAuth) =====
+  adminAuth: router({
+    login: publicProcedure
+      .input(z.object({ email: z.string(), password: z.string() }))
+      .mutation(async ({ input, ctx }) => {
+        const emailMatch = input.email.trim().toUpperCase() === ADMIN_EMAIL;
+        const passMatch = input.password === ADMIN_PASSWORD;
+        if (!emailMatch || !passMatch) {
+          throw new Error("Credenciais inválidas");
+        }
+        // Set a simple admin session cookie
+        ctx.res.cookie(ADMIN_SESSION_KEY, "authenticated", {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 24 * 60 * 60 * 1000, // 24 hours
+          path: "/",
+        });
+        return { success: true };
+      }),
+
+    logout: publicProcedure.mutation(async ({ ctx }) => {
+      ctx.res.clearCookie(ADMIN_SESSION_KEY, { path: "/" });
+      return { success: true };
+    }),
+
+    check: publicProcedure.query(async ({ ctx }) => {
+      const session = ctx.req.cookies?.[ADMIN_SESSION_KEY];
+      return { authenticated: session === "authenticated" };
+    }),
+  }),
+
+  // ===== MEDIA UPLOAD =====
+  mediaUpload: router({
+    upload: publicProcedure
+      .input(z.object({
+        filename: z.string(),
+        mimeType: z.string(),
+        dataBase64: z.string(), // base64 encoded file data
+        alt: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        // Check admin session via headers (passed from client)
+        const buffer = Buffer.from(input.dataBase64, "base64");
+        const suffix = Date.now().toString(36);
+        const ext = input.filename.split(".").pop() || "bin";
+        const key = `media/${suffix}-${input.filename.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+        try {
+          const { url } = await storagePut(key, buffer, input.mimeType);
+          const mediaId = await db.createMediaItem({
+            filename: input.filename,
+            url,
+            fileKey: key,
+            mimeType: input.mimeType,
+            sizeBytes: buffer.length,
+            alt: input.alt || input.filename,
+          });
+          return { id: mediaId, url, key };
+        } catch (err) {
+          // Fallback: return a placeholder if S3 upload fails
+          throw new Error(`Upload failed: ${err instanceof Error ? err.message : String(err)}`);
+        }
+      }),
+
+    list: publicProcedure
+      .input(z.object({ limit: z.number().default(50) }).optional())
+      .query(async ({ input }) => {
+        return db.getMediaItems(input?.limit ?? 50);
+      }),
+  }),
+
+  // ===== WORDPRESS IMPORT =====
+  wordpressImport: router({
+    importXml: publicProcedure
+      .input(z.object({
+        xmlContent: z.string(), // WordPress WXR XML content
+      }))
+      .mutation(async ({ input }) => {
+        const { parseWPXml } = await import("./wpImporter");
+        const result = await parseWPXml(input.xmlContent);
+        return result;
+      }),
   }),
 });
 

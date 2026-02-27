@@ -31,7 +31,9 @@ export const articles = mysqlTable("articles", {
   videoUrl: text("videoUrl"),
   status: mysqlEnum("status", ["online", "draft", "review", "scheduled"]).default("draft").notNull(),
   isHero: boolean("isHero").default(false).notNull(),
+  isFeatured: boolean("isFeatured").default(false).notNull(),
   isBreaking: boolean("isBreaking").default(false).notNull(),
+  state: varchar("state", { length: 2 }), // Brazilian state code (AL, SP, RJ, etc.)
   authorId: int("authorId"),
   reviewerId: int("reviewerId"),
   viewCount: int("viewCount").default(0).notNull(),
@@ -154,11 +156,13 @@ export type InsertUserPreference = typeof userPreferences.$inferInsert;
 export const ads = mysqlTable("ads", {
   id: int("id").autoincrement().primaryKey(),
   type: mysqlEnum("type", ["google", "custom"]).default("custom").notNull(),
-  placement: mysqlEnum("placement", ["horizontal", "lateral"]).default("horizontal").notNull(),
+  placement: mysqlEnum("placement", ["horizontal", "lateral", "middle"]).default("horizontal").notNull(),
   imageUrl: text("imageUrl"),
+  adCode: text("adCode"), // Google AdSense or custom HTML/JS code
   link: text("link"),
   sponsor: varchar("sponsor", { length: 255 }),
   duration: int("duration").default(5000).notNull(),
+  position: int("position").default(0).notNull(),
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

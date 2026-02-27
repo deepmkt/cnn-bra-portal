@@ -3,7 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
 import { Search, X, Menu } from "lucide-react";
 import { capitalizeTitle } from "@shared/titleUtils";
-import { getAdByRotation } from "@shared/adConfig";
+import { AdBanner } from "@/components/AdBanner";
 
 // ===== CATEGORIES =====
 const NAV_ITEMS = [
@@ -361,13 +361,9 @@ export default function Home() {
           </aside>
         </div>
 
-        {/* ===== AD BANNER (below hero) — Responsive ===== */}
+        {/* ===== AD BANNER (below hero) — Dynamic from DB ===== */}
         <div className="w-full flex justify-center mb-8 px-4">
-          <img
-            src={getAdByRotation('horizontal', 1).url}
-            alt={getAdByRotation('horizontal', 1).alt}
-            className="w-full max-w-[728px] h-auto rounded-lg shadow-sm"
-          />
+          <AdBanner placement="horizontal" fallbackIndex={1} className="w-full max-w-[728px]" />
         </div>
 
         {/* ===== SECTION TITLE ===== */}
@@ -438,13 +434,7 @@ export default function Home() {
                 {/* Intercalated Ad Banner — appears after every 4th article */}
                 {(index + 1) % 4 === 0 && index < filteredArticles.length - 1 && (
                   <div className="w-full flex justify-center my-6 px-2">
-                    <div className="w-full max-w-full aspect-[728/90] flex items-center justify-center">
-                      <img
-                        src={getAdByRotation('horizontal', 0).url}
-                        alt={getAdByRotation('horizontal', 0).alt}
-                        className="w-full h-auto max-w-[728px] rounded-lg shadow-sm"
-                      />
-                    </div>
+                    <AdBanner placement="middle" fallbackIndex={0} className="w-full max-w-[728px]" />
                   </div>
                 )}
               </div>
@@ -468,13 +458,9 @@ export default function Home() {
               </div>
             </a>
 
-            {/* AD 300x250 — Responsive */}
+            {/* AD 300x250 — Dynamic from DB */}
             <div className="w-full flex justify-center">
-              <img
-                src={getAdByRotation('sidebar', 0).url}
-                alt={getAdByRotation('sidebar', 0).alt}
-                className="w-full max-w-[300px] h-auto rounded-lg shadow-sm"
-              />
+              <AdBanner placement="lateral" fallbackIndex={0} className="w-full max-w-[300px]" />
             </div>
 
             {/* TRENDING TOPICS */}
@@ -577,13 +563,9 @@ export default function Home() {
               )}
             </div>
 
-            {/* AD 300x250 (second) */}
+            {/* AD 300x250 (second) — Dynamic from DB */}
             <div className="w-full flex justify-center">
-              <img
-                src={getAdByRotation('sidebar', 1).url}
-                alt={getAdByRotation('sidebar', 1).alt}
-                className="w-full max-w-[300px] h-auto rounded-lg shadow-sm"
-              />
+              <AdBanner placement="lateral" fallbackIndex={1} className="w-full max-w-[300px]" />
             </div>
 
           </aside>
