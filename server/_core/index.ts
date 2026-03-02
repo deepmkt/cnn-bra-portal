@@ -9,6 +9,35 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { fetchAndPublishGlobalNews } from "../globalNewsFetcher";
 
+// ===== ADMIN SUBDOMAIN RESTRICTION =====
+// In production, the admin panel (/admin) is only accessible from admin.cnnbra.com.br.
+// Requests to /admin from any other host are redirected there automatically.
+const ADMIN_SUBDOMAIN = "admin.cnnbra.com.br";
+const PUBLIC_DOMAIN = "cnnbra.com.br";
+
+/**
+ * Returns true if the incoming request originates from the admin subdomain.
+ * In development mode every host is allowed so local testing still works.
+ */
+function isAdminSubdomain(req: express.Request): boolean {
+  if (process.env.NODE_ENV !== "production") return true;
+  // Respect reverse-proxy forwarded host header (Manus / Nginx)
+  const host = (req.headers["x-forwarded-host"] as string) || req.headers.host || "";
+  const hostname = host.split(":")[0].toLowerCase();
+  return hostname === ADMIN_SUBDOMAIN;
+}
+
+/**
+ * Returns true if the incoming request originates from the public portal domain
+ * (cnnbra.com.br or www.cnnbra.com.br) — used to block admin routes there.
+ */
+function isPublicDomain(req: express.Request): boolean {
+  if (process.env.NODE_ENV !== "production") return false;
+  const host = (req.headers["x-forwarded-host"] as string) || req.headers.host || "";
+  const hostname = host.split(":")[0].toLowerCase();
+  return hostname === PUBLIC_DOMAIN || hostname === `www.${PUBLIC_DOMAIN}`;
+}
+
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
     const server = net.createServer();
@@ -31,11 +60,35 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+  // ── Admin subdomain guard ────────────────────────────────────────────────
+  // Redirect /admin requests to admin.cnnbra.com.br when accessed elsewhere.
+  app.use("/admin", (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (!isAdminSubdomain(req)) {
+      const targetPath = req.path === "/" ? "" : req.path;
+      return res.redirect(301, `https://${ADMIN_SUBDOMAIN}/admin${targetPath}`);
+    }
+    next();
+  });
+
+  // Block admin tRPC procedures when called from the public domain.
+  // The adminProcedure middleware already enforces auth, but this adds an
+  // extra network-level layer so admin API endpoints are unreachable from
+  // the public portal entirely.
+  app.use("/api/trpc/admin", (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (isPublicDomain(req)) {
+      return res.status(403).json({ error: "Admin API not available on this domain." });
+    }
+    next();
+  });
+
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+
   // tRPC API
   app.use(
     "/api/trpc",
@@ -44,6 +97,7 @@ async function startServer() {
       createContext,
     })
   );
+
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
@@ -60,6 +114,9 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+    if (process.env.NODE_ENV === "production") {
+      console.log(`[Admin] Panel restricted to https://${ADMIN_SUBDOMAIN}/admin`);
+    }
   });
 
   // ===== CRON: Auto-fetch global news every 1 hour =====
@@ -77,7 +134,7 @@ async function startServer() {
     }
   }, 30_000);
 
-  // Run first fetch after 120 seconds (let server stabilize + image fix)
+  // Run first fetch after 60 seconds (let server stabilize + image fix)
   setTimeout(async () => {
     console.log("[Cron] Running initial global news fetch...");
     try {

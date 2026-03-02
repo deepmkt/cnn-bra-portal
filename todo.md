@@ -339,3 +339,9 @@
 ### 6. Importação de Dados
 - [x] Upload de arquivo XML/JSON com histórico de matérias WordPress
 - [x] Parser e importação de posts do backup WordPress para o banco de dados
+
+## Sprint 23 — Restrição do Painel Admin ao Subdomínio admin.cnnbra.com.br
+
+- [x] Middleware no servidor: bloquear acesso a /admin e /api/trpc (rotas admin) fora do subdomínio admin.cnnbra.com.br
+- [x] Frontend: redirecionar /admin para admin.cnnbra.com.br se acessado em outro domínio
+- [x] Garantir que o portal público (cnnbra.com.br) redirecione /admin para admin.cnnbra.com.br
