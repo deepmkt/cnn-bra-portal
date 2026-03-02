@@ -58,10 +58,37 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+/**
+ * HomeOrAdminRedirect — renders the Home page normally on the public domain,
+ * but redirects to /admin when visited on the admin subdomain.
+ */
+function HomeOrAdminRedirect() {
+  useEffect(() => {
+    const hostname = window.location.hostname.toLowerCase();
+    if (hostname === ADMIN_SUBDOMAIN) {
+      window.location.replace("/admin");
+    }
+  }, []);
+
+  // Show redirect screen on admin subdomain
+  if (window.location.hostname.toLowerCase() === ADMIN_SUBDOMAIN) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#001c56]">
+        <div className="text-center text-white">
+          <div className="animate-spin w-10 h-10 border-4 border-white border-t-transparent rounded-full mx-auto mb-4" />
+          <p className="text-sm opacity-75">Redirecionando para o painel administrativo…</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <Home />;
+}
+
 function Router() {
   return (
     <Switch>
-      <Route path={"/"} component={Home} />
+      <Route path={"/"} component={HomeOrAdminRedirect} />
       <Route path={"/admin"}>
         <AdminGuard>
           <Suspense fallback={<LazyFallback />}><Admin /></Suspense>

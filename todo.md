@@ -345,3 +345,8 @@
 - [x] Middleware no servidor: bloquear acesso a /admin e /api/trpc (rotas admin) fora do subdomínio admin.cnnbra.com.br
 - [x] Frontend: redirecionar /admin para admin.cnnbra.com.br se acessado em outro domínio
 - [x] Garantir que o portal público (cnnbra.com.br) redirecione /admin para admin.cnnbra.com.br
+
+## Sprint 24 — Redirecionamento Automático admin.cnnbra.com.br → /admin
+
+- [x] Adicionar middleware no servidor: quando hostname for admin.cnnbra.com.br e path for /, redirecionar para /admin
+- [x] Garantir que admin.cnnbra.com.br/ vá direto para o painel de login

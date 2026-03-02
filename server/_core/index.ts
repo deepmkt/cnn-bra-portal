@@ -64,8 +64,16 @@ async function startServer() {
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  // ── Admin subdomain guard ──────────────────────────────────────────────────
+  // When the admin subdomain is accessed at root (/), redirect to /admin.
+  // This ensures admin.cnnbra.com.br goes straight to the admin panel.
+  app.use("/", (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (isAdminSubdomain(req) && req.path === "/") {
+      return res.redirect(302, "/admin");
+    }
+    next();
+  });
 
-  // ── Admin subdomain guard ────────────────────────────────────────────────
   // Redirect /admin requests to admin.cnnbra.com.br when accessed elsewhere.
   app.use("/admin", (req: express.Request, res: express.Response, next: express.NextFunction) => {
     if (!isAdminSubdomain(req)) {
@@ -74,7 +82,6 @@ async function startServer() {
     }
     next();
   });
-
   // Block admin tRPC procedures when called from the public domain.
   // The adminProcedure middleware already enforces auth, but this adds an
   // extra network-level layer so admin API endpoints are unreachable from
