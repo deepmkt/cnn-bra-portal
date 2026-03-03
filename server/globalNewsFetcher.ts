@@ -246,10 +246,14 @@ async function scrapeArticle(url: string): Promise<{ content: string; imageUrl: 
       }
       
       // Skip Google News logos and other known bad patterns
-      if (absoluteUrl.includes("news.google.com")) continue;
-      if (absoluteUrl.includes("gstatic.com")) continue;
-      if (absoluteUrl.includes("google.com/images/branding")) continue;
-      if (absoluteUrl.includes("play-lh.googleusercontent.com")) continue;
+      const isGoogleImage = [
+        "news.google.com",
+        "gstatic.com",
+        "googleusercontent.com",
+        "google.com/images",
+        "google.com/logos",
+      ].some(d => absoluteUrl.includes(d));
+      if (isGoogleImage) continue;
       
       // Accept the first valid-looking image URL (no HEAD request needed for og:image)
       imageUrl = absoluteUrl;
@@ -308,24 +312,35 @@ async function scrapeArticle(url: string): Promise<{ content: string; imageUrl: 
  */
 async function validateImageUrl(imageUrl: string): Promise<string | null> {
   try {
-    // Reject Google News logos immediately
-    if (imageUrl.includes("gstatic.com") || imageUrl.includes("googleusercontent.com")) {
+    // Reject Google logos, icons and news thumbnails immediately
+    const googleDomains = [
+      "gstatic.com",
+      "googleusercontent.com",
+      "news.google.com",
+      "google.com/images",
+      "google.com/logos",
+      "lh3.googleusercontent.com",
+      "lh4.googleusercontent.com",
+      "lh5.googleusercontent.com",
+      "lh6.googleusercontent.com",
+    ];
+    if (googleDomains.some(domain => imageUrl.includes(domain))) {
       console.log(`[GlobalNews] Rejected Google logo/icon: ${imageUrl}`);
       return null;
     }
     
-    // Check if URL is valid and has acceptable image extension
+    // Check if URL is valid
     const url = new URL(imageUrl);
-    const validExtensions = [".jpg", ".jpeg", ".png", ".webp", ".avif"];
-    const hasValidExt = validExtensions.some(ext => url.pathname.toLowerCase().endsWith(ext));
     
-    // Also accept URLs with image query params (e.g., ?format=jpg)
-    const hasImageParam = url.searchParams.has("format") || url.searchParams.has("auto");
-    
-    if (!hasValidExt && !hasImageParam) {
-      console.log(`[GlobalNews] Image URL has invalid extension: ${imageUrl}`);
+    // Reject URLs that are clearly NOT images (documents, scripts, pages)
+    const badExtensions = [".pdf", ".html", ".htm", ".js", ".css", ".xml", ".json", ".txt", ".zip"];
+    const isBadExt = badExtensions.some(ext => url.pathname.toLowerCase().endsWith(ext));
+    if (isBadExt) {
+      console.log(`[GlobalNews] Image URL has bad extension: ${imageUrl}`);
       return null;
     }
+    // Note: Many news sites use URLs without .jpg/.png extension (G1, UOL, Reuters, etc.)
+    // so we do NOT reject based on missing image extension — we rely on content-type header instead
     
     // Quick HEAD request to verify image is accessible and check size
     const controller = new AbortController();
@@ -647,11 +662,11 @@ export async function fetchAndPublishGlobalNews(): Promise<{ imported: number; e
         let finalImageUrl: string | null = null;
         if (scraped.imageUrl) {
           finalImageUrl = await validateImageUrl(scraped.imageUrl);
-          
-          // If validation fails, try using the URL anyway as fallback
+          // NOTE: Do NOT fall back to scraped.imageUrl if validation fails —
+          // a failed validation means the image is a Google logo or inaccessible.
+          // We prefer the Unsplash placeholder over a broken/wrong image.
           if (!finalImageUrl) {
-            console.log(`[GlobalNews] Image validation failed, using original URL anyway`);
-            finalImageUrl = scraped.imageUrl;
+            console.log(`[GlobalNews] Image validation failed for: ${scraped.imageUrl} — will use placeholder`);
           }
         }
         

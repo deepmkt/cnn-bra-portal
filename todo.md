@@ -391,3 +391,9 @@
 - [x] Painel admin: campo de tags com autocomplete e adição manual também disponível
 - [x] Pipeline global: auto-tagging automático ao importar notícias globais (sem interação manual)
 - [x] Garantir que tags sejam salvas corretamente no banco ao criar/editar artigos
+
+## Sprint 28 — Correção Definitiva de Imagens (Logo Google News)
+
+- [x] Correção 1: Substituir validação de extensão por rejeição de extensões ruins (não rejeitar URLs sem .jpg/.png)
+- [x] Correção 2: Remover fallback que usa imagem inválida (logo Google) mesmo após rejeição
+- [x] Correção 3: Ampliar lista de domínios Google rejeitados (news.google.com, google.com/images)
