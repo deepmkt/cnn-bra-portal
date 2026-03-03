@@ -359,3 +359,26 @@
 - [x] Rota tRPC: articles.getHero para buscar matérias marcadas como hero
 - [x] Painel admin: aba "Hero/Carrossel" com lista de matérias e toggle para marcar como hero (máx. 5)
 - [x] Home: carrossel usa apenas matérias com isHero=true (fallback para mais recentes se vazio)
+
+## Sprint 26 — Banners Individuais, Sidebar de Notícia e Tags Automáticas
+
+### Publicidade — Gestão Individual por Posição
+- [x] Aba Publicidade: listar banners agrupados por posição (home-top, home-mid, home-sidebar, article-mid, article-sidebar)
+- [x] Permitir adicionar/editar/remover banners individualmente por posição
+- [x] Campo de link de destino por banner
+- [x] Campo de tempo de exibição (segundos) por banner
+- [x] Suporte a código AdSense por posição
+
+### Página de Notícia — Sidebar Completa
+- [x] Sidebar fixa na página de artigo com: lista de notícias recentes para navegar
+- [x] Sidebar: banners publicitários (article-sidebar)
+- [x] Sidebar: formulário de inscrição na newsletter
+- [x] Sidebar: botão de entrada no canal do WhatsApp
+- [x] Banner no meio do conteúdo do artigo (article-mid)
+
+### Sistema de Tags e Sugestões
+- [x] Verificar se sistema de tags já existe no schema
+- [x] Auto-tagging via IA ao criar/importar artigos (baseado em título, categoria e conteúdo)
+- [x] Exibir tags clicáveis no final do artigo
+- [x] Sugestões de posts semelhantes no fim do post baseadas em tags em comum
+- [x] Rota tRPC: articles.related para buscar artigos com tags semelhantes

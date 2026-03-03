@@ -1,0 +1,1 @@
+ALTER TABLE `ads` MODIFY COLUMN `placement` enum('home-top','home-mid','home-sidebar','article-mid','article-sidebar','horizontal','lateral','middle') NOT NULL DEFAULT 'home-top';

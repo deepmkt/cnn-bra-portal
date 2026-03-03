@@ -402,7 +402,7 @@ export const appRouter = router({
     create: adminProcedure
       .input(z.object({
         type: z.enum(["google", "custom"]).default("custom"),
-        placement: z.enum(["horizontal", "lateral", "middle"]).default("horizontal"),
+        placement: z.enum(["home-top", "home-mid", "home-sidebar", "article-mid", "article-sidebar", "horizontal", "lateral", "middle"]).default("home-top"),
         imageUrl: z.string().optional(),
         adCode: z.string().optional(),
         link: z.string().optional(),
@@ -420,7 +420,7 @@ export const appRouter = router({
       .input(z.object({
         id: z.number(),
         type: z.enum(["google", "custom"]).optional(),
-        placement: z.enum(["horizontal", "lateral", "middle"]).optional(),
+        placement: z.enum(["home-top", "home-mid", "home-sidebar", "article-mid", "article-sidebar", "horizontal", "lateral", "middle"]).optional(),
         imageUrl: z.string().optional(),
         adCode: z.string().optional(),
         link: z.string().optional(),

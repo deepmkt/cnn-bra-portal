@@ -156,7 +156,7 @@ export type InsertUserPreference = typeof userPreferences.$inferInsert;
 export const ads = mysqlTable("ads", {
   id: int("id").autoincrement().primaryKey(),
   type: mysqlEnum("type", ["google", "custom"]).default("custom").notNull(),
-  placement: mysqlEnum("placement", ["horizontal", "lateral", "middle"]).default("horizontal").notNull(),
+  placement: mysqlEnum("placement", ["home-top", "home-mid", "home-sidebar", "article-mid", "article-sidebar", "horizontal", "lateral", "middle"]).default("home-top").notNull(),
   imageUrl: text("imageUrl"),
   adCode: text("adCode"), // Google AdSense or custom HTML/JS code
   link: text("link"),

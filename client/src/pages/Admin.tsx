@@ -465,9 +465,23 @@ function MediaTab() {
 
 // ===== ADS TAB =====
 function AdsTab() {
+  const AD_PLACEMENTS = [
+    { key: "home-top",        label: "Home — Topo Central",      desc: "728×90 · Abaixo do hero principal",          color: "bg-blue-50 border-blue-200" },
+    { key: "home-mid",        label: "Home — Meio do Feed",       desc: "728×90 · Entre os blocos de notícias",        color: "bg-indigo-50 border-indigo-200" },
+    { key: "home-sidebar",    label: "Home — Barra Lateral",      desc: "300×250 · Sidebar da página inicial",         color: "bg-purple-50 border-purple-200" },
+    { key: "article-mid",     label: "Notícia — Meio do Conteúdo",desc: "728×90 · No meio do texto do artigo",         color: "bg-orange-50 border-orange-200" },
+    { key: "article-sidebar", label: "Notícia — Barra Lateral",   desc: "300×250 · Sidebar das páginas de notícia",    color: "bg-rose-50 border-rose-200" },
+  ] as const;
+
   const [showForm, setShowForm] = useState(false);
   const [editingAd, setEditingAd] = useState<any>(null);
-  const [form, setForm] = useState({ type: "custom" as "custom" | "google", placement: "horizontal" as "horizontal" | "lateral" | "middle", imageUrl: "", adCode: "", link: "", sponsor: "", duration: 5000, position: 0, isActive: true });
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [form, setForm] = useState({
+    type: "custom" as "custom" | "google",
+    placement: "home-top" as string,
+    imageUrl: "", adCode: "", link: "", sponsor: "", duration: 5000, position: 0, isActive: true
+  });
+  const [uploading, setUploading] = useState(false);
   const utils = trpc.useUtils();
   const { data: ads = [], isLoading } = trpc.ads.list.useQuery();
   const createMut = trpc.ads.create.useMutation({
@@ -483,7 +497,7 @@ function AdsTab() {
   });
   const toggleMut = trpc.ads.update.useMutation({ onSuccess: () => utils.ads.list.invalidate() });
 
-  const resetForm = () => setForm({ type: "custom", placement: "horizontal", imageUrl: "", adCode: "", link: "", sponsor: "", duration: 5000, position: 0, isActive: true });
+  const resetForm = () => setForm({ type: "custom", placement: activeSection || "home-top", imageUrl: "", adCode: "", link: "", sponsor: "", duration: 5000, position: 0, isActive: true });
 
   const openEdit = (ad: any) => {
     setEditingAd(ad);
@@ -491,45 +505,63 @@ function AdsTab() {
     setShowForm(true);
   };
 
-  const handleSave = () => {
-    if (editingAd) updateMut.mutate({ id: editingAd.id, ...form });
-    else createMut.mutate(form);
+  const openNew = (placementKey: string) => {
+    setEditingAd(null);
+    setActiveSection(placementKey);
+    setForm({ type: "custom", placement: placementKey, imageUrl: "", adCode: "", link: "", sponsor: "", duration: 5000, position: 0, isActive: true });
+    setShowForm(true);
   };
 
-  const placementLabels: Record<string, string> = { horizontal: "Topo Central (728×90)", middle: "Meio da Notícia (728×90)", lateral: "Barra Lateral (300×250)" };
+  const handleSave = () => {
+    if (editingAd) updateMut.mutate({ id: editingAd.id, ...form } as any);
+    else createMut.mutate(form as any);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/media/upload", { method: "POST", body: fd, credentials: "include" });
+      const json = await res.json();
+      if (json.url) setForm(f => ({ ...f, imageUrl: json.url }));
+      else toast.error("Falha no upload");
+    } catch { toast.error("Erro no upload"); }
+    setUploading(false);
+  };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-black text-gray-800">Gestão de Publicidade</h2>
-        <Button onClick={() => { setEditingAd(null); resetForm(); setShowForm(true); }}
-          className="bg-[#001c56] hover:bg-[#002a7a] text-white font-bold">
-          <Plus className="w-4 h-4 mr-1" /> Novo Anúncio
-        </Button>
+        <div>
+          <h2 className="text-xl font-black text-gray-800">Gestão de Publicidade</h2>
+          <p className="text-sm text-gray-500 mt-0.5">Gerencie banners individualmente por posição no site</p>
+        </div>
       </div>
 
+      {/* Form Modal */}
       {showForm && (
-        <div className="bg-white rounded-xl border p-6 shadow-sm space-y-4">
+        <div className="bg-white rounded-xl border-2 border-[#001c56] p-6 shadow-lg space-y-4">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-black text-lg">{editingAd ? "Editar Anúncio" : "Novo Anúncio"}</h3>
             <button onClick={() => { setShowForm(false); setEditingAd(null); resetForm(); }}><X className="w-5 h-5" /></button>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="font-semibold text-sm">Tipo</Label>
+              <Label className="font-semibold text-sm">Tipo de Anúncio</Label>
               <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value as any }))}
                 className="mt-1 w-full border rounded-lg px-3 py-2 text-sm bg-white">
                 <option value="custom">Banner Próprio (imagem/GIF)</option>
-                <option value="google">Google AdSense (código)</option>
+                <option value="google">Google AdSense (código HTML)</option>
               </select>
             </div>
             <div>
-              <Label className="font-semibold text-sm">Posição</Label>
-              <select value={form.placement} onChange={e => setForm(f => ({ ...f, placement: e.target.value as any }))}
+              <Label className="font-semibold text-sm">Posição no Site</Label>
+              <select value={form.placement} onChange={e => setForm(f => ({ ...f, placement: e.target.value }))}
                 className="mt-1 w-full border rounded-lg px-3 py-2 text-sm bg-white">
-                <option value="horizontal">Topo Central (728×90)</option>
-                <option value="middle">Meio da Notícia (728×90)</option>
-                <option value="lateral">Barra Lateral (300×250)</option>
+                {AD_PLACEMENTS.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}
               </select>
             </div>
           </div>
@@ -537,43 +569,59 @@ function AdsTab() {
           {form.type === "custom" ? (
             <>
               <div>
-                <Label className="font-semibold text-sm">URL da Imagem/GIF</Label>
-                <Input value={form.imageUrl} onChange={e => setForm(f => ({ ...f, imageUrl: e.target.value }))} placeholder="https://..." className="mt-1" />
-                {form.imageUrl && <img src={form.imageUrl} alt="Preview" className="mt-2 h-16 object-contain rounded border" />}
+                <Label className="font-semibold text-sm">Imagem / GIF do Banner</Label>
+                <div className="mt-1 flex gap-2">
+                  <Input value={form.imageUrl} onChange={e => setForm(f => ({ ...f, imageUrl: e.target.value }))} placeholder="Cole a URL ou faça upload →" className="flex-1" />
+                  <label className="cursor-pointer">
+                    <span className="inline-flex items-center gap-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-semibold border transition-colors">
+                      {uploading ? <div className="animate-spin w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full" /> : <Upload className="w-4 h-4" />}
+                      Upload
+                    </span>
+                    <input type="file" accept="image/*,.gif" className="hidden" onChange={handleImageUpload} />
+                  </label>
+                </div>
+                {form.imageUrl && (
+                  <div className="mt-2 p-2 bg-gray-50 rounded-lg border">
+                    <img src={form.imageUrl} alt="Preview" className="max-h-20 object-contain rounded" />
+                  </div>
+                )}
               </div>
-              <div>
-                <Label className="font-semibold text-sm">Link de Destino</Label>
-                <Input value={form.link} onChange={e => setForm(f => ({ ...f, link: e.target.value }))} placeholder="https://..." className="mt-1" />
-              </div>
-              <div>
-                <Label className="font-semibold text-sm">Anunciante / Patrocinador</Label>
-                <Input value={form.sponsor} onChange={e => setForm(f => ({ ...f, sponsor: e.target.value }))} placeholder="Nome do anunciante..." className="mt-1" />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="font-semibold text-sm">Link de Destino (ao clicar)</Label>
+                  <Input value={form.link} onChange={e => setForm(f => ({ ...f, link: e.target.value }))} placeholder="https://..." className="mt-1" />
+                </div>
+                <div>
+                  <Label className="font-semibold text-sm">Anunciante / Patrocinador</Label>
+                  <Input value={form.sponsor} onChange={e => setForm(f => ({ ...f, sponsor: e.target.value }))} placeholder="Nome do anunciante..." className="mt-1" />
+                </div>
               </div>
             </>
           ) : (
             <div>
               <Label className="font-semibold text-sm">Código Google AdSense</Label>
               <Textarea value={form.adCode} onChange={e => setForm(f => ({ ...f, adCode: e.target.value }))}
-                placeholder="<ins class='adsbygoogle'...></ins><script>...</script>" className="mt-1 font-mono text-xs" rows={6} />
-              <p className="text-xs text-gray-400 mt-1">Cole aqui o código completo do bloco de anúncio do Google AdSense.</p>
+                placeholder="<ins class='adsbygoogle'...></ins>" className="mt-1 font-mono text-xs" rows={6} />
+              <p className="text-xs text-gray-400 mt-1">Cole o código completo do bloco de anúncio do Google AdSense.</p>
             </div>
           )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="font-semibold text-sm">Duração na Rotação (ms)</Label>
+              <Label className="font-semibold text-sm">Duração na Rotação</Label>
               <Input type="number" value={form.duration} onChange={e => setForm(f => ({ ...f, duration: Number(e.target.value) }))} min={1000} step={500} className="mt-1" />
               <p className="text-xs text-gray-400 mt-0.5">{(form.duration / 1000).toFixed(1)} segundos</p>
             </div>
             <div>
               <Label className="font-semibold text-sm">Ordem de Exibição</Label>
               <Input type="number" value={form.position} onChange={e => setForm(f => ({ ...f, position: Number(e.target.value) }))} min={0} className="mt-1" />
+              <p className="text-xs text-gray-400 mt-0.5">Menor número = exibido primeiro</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <Switch checked={form.isActive} onCheckedChange={v => setForm(f => ({ ...f, isActive: v }))} />
-            <Label className="text-sm">Anúncio ativo</Label>
+            <Label className="text-sm font-medium">Anúncio ativo (visível no site)</Label>
           </div>
 
           <div className="flex gap-2 pt-2">
@@ -586,50 +634,66 @@ function AdsTab() {
         </div>
       )}
 
+      {/* Sections by placement */}
       {isLoading ? (
         <div className="flex justify-center py-8"><div className="animate-spin w-8 h-8 border-4 border-[#001c56] border-t-transparent rounded-full" /></div>
-      ) : ads.length === 0 ? (
-        <div className="text-center py-12 text-gray-400">
-          <Megaphone className="w-12 h-12 mx-auto mb-2 opacity-30" /><p>Nenhum anúncio cadastrado.</p>
-        </div>
       ) : (
-        <div className="space-y-3">
-          {(["horizontal", "middle", "lateral"] as const).map(placement => {
-            const placementAds = ads.filter((a: any) => a.placement === placement);
-            if (placementAds.length === 0) return null;
+        <div className="space-y-4">
+          {AD_PLACEMENTS.map(({ key, label, desc, color }) => {
+            const placementAds = ads.filter((a: any) => a.placement === key || (key === "home-top" && a.placement === "horizontal") || (key === "article-mid" && a.placement === "middle") || (key === "home-sidebar" && a.placement === "lateral"));
             return (
-              <div key={placement}>
-                <h3 className="font-bold text-sm text-gray-500 mb-2 uppercase tracking-wider">{placementLabels[placement]}</h3>
-                <div className="space-y-2">
-                  {placementAds.map((ad: any) => (
-                    <div key={ad.id} className={`bg-white rounded-xl border p-4 flex items-center gap-3 ${!ad.isActive ? "opacity-50" : ""}`}>
-                      {ad.imageUrl && <img src={ad.imageUrl} alt={ad.sponsor || "Ad"} className="h-12 w-20 object-contain rounded border shrink-0" />}
-                      {ad.type === "google" && !ad.imageUrl && <div className="h-12 w-20 bg-blue-50 rounded border flex items-center justify-center shrink-0"><Code className="w-6 h-6 text-blue-400" /></div>}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${ad.type === "google" ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"}`}>
-                            {ad.type === "google" ? "Google AdSense" : "Banner Próprio"}
-                          </span>
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${ad.isActive ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-500"}`}>
-                            {ad.isActive ? "Ativo" : "Inativo"}
-                          </span>
-                          <span className="text-xs text-gray-400">{(ad.duration / 1000).toFixed(1)}s</span>
-                        </div>
-                        <p className="text-sm font-semibold text-gray-700 mt-0.5">{ad.sponsor || ad.link || "Sem nome"}</p>
-                      </div>
-                      <div className="flex gap-1 shrink-0">
-                        <Button size="sm" variant="ghost" onClick={() => toggleMut.mutate({ id: ad.id, isActive: !ad.isActive })}>
-                          {ad.isActive ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => openEdit(ad)}><Edit className="w-4 h-4" /></Button>
-                        <Button size="sm" variant="ghost" className="text-red-500"
-                          onClick={() => { if (confirm("Excluir anúncio?")) deleteMut.mutate({ id: ad.id }); }}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+              <div key={key} className={`rounded-xl border-2 p-4 ${color}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h3 className="font-black text-sm text-gray-800">{label}</h3>
+                    <p className="text-xs text-gray-500">{desc} · {placementAds.length} anúncio{placementAds.length !== 1 ? "s" : ""}</p>
+                  </div>
+                  <Button size="sm" onClick={() => openNew(key)}
+                    className="bg-[#001c56] hover:bg-[#002a7a] text-white font-bold text-xs h-8">
+                    <Plus className="w-3 h-3 mr-1" /> Adicionar
+                  </Button>
                 </div>
+                {placementAds.length === 0 ? (
+                  <div className="text-center py-4 text-gray-400 text-sm border-2 border-dashed border-gray-200 rounded-lg">
+                    Nenhum anúncio nesta posição. Clique em "Adicionar" para criar.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {placementAds.map((ad: any) => (
+                      <div key={ad.id} className={`bg-white rounded-lg border p-3 flex items-center gap-3 ${!ad.isActive ? "opacity-50" : ""}`}>
+                        {ad.imageUrl && <img src={ad.imageUrl} alt={ad.sponsor || "Ad"} className="h-12 w-20 object-contain rounded border shrink-0 bg-gray-50" />}
+                        {ad.type === "google" && !ad.imageUrl && (
+                          <div className="h-12 w-20 bg-blue-50 rounded border flex items-center justify-center shrink-0">
+                            <Code className="w-6 h-6 text-blue-400" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${ad.type === "google" ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"}`}>
+                              {ad.type === "google" ? "AdSense" : "Banner"}
+                            </span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${ad.isActive ? "bg-green-50 text-green-600 font-semibold" : "bg-gray-100 text-gray-500"}`}>
+                              {ad.isActive ? "● Ativo" : "○ Inativo"}
+                            </span>
+                            <span className="text-xs text-gray-400">{(ad.duration / 1000).toFixed(1)}s</span>
+                          </div>
+                          <p className="text-sm font-semibold text-gray-700 mt-0.5 truncate">{ad.sponsor || ad.link || "Sem nome"}</p>
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          <Button size="sm" variant="ghost" title={ad.isActive ? "Desativar" : "Ativar"}
+                            onClick={() => toggleMut.mutate({ id: ad.id, isActive: !ad.isActive })}>
+                            {ad.isActive ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </Button>
+                          <Button size="sm" variant="ghost" title="Editar" onClick={() => openEdit(ad)}><Edit className="w-4 h-4" /></Button>
+                          <Button size="sm" variant="ghost" className="text-red-500" title="Excluir"
+                            onClick={() => { if (confirm("Excluir este anúncio?")) deleteMut.mutate({ id: ad.id }); }}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}
