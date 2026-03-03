@@ -1120,6 +1120,75 @@ export const appRouter = router({
       return { fixed };
     }),
 
+    fixAllImages: adminProcedure.mutation(async () => {
+      // Fix images for ALL articles (any category) with bad/missing images
+      const { scrapeArticle, validateImageUrl } = await import("./globalNewsFetcher") as any;
+      const { articles: articlesTable, globalNewsCache: cacheTable } = await import("../drizzle/schema");
+      const { eq } = await import("drizzle-orm");
+      const { getDb } = await import("./db");
+      const dbConn = await getDb();
+      if (!dbConn) return { fixed: 0, total: 0, errors: 0 };
+
+      const BAD_IMAGE_PATTERNS = [
+        "gstatic.com",
+        "googleusercontent.com",
+        "news.google.com",
+        "google.com/images",
+        "global-news/ai-",
+        "unsplash.com/photo-1585829365295",
+      ];
+
+      const allArticles = await dbConn.select().from(articlesTable);
+      const badArticles = allArticles.filter((a: any) => {
+        const img = a.imageUrl || "";
+        return !img || BAD_IMAGE_PATTERNS.some((p: string) => img.includes(p));
+      });
+
+      let fixed = 0;
+      let errors = 0;
+      const total = badArticles.length;
+
+      for (const article of badArticles) {
+        try {
+          // Try to find original URL from globalNewsCache by title match
+          const cached = await dbConn.select()
+            .from(cacheTable)
+            .where(eq(cacheTable.originalTitle, article.title))
+            .limit(1);
+
+          let sourceUrl: string | null = null;
+          if (cached.length > 0 && cached[0].originalUrl && !cached[0].originalUrl.includes("news.google.com")) {
+            sourceUrl = cached[0].originalUrl;
+          } else {
+            // Try to extract source URL from article content (source link at bottom)
+            const urlMatch = article.content?.match(/href="(https?:\/\/(?!news\.google)[^"]+)"[^>]*>[^<]*<\/a><\/p>/);
+            if (urlMatch) sourceUrl = urlMatch[1];
+          }
+
+          if (!sourceUrl) { errors++; continue; }
+
+          const scraped = await scrapeArticle(sourceUrl);
+          if (!scraped?.imageUrl) { errors++; continue; }
+
+          const validImg = await validateImageUrl(scraped.imageUrl);
+          if (!validImg) { errors++; continue; }
+
+          await dbConn.update(articlesTable)
+            .set({ imageUrl: validImg })
+            .where(eq(articlesTable.id, article.id));
+
+          fixed++;
+          await new Promise(r => setTimeout(r, 1500));
+        } catch (e) {
+          console.error(`[FixAllImages] Error on article ${article.id}:`, e);
+          errors++;
+        }
+      }
+
+      console.log(`[FixAllImages] Done: ${fixed} fixed, ${errors} errors out of ${total} bad images`);
+      return { fixed, errors, total };
+    }),
+
     fixSourceLinks: adminProcedure.mutation(async () => {
       const { fixAllSourceLinks } = await import("./fixSourceLinks");
       const fixed = await fixAllSourceLinks();

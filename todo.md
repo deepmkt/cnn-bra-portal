@@ -397,3 +397,9 @@
 - [x] Correção 1: Substituir validação de extensão por rejeição de extensões ruins (não rejeitar URLs sem .jpg/.png)
 - [x] Correção 2: Remover fallback que usa imagem inválida (logo Google) mesmo após rejeição
 - [x] Correção 3: Ampliar lista de domínios Google rejeitados (news.google.com, google.com/images)
+
+## Sprint 29 — Botão "Corrigir Imagens" no Painel Admin
+
+- [x] Rota tRPC globalNews.fixAllImages: reprocessar todos os artigos com imagem inválida (logo Google, vazia ou placeholder)
+- [x] Botão "Corrigir Imagens Agora" no Dashboard do painel admin com spinner de carregamento
+- [x] Exibir contagem de artigos corrigidos, sem fonte e total inválidas ao final do processo

@@ -1038,9 +1038,23 @@ function ImportTab() {
 // ===== DASHBOARD TAB =====
 function DashboardTab() {
   const { data: stats } = trpc.stats.overview.useQuery();
+  const [fixResult, setFixResult] = useState<{ fixed: number; errors: number; total: number } | null>(null);
+
+  const fixAllImages = trpc.globalNews.fixAllImages.useMutation({
+    onSuccess: (data: { fixed: number; errors: number; total: number }) => {
+      setFixResult(data);
+      toast.success(`Concluído! ${data.fixed} imagens corrigidas de ${data.total} artigos com imagens inválidas.`);
+    },
+    onError: (err: any) => {
+      toast.error(`Erro ao corrigir imagens: ${err.message}`);
+    },
+  });
+
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-black text-gray-800">Dashboard</h2>
+
+      {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "Notícias", value: stats?.articleCount ?? "—", color: "blue", icon: FileText },
@@ -1057,6 +1071,46 @@ function DashboardTab() {
           </div>
         ))}
       </div>
+
+      {/* Maintenance Tools */}
+      <div className="bg-white rounded-xl border p-6 shadow-sm">
+        <h3 className="font-black text-gray-700 mb-1">Manutenção</h3>
+        <p className="text-sm text-gray-500 mb-4">Ferramentas para corrigir e otimizar o conteúdo do portal.</p>
+
+        {/* Fix All Images */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <Image className="w-5 h-5 text-amber-600 shrink-0" />
+              <span className="font-bold text-gray-800">Corrigir Imagens de Todos os Artigos</span>
+            </div>
+            <p className="text-sm text-gray-500">
+              Varre todos os artigos publicados e substitui imagens inválidas (logo do Google, imagens ausentes)
+              pelas imagens originais das fontes. Pode demorar alguns minutos.
+            </p>
+            {fixResult && (
+              <div className="mt-2 flex flex-wrap gap-4 text-sm">
+                <span className="text-green-600 font-semibold">✓ {fixResult.fixed} corrigidas</span>
+                <span className="text-red-500 font-semibold">✗ {fixResult.errors} sem fonte disponível</span>
+                <span className="text-gray-500">{fixResult.total} total com imagem inválida</span>
+              </div>
+            )}
+          </div>
+          <Button
+            onClick={() => { setFixResult(null); fixAllImages.mutate(); }}
+            disabled={fixAllImages.isPending}
+            className="bg-amber-500 hover:bg-amber-600 text-white whitespace-nowrap shrink-0"
+          >
+            {fixAllImages.isPending ? (
+              <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Corrigindo...</>
+            ) : (
+              <><Image className="w-4 h-4 mr-2" />Corrigir Imagens Agora</>
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {/* Quick Access */}
       <div className="bg-white rounded-xl border p-6 shadow-sm">
         <h3 className="font-black text-gray-700 mb-3">Acesso Rápido</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
