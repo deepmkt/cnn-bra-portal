@@ -193,6 +193,27 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return db.getRevisions(input.articleId);
       }),
+
+    // ── Hero/Carrossel management ─────────────────────────────────────────
+    // Toggle isHero on an article. Max 5 hero articles allowed at once.
+    setHero: adminProcedure
+      .input(z.object({ id: z.number(), isHero: z.boolean() }))
+      .mutation(async ({ input }) => {
+        if (input.isHero) {
+          const currentHeroes = await db.getArticles({ isHero: true });
+          if (currentHeroes.length >= 5) {
+            throw new Error("Limite de 5 matérias no carrossel atingido. Remova uma antes de adicionar outra.");
+          }
+        }
+        await db.updateArticle(input.id, { isHero: input.isHero });
+        return { success: true };
+      }),
+
+    // List all hero articles (admin management)
+    listHero: adminProcedure
+      .query(async () => {
+        return db.getArticles({ isHero: true });
+      }),
   }),
 
   // ===== TAGS =====

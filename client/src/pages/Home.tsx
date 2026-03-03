@@ -67,6 +67,10 @@ export default function Home() {
   const { data: articlesData } = trpc.articles.list.useQuery({ status: "online", limit: 20 });
   const articles = articlesData ?? [];
 
+  // Fetch hero articles (admin-selected for the carousel)
+  // Uses a dedicated query so hero articles are always loaded regardless of the main list limit.
+  const { data: heroArticlesData } = trpc.articles.list.useQuery({ status: "online", isHero: true });
+
   // Fetch ticker
   const { data: tickerData } = trpc.ticker.list.useQuery();
   const tickerItems = tickerData ?? [];
@@ -94,18 +98,25 @@ export default function Home() {
     );
   }
 
-  const heroArticles = filteredArticles.filter(a => a.isHero);
-  const currentHero = heroArticles.length > 0 ? heroArticles[heroIndex % heroArticles.length] : filteredArticles[0];
+  // Use admin-selected hero articles for the carousel.
+  // When a category filter is active, also filter heroes by that category.
+  // Fallback: if no hero articles are configured, use the most recent articles.
+  const allHeroArticles = heroArticlesData ?? [];
+  const heroArticles = currentCategory === "home"
+    ? allHeroArticles
+    : allHeroArticles.filter((a: any) => a.category === currentCategory);
+  const carouselArticles = heroArticles.length > 0 ? heroArticles : filteredArticles.slice(0, 5);
+  const currentHero = carouselArticles.length > 0 ? carouselArticles[heroIndex % carouselArticles.length] : filteredArticles[0];
 
   // Hero auto-rotation
   useEffect(() => {
-    if (heroArticles.length <= 1) return;
+    if (carouselArticles.length <= 1) return;
     const interval = setInterval(() => {
-      setHeroIndex(prev => (prev + 1) % heroArticles.length);
+      setHeroIndex(prev => (prev + 1) % carouselArticles.length);
       setHeroZoomed(false);
     }, 10000);
     return () => clearInterval(interval);
-  }, [heroArticles.length]);
+  }, [carouselArticles.length]);
 
   useEffect(() => {
     setHeroZoomed(false);
@@ -313,11 +324,11 @@ export default function Home() {
                 )}
               </div>
               {/* Hero dots */}
-              {heroArticles.length > 1 && (
+              {carouselArticles.length > 1 && (
                 <div className="absolute bottom-4 right-6 flex gap-1.5">
-                  {heroArticles.map((_, i) => (
+                  {carouselArticles.map((_, i) => (
                     <button key={i} onClick={(e) => { e.stopPropagation(); setHeroIndex(i); }}
-                      className={`w-2 h-2 rounded-full transition-all ${i === heroIndex % heroArticles.length ? "bg-white w-6" : "bg-white/40"}`} />
+                      className={`w-2 h-2 rounded-full transition-all ${i === heroIndex % carouselArticles.length ? "bg-white w-6" : "bg-white/40"}`} />
                   ))}
                 </div>
               )}

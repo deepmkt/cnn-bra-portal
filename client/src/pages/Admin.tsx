@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 // ===== TYPES =====
-type Tab = "dashboard" | "articles" | "media" | "ads" | "ticker" | "seo" | "import" | "comments" | "users" | "ugc" | "shorts" | "gamification";
+type Tab = "dashboard" | "articles" | "hero" | "media" | "ads" | "ticker" | "seo" | "import" | "comments" | "users" | "ugc" | "shorts" | "gamification";
 
 const CATEGORIES = ["GERAL", "POLÍTICA", "ECONOMIA", "ESPORTES", "TECNOLOGIA", "SAÚDE", "ENTRETENIMENTO", "MUNDO", "BRASIL", "DIA A DIA", "GLOBAL"];
 
@@ -969,6 +969,110 @@ function UsersTab() {
   );
 }
 
+// ===== HERO / CARROSSEL TAB =====
+function HeroTab() {
+  const utils = trpc.useUtils();
+  const { data: heroArticles = [], isLoading: heroLoading } = trpc.articles.listHero.useQuery();
+  const { data: allArticles = [], isLoading: allLoading } = trpc.articles.list.useQuery({ status: "online", limit: 50 });
+  const setHeroMut = trpc.articles.setHero.useMutation({
+    onSuccess: () => {
+      toast.success("Carrossel atualizado!");
+      utils.articles.listHero.invalidate();
+      utils.articles.list.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const heroIds = new Set(heroArticles.map((a: any) => a.id));
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-black text-gray-800">Hero / Carrossel da Home</h2>
+        <p className="text-sm text-gray-500 mt-1">
+          Selecione até <strong>5 matérias</strong> para aparecerem no banner principal da página inicial.
+          Se nenhuma for selecionada, as mais recentes serão exibidas automaticamente.
+        </p>
+      </div>
+
+      {/* Current hero articles */}
+      <div className="bg-white rounded-xl border shadow-sm">
+        <div className="p-4 border-b flex items-center gap-2">
+          <Star className="w-5 h-5 text-yellow-500" />
+          <h3 className="font-black text-gray-700">No Carrossel Agora ({heroArticles.length}/5)</h3>
+        </div>
+        {heroLoading ? (
+          <div className="p-8 text-center text-gray-400">Carregando...</div>
+        ) : heroArticles.length === 0 ? (
+          <div className="p-8 text-center text-gray-400">
+            <Star className="w-10 h-10 mx-auto mb-2 opacity-20" />
+            <p className="text-sm">Nenhuma matéria selecionada. As mais recentes serão exibidas.</p>
+          </div>
+        ) : (
+          <div className="divide-y">
+            {heroArticles.map((a: any) => (
+              <div key={a.id} className="p-4 flex items-center gap-4">
+                {a.imageUrl && (
+                  <img src={a.imageUrl} alt="" className="w-16 h-12 object-cover rounded-lg shrink-0" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm text-gray-800 line-clamp-2">{a.title}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{a.category} • {a.publishedAt ? new Date(a.publishedAt).toLocaleDateString("pt-BR") : "Rascunho"}</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-red-500 border-red-200 hover:bg-red-50 shrink-0"
+                  onClick={() => setHeroMut.mutate({ id: a.id, isHero: false })}
+                  disabled={setHeroMut.isPending}
+                >
+                  <StarOff className="w-3 h-3 mr-1" /> Remover
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* All published articles — pick to add to hero */}
+      <div className="bg-white rounded-xl border shadow-sm">
+        <div className="p-4 border-b">
+          <h3 className="font-black text-gray-700">Matérias Publicadas</h3>
+          <p className="text-xs text-gray-400 mt-0.5">Clique em “Adicionar ao Hero” para incluir no carrossel</p>
+        </div>
+        {allLoading ? (
+          <div className="p-8 text-center text-gray-400">Carregando...</div>
+        ) : (
+          <div className="divide-y max-h-[500px] overflow-y-auto">
+            {allArticles.filter((a: any) => !heroIds.has(a.id)).map((a: any) => (
+              <div key={a.id} className="p-4 flex items-center gap-4">
+                {a.imageUrl && (
+                  <img src={a.imageUrl} alt="" className="w-16 h-12 object-cover rounded-lg shrink-0" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm text-gray-800 line-clamp-2">{a.title}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{a.category} • {a.publishedAt ? new Date(a.publishedAt).toLocaleDateString("pt-BR") : ""}</p>
+                </div>
+                <Button
+                  size="sm"
+                  className="bg-yellow-500 hover:bg-yellow-600 text-white shrink-0"
+                  onClick={() => setHeroMut.mutate({ id: a.id, isHero: true })}
+                  disabled={setHeroMut.isPending || heroArticles.length >= 5}
+                >
+                  <Star className="w-3 h-3 mr-1" /> Adicionar
+                </Button>
+              </div>
+            ))}
+            {allArticles.filter((a: any) => !heroIds.has(a.id)).length === 0 && (
+              <div className="p-8 text-center text-gray-400 text-sm">Todas as matérias publicadas já estão no carrossel.</div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ===== MAIN ADMIN COMPONENT =====
 export default function Admin() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean | null>(null);
@@ -1007,6 +1111,7 @@ export default function Admin() {
   const tabs: { id: Tab; label: string; icon: any }[] = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "articles", label: "Notícias", icon: FileText },
+    { id: "hero", label: "Hero/Carrossel", icon: Star },
     { id: "media", label: "Mídia", icon: Image },
     { id: "ads", label: "Publicidade", icon: Megaphone },
     { id: "ticker", label: "Ticker", icon: Type },
@@ -1069,6 +1174,7 @@ export default function Admin() {
         <div className="p-6 md:p-8 pt-16 md:pt-8 max-w-6xl mx-auto">
           {activeTab === "dashboard" && <DashboardTab />}
           {activeTab === "articles" && <ArticlesTab />}
+          {activeTab === "hero" && <HeroTab />}
           {activeTab === "media" && <MediaTab />}
           {activeTab === "ads" && <AdsTab />}
           {activeTab === "ticker" && <TickerTab />}

@@ -350,3 +350,12 @@
 
 - [x] Adicionar middleware no servidor: quando hostname for admin.cnnbra.com.br e path for /, redirecionar para /admin
 - [x] Garantir que admin.cnnbra.com.br/ vá direto para o painel de login
+
+## Sprint 25 — Seleção Manual de Matérias para o Hero/Carrossel
+
+- [x] Verificar se campo isHero já existe no schema de articles
+- [x] Adicionar campo isHero ao schema se necessário e migrar banco
+- [x] Rota tRPC: articles.setHero para marcar/desmarcar matéria como hero
+- [x] Rota tRPC: articles.getHero para buscar matérias marcadas como hero
+- [x] Painel admin: aba "Hero/Carrossel" com lista de matérias e toggle para marcar como hero (máx. 5)
+- [x] Home: carrossel usa apenas matérias com isHero=true (fallback para mais recentes se vazio)
