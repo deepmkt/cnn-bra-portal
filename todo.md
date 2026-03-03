@@ -382,3 +382,12 @@
 - [x] Exibir tags clicáveis no final do artigo
 - [x] Sugestões de posts semelhantes no fim do post baseadas em tags em comum
 - [x] Rota tRPC: articles.related para buscar artigos com tags semelhantes
+
+## Sprint 27 — Auto-Tagging com IA
+
+- [x] Rota tRPC articles.suggestTags: recebe título, resumo e conteúdo, retorna array de tags via LLM
+- [x] Painel admin: botão "Sugerir Tags com IA" no formulário de criação/edição de artigos
+- [x] Painel admin: tags sugeridas aparecem como chips clicáveis para aceitar/rejeitar individualmente
+- [x] Painel admin: campo de tags com autocomplete e adição manual também disponível
+- [x] Pipeline global: auto-tagging automático ao importar notícias globais (sem interação manual)
+- [x] Garantir que tags sejam salvas corretamente no banco ao criar/editar artigos

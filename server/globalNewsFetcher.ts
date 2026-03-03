@@ -378,7 +378,7 @@ REGRAS:
 1. Reescreva o título de forma atraente e jornalística. Use capitalização correta: primeira letra maiúscula, restante em minúsculas, exceto nomes próprios e siglas.
 2. Crie um excerpt/resumo de 1-2 frases
 3. Reescreva o conteúdo completo em 3-6 parágrafos
-4. Identifique até 3 tags/tópicos principais da notícia (escolha entre: economia, saúde, tecnologia, política, esportes, educação, meio-ambiente, cultura, internacional, ciência, segurança, justiça, transporte, energia, agronegócio, turismo, entretenimento)
+4. Identifique entre 3 e 6 tags/tópicos principais da notícia (escolha entre: política, economia, saúde, tecnologia, esportes, educação, meio-ambiente, cultura, internacional, ciência, segurança, justiça, transporte, energia, agronegócio, turismo, entretenimento, governo-federal, congresso, stf, eleições, impostos, inflação, emprego, bolsa-família, sus, pandemia, vacinas, clima, amazônia, petróleo, pré-sal, futebol, olimpíadas, copa, nordeste, sudeste, sul, norte, centro-oeste, breaking-news, exclusivo, análise, entrevista, opinião)
 5. NÃO inclua a fonte no conteúdo (será adicionada automaticamente pelo sistema)
 6. NÃO copie o texto original, reescreva com suas palavras
 7. Use linguagem jornalística profissional brasileira

@@ -5,6 +5,7 @@ import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_
 import { z } from "zod";
 import * as db from "./db";
 import { storagePut } from "./storage";
+import { invokeLLM } from "./_core/llm";
 
 // Admin credentials (fixed, separate from OAuth)
 const ADMIN_EMAIL = "AGENCIADEEPMKT@GMAIL.COM";
@@ -221,6 +222,85 @@ export const appRouter = router({
     list: publicProcedure.query(async () => {
       return db.getTags();
     }),
+
+    // AI-powered tag suggestion endpoint
+    suggest: adminProcedure
+      .input(z.object({
+        title: z.string().min(1),
+        excerpt: z.string().optional(),
+        content: z.string().optional(),
+        category: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const AVAILABLE_TAGS = [
+          // Temas principais
+          "pol\u00edtica", "economia", "sa\u00fade", "tecnologia", "esportes", "educa\u00e7\u00e3o",
+          "meio-ambiente", "cultura", "internacional", "ci\u00eancia", "seguran\u00e7a",
+          "justi\u00e7a", "transporte", "energia", "agroneg\u00f3cio", "turismo", "entretenimento",
+          // Temas espec\u00edficos Brasil
+          "governo-federal", "congresso", "stf", "elei\u00e7\u00f5es", "impostos", "infla\u00e7\u00e3o",
+          "emprego", "bolsa-fam\u00edlia", "sus", "pandemia", "vacinas", "clima",
+          "amaz\u00f4nia", "petr\u00f3leo", "pr\u00e9-sal", "futebol", "olimp\u00edadas", "copa",
+          // Regi\u00f5es
+          "nordeste", "sudeste", "sul", "norte", "centro-oeste",
+          // Formatos
+          "breaking-news", "exclusivo", "an\u00e1lise", "entrevista", "opini\u00e3o",
+        ];
+
+        const textSnippet = [
+          input.title,
+          input.excerpt || "",
+          (input.content || "").replace(/<[^>]+>/g, "").slice(0, 800),
+        ].filter(Boolean).join(" ");
+
+        try {
+          const response = await invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content: `Voc\u00ea \u00e9 um especialista em taxonomia de conte\u00fado jornal\u00edstico brasileiro.\nAnalise o texto e retorne EXATAMENTE entre 3 e 7 tags relevantes da lista fornecida.\nRetorne APENAS um JSON v\u00e1lido com o campo "tags" contendo um array de strings.\nEscolha apenas tags da lista dispon\u00edvel. Priorize as mais espec\u00edficas e relevantes.`,
+              },
+              {
+                role: "user",
+                content: `Lista de tags dispon\u00edveis: ${AVAILABLE_TAGS.join(", ")}\n\nCategoria do artigo: ${input.category || "Geral"}\n\nTexto para an\u00e1lise:\n${textSnippet}\n\nRetorne JSON: {"tags": ["tag1", "tag2", "tag3"]}`,
+              },
+            ],
+            response_format: {
+              type: "json_schema",
+              json_schema: {
+                name: "tag_suggestions",
+                strict: true,
+                schema: {
+                  type: "object",
+                  properties: {
+                    tags: {
+                      type: "array",
+                      items: { type: "string" },
+                      description: "Array de tags sugeridas",
+                    },
+                  },
+                  required: ["tags"],
+                  additionalProperties: false,
+                },
+              },
+            },
+          });
+
+          const rawContent = response?.choices?.[0]?.message?.content;
+          const raw = typeof rawContent === "string" ? rawContent : null;
+          if (!raw) return { tags: [] };
+          const parsed = JSON.parse(raw) as { tags: string[] };
+          const validTags = parsed.tags
+            .map((t: string) => t.toLowerCase().trim())
+            .filter((t: string) => AVAILABLE_TAGS.includes(t))
+            .slice(0, 7);
+
+          return { tags: validTags };
+        } catch (err) {
+          console.error("[AI Tags] Error suggesting tags:", err);
+          return { tags: [] };
+        }
+      }),
   }),
 
   // ===== SEARCH (Microservice) =====

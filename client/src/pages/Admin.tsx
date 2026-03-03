@@ -112,7 +112,44 @@ function ArticleForm({ article, onSave, onCancel, mediaItems }: {
   });
   const [showMediaGallery, setShowMediaGallery] = useState(false);
   const [categories, setCategories] = useState([...CATEGORIES]);
+  const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
+  const [showSuggestedTags, setShowSuggestedTags] = useState(false);
+  const [newTagInput, setNewTagInput] = useState("");
   const utils = trpc.useUtils();
+
+  // Parse current tags from JSON string to array
+  const currentTagsArray = (): string[] => {
+    try { return JSON.parse(form.tags || "[]"); } catch { return []; }
+  };
+
+  // Add a tag to the current tags list
+  const addTag = (tag: string) => {
+    const t = tag.toLowerCase().trim();
+    if (!t) return;
+    const current = currentTagsArray();
+    if (!current.includes(t)) {
+      setForm(f => ({ ...f, tags: JSON.stringify([...current, t]) }));
+    }
+    setSuggestedTags(prev => prev.filter(s => s !== t));
+  };
+
+  // Remove a tag from the current tags list
+  const removeTag = (tag: string) => {
+    const current = currentTagsArray().filter(t => t !== tag);
+    setForm(f => ({ ...f, tags: JSON.stringify(current) }));
+  };
+
+  const suggestTagsMut = trpc.tags.suggest.useMutation({
+    onSuccess: (data) => {
+      const current = currentTagsArray();
+      const newSuggestions = data.tags.filter(t => !current.includes(t));
+      setSuggestedTags(newSuggestions);
+      setShowSuggestedTags(true);
+      if (newSuggestions.length === 0) toast.info("Nenhuma tag nova para sugerir.");
+      else toast.success(`${newSuggestions.length} tags sugeridas pela IA!`);
+    },
+    onError: () => toast.error("Erro ao sugerir tags. Tente novamente."),
+  });
 
   const createMut = trpc.articles.create.useMutation({
     onSuccess: () => { toast.success("Notícia criada!"); utils.articles.list.invalidate(); onSave(); },
@@ -237,10 +274,84 @@ function ArticleForm({ article, onSave, onCancel, mediaItems }: {
             </div>
           </div>
 
-          <div className="bg-gray-50 rounded-xl p-4 border">
-            <Label className="font-semibold text-sm">Tags (JSON array)</Label>
-            <Input value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))}
-              placeholder='["política","brasil"]' className="mt-1 text-xs font-mono" />
+          <div className="bg-gray-50 rounded-xl p-4 border space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="font-semibold text-sm flex items-center gap-1">
+                <Search className="w-3 h-3" /> Tags
+              </Label>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs px-2 border-purple-300 text-purple-700 hover:bg-purple-50"
+                disabled={!form.title || suggestTagsMut.isPending}
+                onClick={() => suggestTagsMut.mutate({
+                  title: form.title,
+                  excerpt: form.excerpt,
+                  content: form.content,
+                  category: form.category,
+                })}
+              >
+                {suggestTagsMut.isPending ? (
+                  <><RefreshCw className="w-3 h-3 mr-1 animate-spin" /> Analisando...</>
+                ) : (
+                  <><Zap className="w-3 h-3 mr-1" /> Sugerir com IA</>
+                )}
+              </Button>
+            </div>
+
+            {/* Current tags as chips */}
+            {currentTagsArray().length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {currentTagsArray().map(tag => (
+                  <span key={tag}
+                    className="inline-flex items-center gap-1 bg-[#001c56] text-white text-xs px-2 py-0.5 rounded-full">
+                    {tag}
+                    <button type="button" onClick={() => removeTag(tag)}
+                      className="hover:text-red-300 transition-colors">
+                      <X className="w-2.5 h-2.5" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* AI Suggested tags */}
+            {showSuggestedTags && suggestedTags.length > 0 && (
+              <div className="border border-purple-200 rounded-lg p-2 bg-purple-50">
+                <p className="text-xs text-purple-600 font-semibold mb-1.5 flex items-center gap-1">
+                  <Zap className="w-3 h-3" /> Sugestões da IA — clique para adicionar:
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  {suggestedTags.map(tag => (
+                    <button key={tag} type="button" onClick={() => addTag(tag)}
+                      className="inline-flex items-center gap-1 bg-white border border-purple-300 text-purple-700 text-xs px-2 py-0.5 rounded-full hover:bg-purple-100 transition-colors">
+                      <Plus className="w-2.5 h-2.5" /> {tag}
+                    </button>
+                  ))}
+                </div>
+                <button type="button" onClick={() => { setSuggestedTags([]); setShowSuggestedTags(false); }}
+                  className="text-xs text-gray-400 mt-1.5 hover:text-gray-600">
+                  Descartar sugestões
+                </button>
+              </div>
+            )}
+
+            {/* Manual tag input */}
+            <div className="flex gap-1">
+              <Input
+                value={newTagInput}
+                onChange={e => setNewTagInput(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addTag(newTagInput); setNewTagInput(""); } }}
+                placeholder="Adicionar tag manualmente..."
+                className="text-xs h-8"
+              />
+              <Button type="button" size="sm" variant="outline" className="h-8 px-2"
+                onClick={() => { addTag(newTagInput); setNewTagInput(""); }}>
+                <Plus className="w-3 h-3" />
+              </Button>
+            </div>
+            <p className="text-xs text-gray-400">Pressione Enter ou clique + para adicionar</p>
           </div>
 
           <div className="space-y-2">
