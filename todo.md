@@ -470,3 +470,11 @@
 - [x] Adicionar função isValidShortImage no shortsAutomation.ts (bloqueia googleusercontent, gstatic, unsplash)
 - [x] Aplicar filtro nos artigos candidatos para geração de shorts por IA
 - [x] Frontend: adicionar isValidImage no ShortCard com fallback gradiente CNN BRA quando não há imagem válida
+
+## Sprint 36 — Botão Gerar Shorts Agora no Painel Admin
+
+- [x] Criar ShortsTab no painel admin com botão "Gerar Shorts Agora"
+- [x] Botão chama trpc.shorts.runAutomation e exibe feedback (IA gerados + YouTube importados)
+- [x] Lista de shorts publicados com thumbnail, badge de fonte (IA/YouTube/Manual), categoria, views
+- [x] Botão de remover short individual
+- [x] Tab "CNN Shorts" adicionada ao menu lateral do admin

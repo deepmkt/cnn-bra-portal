@@ -1302,6 +1302,111 @@ function HeroTab() {
   );
 }
 
+// ===== SHORTS TAB =====
+function ShortsTab() {
+  const { data: shorts = [], refetch } = trpc.shorts.list.useQuery({ limit: 50 });
+  const runAutomation = trpc.shorts.runAutomation.useMutation({
+    onSuccess: (data: { youtubeImported: number; aiGenerated: number; errors: number }) => {
+      refetch();
+      toast.success(`Concluído! ${data.aiGenerated} shorts gerados via IA, ${data.youtubeImported} do YouTube.`);
+    },
+    onError: (err: any) => toast.error(`Erro ao gerar shorts: ${err.message}`),
+  });
+  const deleteShort = trpc.shorts.delete.useMutation({
+    onSuccess: () => { refetch(); toast.success("Short removido!"); },
+    onError: (err: any) => toast.error(`Erro: ${err.message}`),
+  });
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-black text-gray-800">CNN Shorts</h2>
+        <span className="text-sm text-gray-500">{shorts.length} shorts publicados</span>
+      </div>
+
+      {/* Gerar Shorts */}
+      <div className="bg-white rounded-xl border p-6 shadow-sm">
+        <h3 className="font-black text-gray-700 mb-1">Automação de Shorts</h3>
+        <p className="text-sm text-gray-500 mb-4">Gera shorts automaticamente a partir dos artigos recentes com imagens válidas e busca vídeos dos canais de notícias no YouTube.</p>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-purple-50 border border-purple-200 rounded-xl">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <Zap className="w-5 h-5 text-purple-600 shrink-0" />
+              <span className="font-bold text-gray-800">Gerar Shorts Agora</span>
+            </div>
+            <p className="text-sm text-gray-500">
+              Processa até 3 artigos recentes (com imagem real) e gera descrições via IA estilo Reels.
+              Também importa vídeos recentes dos canais CNN Brasil, Jovem Pan, Record, Band, SBT e GloboNews.
+            </p>
+          </div>
+          <Button
+            onClick={() => runAutomation.mutate()}
+            disabled={runAutomation.isPending}
+            className="bg-purple-600 hover:bg-purple-700 text-white whitespace-nowrap shrink-0"
+          >
+            {runAutomation.isPending ? (
+              <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Gerando...</>
+            ) : (
+              <><Zap className="w-4 h-4 mr-2" />Gerar Shorts Agora</>
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {/* Lista de Shorts */}
+      <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+        <div className="p-4 border-b">
+          <h3 className="font-black text-gray-700">Shorts Publicados</h3>
+        </div>
+        {shorts.length === 0 ? (
+          <div className="p-12 text-center text-gray-400">
+            <PlayCircle className="w-12 h-12 mx-auto mb-3 opacity-30" />
+            <p className="font-semibold">Nenhum short publicado ainda.</p>
+            <p className="text-sm mt-1">Clique em "Gerar Shorts Agora" para criar os primeiros.</p>
+          </div>
+        ) : (
+          <div className="divide-y">
+            {shorts.map((s: any) => (
+              <div key={s.id} className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors">
+                <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 shrink-0">
+                  {s.thumbnailUrl && !s.thumbnailUrl.includes('googleusercontent') ? (
+                    <img src={s.thumbnailUrl} alt={s.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-[#001c56] to-red-700 flex items-center justify-center">
+                      <span className="text-white text-xs font-black">CNN</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-gray-800 text-sm line-clamp-1">{s.title}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                      s.sourceType === 'youtube' ? 'bg-red-100 text-red-700' :
+                      s.sourceType === 'ai' ? 'bg-purple-100 text-purple-700' :
+                      'bg-gray-100 text-gray-600'
+                    }`}>
+                      {s.sourceType === 'youtube' ? 'YouTube' : s.sourceType === 'ai' ? 'IA' : 'Manual'}
+                    </span>
+                    <span className="text-xs text-gray-400">{s.category}</span>
+                    <span className="text-xs text-gray-400">{s.viewCount ?? 0} views</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { if (confirm('Remover este short?')) deleteShort.mutate({ id: s.id }); }}
+                  className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Remover"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ===== MAIN ADMIN COMPONENT =====
 export default function Admin() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean | null>(null);
@@ -1348,6 +1453,7 @@ export default function Admin() {
     { id: "import", label: "Importar WP", icon: Download },
     { id: "comments", label: "Comentários", icon: MessageCircle },
     { id: "users", label: "Usuários", icon: Users },
+    { id: "shorts", label: "CNN Shorts", icon: PlayCircle },
   ];
 
   return (
@@ -1411,6 +1517,7 @@ export default function Admin() {
           {activeTab === "import" && <ImportTab />}
           {activeTab === "comments" && <CommentsTab />}
           {activeTab === "users" && <UsersTab />}
+          {activeTab === "shorts" && <ShortsTab />}
         </div>
       </div>
     </div>
