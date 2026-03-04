@@ -403,3 +403,9 @@
 - [x] Rota tRPC globalNews.fixAllImages: reprocessar todos os artigos com imagem inválida (logo Google, vazia ou placeholder)
 - [x] Botão "Corrigir Imagens Agora" no Dashboard do painel admin com spinner de carregamento
 - [x] Exibir contagem de artigos corrigidos, sem fonte e total inválidas ao final do processo
+
+## Sprint 30 — Correção Definitiva de Imagens (Diagnóstico Profundo)
+
+- [x] Diagnosticar o fluxo completo: RSS → decodeUrl → scrapeArticle → validateImage → banco
+- [x] Corrigir o decoder para usar o algoritmo correto (signature + timestamp + batchexecute API)
+- [x] Testar com notícias reais e confirmar imagens corretas no banco (R7, CNN Brasil, Valor, BBC)
