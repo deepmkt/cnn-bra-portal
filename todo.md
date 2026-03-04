@@ -462,3 +462,11 @@
 - [x] Rastreamento automático de mudança de rota SPA (RouteTracker no App.tsx)
 - [x] Eventos rastreados: clique em artigo (home + hero), leitura (10s), compartilhamento WhatsApp, busca, inscrição newsletter
 - [x] Hook useAnalytics com funções para todos os eventos do site
+
+## Sprint 35 — Corrigir Imagens Google News no CNN Shorts
+
+- [x] Identificar origem: shorts manuais importados antes da correção do decoder tinham lh3.googleusercontent.com
+- [x] Remover 6 shorts com imagens do Google do banco de dados
+- [x] Adicionar função isValidShortImage no shortsAutomation.ts (bloqueia googleusercontent, gstatic, unsplash)
+- [x] Aplicar filtro nos artigos candidatos para geração de shorts por IA
+- [x] Frontend: adicionar isValidImage no ShortCard com fallback gradiente CNN BRA quando não há imagem válida

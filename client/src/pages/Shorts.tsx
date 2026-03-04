@@ -10,6 +10,23 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
+// Padrões de imagem inválida (Google News logo, placeholders)
+const INVALID_IMAGE_PATTERNS = [
+  "googleusercontent.com",
+  "lh3.google",
+  "lh4.google",
+  "lh5.google",
+  "news.google.com",
+  "google.com/s2",
+  "gstatic.com",
+  "unsplash.com",
+];
+function isValidImage(url: string | null | undefined): boolean {
+  if (!url || url.trim() === "") return false;
+  const lower = url.toLowerCase();
+  return !INVALID_IMAGE_PATTERNS.some(p => lower.includes(p));
+}
+
 function formatCount(n: number): string {
   if (n >= 1000000) return (n / 1000000).toFixed(1) + "M";
   if (n >= 1000) return (n / 1000).toFixed(1) + "K";
@@ -141,6 +158,10 @@ function ShortItem({ short, isActive, isMuted, onToggleMute, likedShorts, onNext
 
   const isYoutube = !!short.youtubeId;
   const isNativeVideo = !isYoutube && short.videoUrl && (short.videoUrl.includes(".mp4") || short.videoUrl.includes(".webm") || short.videoUrl.includes("blob:"));
+  // Imagem válida para Ken Burns (não pode ser do Google News)
+  const validImage = isValidImage(short.thumbnailUrl) ? short.thumbnailUrl
+    : isValidImage(short.videoUrl) ? short.videoUrl
+    : null;
 
   useEffect(() => {
     if (isActive) {
@@ -167,8 +188,18 @@ function ShortItem({ short, isActive, isMuted, onToggleMute, likedShorts, onNext
         <YouTubePlayer youtubeId={short.youtubeId} isActive={isActive} isMuted={isMuted} />
       ) : isNativeVideo ? (
         <NativeVideoPlayer videoUrl={short.videoUrl} thumbnailUrl={short.thumbnailUrl} isActive={isActive} isMuted={isMuted} onProgress={setProgress} />
+      ) : validImage ? (
+        <KenBurnsPlayer imageUrl={validImage} isActive={isActive} />
       ) : (
-        <KenBurnsPlayer imageUrl={short.thumbnailUrl || short.videoUrl || ""} isActive={isActive} />
+        // Fallback quando não há imagem válida: fundo gradiente com título
+        <div className="absolute inset-0 bg-gradient-to-br from-[#001c56] via-[#0a2a7a] to-red-900 flex items-center justify-center">
+          <div className="text-center px-8">
+            <div className="w-16 h-16 rounded-2xl bg-red-600 flex items-center justify-center mx-auto mb-4">
+              <span className="text-white font-black text-xl">CNN</span>
+            </div>
+            <p className="text-white/80 text-sm font-medium leading-relaxed">{short.title}</p>
+          </div>
+        </div>
       )}
 
       {isNativeVideo && (

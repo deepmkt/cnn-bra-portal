@@ -137,6 +137,27 @@ export async function fetchYouTubeShorts(maxPerChannel = 3): Promise<{ imported:
   return { imported, errors };
 }
 
+// ===== Validação de imagem para shorts =====
+// Rejeita imagens do Google News (logo/thumbnail do Google), placeholders e URLs inválidas
+const INVALID_IMAGE_PATTERNS = [
+  "googleusercontent.com",
+  "lh3.google",
+  "lh4.google",
+  "lh5.google",
+  "lh6.google",
+  "news.google.com",
+  "google.com/s2",
+  "gstatic.com",
+  "unsplash.com",
+  "placeholder",
+];
+
+function isValidShortImage(url: string | null | undefined): boolean {
+  if (!url || url.trim() === "") return false;
+  const lower = url.toLowerCase();
+  return !INVALID_IMAGE_PATTERNS.some(pattern => lower.includes(pattern));
+}
+
 // ===== Gerar shorts via IA a partir de artigos recentes =====
 export async function generateAIShorts(maxToGenerate = 3): Promise<{ generated: number; errors: number }> {
   let generated = 0;
@@ -147,7 +168,7 @@ export async function generateAIShorts(maxToGenerate = 3): Promise<{ generated: 
     const recentArticles = await db.getArticles({ status: "online", limit: 50 });
     const cutoff = Date.now() - 6 * 60 * 60 * 1000;
     const candidates = recentArticles
-      .filter((a: any) => a.imageUrl && a.publishedAt && new Date(a.publishedAt).getTime() > cutoff)
+      .filter((a: any) => isValidShortImage(a.imageUrl) && a.publishedAt && new Date(a.publishedAt).getTime() > cutoff)
       .slice(0, maxToGenerate * 3); // pegar mais para ter margem
 
     // Verificar quais já têm short

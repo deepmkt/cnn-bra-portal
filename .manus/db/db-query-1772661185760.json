@@ -1,0 +1,25 @@
+{
+  "query": "SELECT id, sourceType, LEFT(thumbnailUrl, 80) as thumb FROM shorts ORDER BY id DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AGjn9SpCJUmEG7Z.root --database 6wzLmWaAhQKjEBEoadSqJc --execute SELECT id, sourceType, LEFT(thumbnailUrl, 80) as thumb FROM shorts ORDER BY id DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "9",
+      "sourceType": "manual",
+      "thumb": "https://lh3.googleusercontent.com/J6_coFbogxhRI9iM864NL_liGXvsQp2AupsKei7z0cNNfD"
+    },
+    {
+      "id": "2",
+      "sourceType": "manual",
+      "thumb": "https://midias.correiobraziliense.com.br/_midias/jpg/2025/04/25/1000x1000/1_lege"
+    },
+    {
+      "id": "1",
+      "sourceType": "manual",
+      "thumb": "https://admin.cnnbrasil.com.br/wp-content/uploads/sites/12/2026/03/Submarino-dos"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsourceType\tthumb\n9\tmanual\thttps://lh3.googleusercontent.com/J6_coFbogxhRI9iM864NL_liGXvsQp2AupsKei7z0cNNfD\n2\tmanual\thttps://midias.correiobraziliense.com.br/_midias/jpg/2025/04/25/1000x1000/1_lege\n1\tmanual\thttps://admin.cnnbrasil.com.br/wp-content/uploads/sites/12/2026/03/Submarino-dos\n",
+  "stderr": "",
+  "execution_time_ms": 60
+}
