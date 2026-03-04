@@ -66,6 +66,11 @@ export default function Home() {
   const [exitPhone, setExitPhone] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [mobileSearchQuery, setMobileSearchQuery] = useState("");
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem("cnnbra_recent_searches") || "[]"); } catch { return []; }
+  });
 
   // Fetch articles
   const { data: articlesData } = trpc.articles.list.useQuery({ status: "online", limit: 20 });
@@ -96,6 +101,34 @@ export default function Home() {
     { status: "online", search: debouncedSearch, limit: 9 },
     { enabled: debouncedSearch.length >= 2 }
   );
+
+  // Mobile search query
+  const debouncedMobileSearch = useMemo(() => mobileSearchQuery.trim(), [mobileSearchQuery]);
+  const { data: mobileSearchResults = [] } = trpc.articles.list.useQuery(
+    { status: "online", search: debouncedMobileSearch, limit: 12 },
+    { enabled: debouncedMobileSearch.length >= 2 }
+  );
+
+  // Save search to history
+  const saveSearch = (q: string) => {
+    if (!q.trim()) return;
+    const updated = [q.trim(), ...recentSearches.filter(s => s !== q.trim())].slice(0, 5);
+    setRecentSearches(updated);
+    try { localStorage.setItem("cnnbra_recent_searches", JSON.stringify(updated)); } catch {}
+  };
+
+  const openMobileSearch = () => {
+    setMobileSearchOpen(true);
+    setMobileMenuOpen(false);
+    // Prevent body scroll when overlay is open
+    document.body.style.overflow = "hidden";
+  };
+
+  const closeMobileSearch = () => {
+    setMobileSearchOpen(false);
+    setMobileSearchQuery("");
+    document.body.style.overflow = "";
+  };
 
   // Filter articles by category and tag
   let filteredArticles = currentCategory === "home"
@@ -186,9 +219,19 @@ export default function Home() {
       {/* ===== HEADER ===== */}
       <header className="border-b border-gray-200 bg-white z-50 sticky top-8 shadow-sm">
         <div className="container mx-auto px-4 h-14 flex items-center justify-between">
-          <button onClick={() => setMobileMenuOpen(true)} className="md:hidden p-1.5 text-gray-700 hover:text-red-600 transition-colors">
-            <Menu size={22} strokeWidth={2.5} />
-          </button>
+          {/* Mobile: hamburger + search */}
+          <div className="flex items-center gap-1 md:hidden">
+            <button onClick={() => setMobileMenuOpen(true)} className="p-1.5 text-gray-700 hover:text-red-600 transition-colors">
+              <Menu size={22} strokeWidth={2.5} />
+            </button>
+            <button
+              onClick={openMobileSearch}
+              className="p-1.5 text-gray-700 hover:text-[#001c56] transition-colors"
+              aria-label="Buscar"
+            >
+              <Search size={20} strokeWidth={2.5} />
+            </button>
+          </div>
 
           {/* LOGO */}
           <div className="flex-1 md:flex-none flex justify-center md:justify-start">
@@ -360,6 +403,13 @@ export default function Home() {
                 className="flex items-center bg-black text-white px-4 py-2 rounded-full hover:bg-gray-800 transition-all mt-4"
               >
                 <span className="text-red-500 mr-2">▶</span> CNN Shorts
+              </button>
+              <button
+                onClick={openMobileSearch}
+                className="flex items-center gap-2 bg-gray-100 text-gray-800 px-4 py-2 rounded-full hover:bg-gray-200 transition-all"
+              >
+                <Search size={16} strokeWidth={2.5} />
+                Buscar Notícias
               </button>
               <Link href="/admin" className="mt-8 pt-6 border-t w-full text-red-600 text-sm">
                 Painel Admin
@@ -722,6 +772,223 @@ export default function Home() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* ===== MOBILE SEARCH OVERLAY (FULLSCREEN) ===== */}
+      {mobileSearchOpen && (
+        <div className="fixed inset-0 z-[300] flex flex-col bg-white animate-search-slide-down">
+          {/* Header da busca */}
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 bg-white shadow-sm">
+            <div className="flex-1 flex items-center gap-2 bg-gray-100 rounded-2xl px-4 py-2.5">
+              <Search size={18} className="text-gray-400 shrink-0" strokeWidth={2.5} />
+              <input
+                autoFocus
+                type="search"
+                inputMode="search"
+                enterKeyHint="search"
+                value={mobileSearchQuery}
+                onChange={e => setMobileSearchQuery(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === "Enter" && mobileSearchQuery.trim()) {
+                    saveSearch(mobileSearchQuery);
+                    trackSearch(mobileSearchQuery);
+                  }
+                  if (e.key === "Escape") closeMobileSearch();
+                }}
+                placeholder="Buscar notícias, temas..."
+                className="flex-1 bg-transparent text-base text-gray-800 placeholder-gray-400 outline-none"
+              />
+              {mobileSearchQuery && (
+                <button onClick={() => setMobileSearchQuery("")} className="text-gray-400 hover:text-gray-700 p-0.5">
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+            <button
+              onClick={closeMobileSearch}
+              className="shrink-0 px-3 py-2 text-sm font-semibold text-[#001c56] hover:text-red-600 transition-colors"
+            >
+              Cancelar
+            </button>
+          </div>
+
+          {/* Conteúdo da busca */}
+          <div className="flex-1 overflow-y-auto">
+            {/* Estado: sem query — mostrar histórico + categorias */}
+            {debouncedMobileSearch.length < 2 && (
+              <div className="p-4">
+                {/* Buscas recentes */}
+                {recentSearches.length > 0 && (
+                  <div className="mb-6">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Buscas Recentes</h3>
+                      <button
+                        onClick={() => { setRecentSearches([]); localStorage.removeItem("cnnbra_recent_searches"); }}
+                        className="text-xs text-red-500 font-semibold hover:text-red-700"
+                      >
+                        Limpar
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {recentSearches.map((s, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setMobileSearchQuery(s)}
+                          className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium px-3 py-1.5 rounded-full transition-colors"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-gray-400">
+                            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                            <path d="M3 3v5h5" />
+                          </svg>
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Categorias populares */}
+                <div>
+                  <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Explorar Categorias</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { label: "Política", cat: "POLÍTICA", emoji: "🏛️", color: "bg-blue-50 text-blue-800 border-blue-200" },
+                      { label: "Esportes", cat: "ESPORTES", emoji: "⚽", color: "bg-green-50 text-green-800 border-green-200" },
+                      { label: "Global", cat: "GLOBAL", emoji: "🌍", color: "bg-purple-50 text-purple-800 border-purple-200" },
+                      { label: "Dia a Dia", cat: "GERAL", emoji: "📰", color: "bg-orange-50 text-orange-800 border-orange-200" },
+                      { label: "Economia", cat: "economia", emoji: "💰", color: "bg-yellow-50 text-yellow-800 border-yellow-200" },
+                      { label: "Saúde", cat: "saúde", emoji: "❤️", color: "bg-red-50 text-red-800 border-red-200" },
+                      { label: "Tecnologia", cat: "tecnologia", emoji: "📱", color: "bg-gray-50 text-gray-800 border-gray-200" },
+                      { label: "Educação", cat: "educação", emoji: "🎓", color: "bg-indigo-50 text-indigo-800 border-indigo-200" },
+                    ].map(({ label, cat, emoji, color }) => (
+                      <button
+                        key={cat}
+                        onClick={() => setMobileSearchQuery(label)}
+                        className={`flex items-center gap-2 p-3 rounded-xl border text-sm font-semibold transition-all active:scale-95 ${color}`}
+                      >
+                        <span className="text-base">{emoji}</span>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Trending topics */}
+                <div className="mt-6">
+                  <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Em Alta Agora</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {trending.slice(0, 6).map((a: any) => (
+                      <button
+                        key={a.id}
+                        onClick={() => setMobileSearchQuery(capitalizeTitle(a.title).split(" ").slice(0, 3).join(" "))}
+                        className="text-xs bg-[#001c56]/5 text-[#001c56] font-semibold px-3 py-1.5 rounded-full border border-[#001c56]/10 hover:bg-[#001c56]/10 transition-colors"
+                      >
+                        # {capitalizeTitle(a.title).split(" ").slice(0, 3).join(" ")}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Estado: digitando mas menos de 2 chars */}
+            {mobileSearchQuery.length === 1 && (
+              <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                <Search size={40} strokeWidth={1.5} className="mb-3 opacity-30" />
+                <p className="text-sm font-medium">Continue digitando para buscar...</p>
+              </div>
+            )}
+
+            {/* Estado: resultados encontrados */}
+            {debouncedMobileSearch.length >= 2 && mobileSearchResults.length > 0 && (
+              <div>
+                <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-100">
+                  <p className="text-xs font-bold text-gray-500">
+                    {mobileSearchResults.length} resultado{mobileSearchResults.length !== 1 ? "s" : ""} para &ldquo;<span className="text-[#001c56]">{debouncedMobileSearch}</span>&rdquo;
+                  </p>
+                </div>
+                <div className="divide-y divide-gray-100">
+                  {mobileSearchResults.map((a: any, idx: number) => (
+                    <button
+                      key={a.id}
+                      onClick={() => {
+                        saveSearch(debouncedMobileSearch);
+                        trackSearch(debouncedMobileSearch);
+                        trackArticleClick(a.id, a.title, a.category);
+                        closeMobileSearch();
+                        setLocation(`/artigo/${a.id}`);
+                      }}
+                      className="w-full text-left flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 active:bg-gray-100 transition-colors animate-result-fade-in"
+                      style={{ animationDelay: `${idx * 40}ms` }}
+                    >
+                      {/* Thumbnail */}
+                      {a.imageUrl ? (
+                        <img
+                          src={a.imageUrl}
+                          alt=""
+                          className="w-16 h-12 object-cover rounded-xl shrink-0 shadow-sm"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-16 h-12 bg-gradient-to-br from-[#001c56] to-[#003080] rounded-xl shrink-0 flex items-center justify-center shadow-sm">
+                          <span className="text-white text-[9px] font-black">CNN</span>
+                        </div>
+                      )}
+                      {/* Texto */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-gray-900 line-clamp-2 leading-snug">
+                          {capitalizeTitle(a.title)}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[10px] font-bold text-red-600 uppercase tracking-wide">{a.category}</span>
+                          <span className="text-[10px] text-gray-400">•</span>
+                          <span className="text-[10px] text-gray-400">{timeAgo(a.createdAt)}</span>
+                        </div>
+                      </div>
+                      {/* Seta */}
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-gray-300 shrink-0">
+                        <path d="M9 18l6-6-6-6" />
+                      </svg>
+                    </button>
+                  ))}
+                </div>
+                {/* Ver todos */}
+                <div className="p-4 border-t border-gray-100">
+                  <Link href={`/busca?q=${encodeURIComponent(debouncedMobileSearch)}`}>
+                    <button
+                      onClick={() => { saveSearch(debouncedMobileSearch); closeMobileSearch(); }}
+                      className="w-full py-3 bg-[#001c56] text-white font-bold text-sm rounded-xl shadow-md active:scale-95 transition-all"
+                    >
+                      Ver todos os resultados →
+                    </button>
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {/* Estado: sem resultados */}
+            {debouncedMobileSearch.length >= 2 && mobileSearchResults.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                  <Search size={28} strokeWidth={1.5} className="text-gray-300" />
+                </div>
+                <h3 className="text-base font-bold text-gray-700 mb-1">Nenhum resultado encontrado</h3>
+                <p className="text-sm text-gray-400 mb-6">Tente outros termos ou explore as categorias abaixo</p>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  {["Política", "Esportes", "Global", "Economia"].map(s => (
+                    <button
+                      key={s}
+                      onClick={() => setMobileSearchQuery(s)}
+                      className="px-4 py-2 bg-[#001c56]/5 text-[#001c56] text-sm font-semibold rounded-full border border-[#001c56]/10 hover:bg-[#001c56]/10 transition-colors"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

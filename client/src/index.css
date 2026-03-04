@@ -199,6 +199,26 @@
   overflow: hidden;
 }
 
+/* ===== MOBILE SEARCH OVERLAY ===== */
+@keyframes searchSlideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes searchSlideUp {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-100%); opacity: 0; }
+}
+.animate-search-slide-down { animation: searchSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-search-slide-up { animation: searchSlideUp 0.25s ease-in forwards; }
+
+@keyframes resultFadeIn {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.animate-result-fade-in {
+  animation: resultFadeIn 0.2s ease-out forwards;
+}
+
 /* ===== WHATSAPP BOUNCE ===== */
 @keyframes whatsappBounce {
   0%, 100% { transform: translateY(0) rotate(0deg); }

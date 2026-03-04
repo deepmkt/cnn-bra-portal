@@ -48,6 +48,11 @@ vi.mock("./db", () => ({
   getTotalViews: vi.fn().mockResolvedValue(100),
   getCommentCount: vi.fn().mockResolvedValue(15),
   getUserCount: vi.fn().mockResolvedValue(42),
+  getShortCount: vi.fn().mockResolvedValue(8),
+  getNewsletterCount: vi.fn().mockResolvedValue(120),
+  getArticlesPerDay: vi.fn().mockResolvedValue([{ date: '2026-03-04', count: 3 }]),
+  getTopArticles: vi.fn().mockResolvedValue([{ id: 1, title: 'Top Article', viewCount: 500, category: 'GERAL', createdAt: new Date() }]),
+  getCategoryDistribution: vi.fn().mockResolvedValue([{ category: 'GERAL', count: 10 }]),
 
   // Comments
   getComments: vi.fn().mockResolvedValue([{ id: 1, articleId: 1, content: "Great article!", authorName: "Reader", status: "approved", likes: 3, createdAt: new Date() }]),

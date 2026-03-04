@@ -564,3 +564,14 @@
 - [x] Melhorar RelatedPosts para grade 3x3 com 6 posts relacionados
 - [x] Adicionar BackToTopButton flutuante na página do artigo
 - [x] Implementar busca inline na home (campo de busca com dropdown de resultados em tempo real)
+## Sprint 47 — Busca Mobile Otimizada
+- [x] Criar overlay de busca mobile em tela cheia (fullscreen) com animação slide-up
+- [x] Campo de busca proeminente com teclado virtual ativado automaticamente
+- [x] Resultados em lista com thumbnail, título, categoria e timestamp
+- [x] Botão de busca dedicado no header mobile (ícone de lupa)
+- [x] Botão de busca no menu mobile lateral
+- [x] Fechar busca com botão X ou swipe down
+- [x] Estado vazio com sugestões de categorias populares
+- [x] Estado "sem resultados" com mensagem amigável
+- [x] Histórico de buscas recentes (localStorage)
+- [x] Animações suaves (entrada/saída do overlay)
