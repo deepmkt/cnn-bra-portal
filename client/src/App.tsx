@@ -7,6 +7,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { CookieConsent } from "./components/CookieConsent";
 import { AnalyticsInjector } from "./components/AnalyticsInjector";
 import { AdBanner } from "@/components/AdBanner";
+import { trpc } from "@/lib/trpc";
 import Home from "./pages/Home";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { trackPageView } from "./hooks/useAnalytics";
@@ -97,6 +98,39 @@ function RouteTracker() {
 }
 
 /**
+ * GlobalTicker — barra "De Última Hora" exibida no topo absoluto do site,
+ * acima do banner de publicidade, em todas as páginas públicas.
+ * Oculta no painel admin e na página Shorts.
+ */
+function GlobalTicker() {
+  const [location] = useLocation();
+  const { data: tickerData } = trpc.ticker.list.useQuery();
+  const tickerItems = tickerData ?? [];
+
+  // Hide on admin and shorts pages
+  const isAdminPage = location.startsWith("/admin");
+  const isShortsPage = location === "/shorts";
+  if (isAdminPage || isShortsPage) return null;
+
+  const tickerText = tickerItems.length > 0
+    ? tickerItems.map((t: any) => t.text).join(" • ")
+    : "Acompanhe as últimas notícias do Brasil e do mundo no CNN BRA • Seu portal de notícias 24 horas";
+
+  return (
+    <div className="bg-[#001c56] text-white text-xs h-8 flex items-center w-full overflow-hidden sticky top-0 z-[70]">
+      <div className="font-bold uppercase px-3 h-full flex items-center bg-[#001c56] z-20 relative border-r border-white/20 shadow-lg whitespace-nowrap text-[11px] shrink-0">
+        <span className="text-red-500 mr-1.5 animate-pulse">●</span> Última Hora
+      </div>
+      <div className="flex-1 overflow-hidden relative h-full flex items-center">
+        <div className="animate-marquee whitespace-nowrap inline-block pl-3 font-medium text-[11px]">
+          {tickerText}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
  * GlobalAdBanner — banner de anúncio fixo exibido em todas as páginas públicas.
  * Não aparece no painel admin nem na página de Shorts (fullscreen).
  * Fica posicionado logo abaixo do conteúdo de cada página, de forma sticky no topo
@@ -140,6 +174,7 @@ function Router() {
   return (
     <>
       <RouteTracker />
+      <GlobalTicker />
       <GlobalAdBanner />
       <Switch>
       <Route path={"/"} component={HomeOrAdminRedirect} />

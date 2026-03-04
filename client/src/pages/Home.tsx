@@ -204,20 +204,8 @@ export default function Home() {
 
   return (
     <div className="bg-white text-gray-900 overflow-x-hidden">
-      {/* ===== TICKER BAR ===== */}
-      <div className="bg-cnn-blue text-white text-xs h-8 flex items-center w-full overflow-hidden sticky top-0 z-[60]">
-        <div className="font-bold uppercase px-3 h-full flex items-center bg-cnn-blue z-20 relative border-r border-white/20 shadow-lg whitespace-nowrap text-[11px]">
-          <span className="text-red-500 mr-1.5 animate-pulse">●</span> Última Hora
-        </div>
-        <div className="flex-1 overflow-hidden relative h-full flex items-center">
-          <div className="animate-marquee whitespace-nowrap inline-block pl-3 font-medium text-[11px]">
-            {tickerText}
-          </div>
-        </div>
-      </div>
-
       {/* ===== HEADER ===== */}
-      <header className="border-b border-gray-200 bg-white z-50 sticky top-8 shadow-sm">
+      <header className="border-b border-gray-200 bg-white z-50 sticky top-0 shadow-sm">
         <div className="container mx-auto px-4 h-14 flex items-center justify-between">
           {/* Mobile: hamburger + search */}
           <div className="flex items-center gap-1 md:hidden">

@@ -580,3 +580,6 @@
 - [x] Adicionar banner de anúncio fixo no layout global (App.tsx) abaixo do header/ticker
 - [x] Banner aparece em todas as páginas (Home, Artigo, Busca, Shorts, etc.)
 - [x] Banner responsivo: 728x90 desktop, 320x50 mobile
+
+## Sprint 49 — Reordenação do Topo
+- [x] Mover barra ticker "De Última Hora" para o topo absoluto (acima da publicidade)
