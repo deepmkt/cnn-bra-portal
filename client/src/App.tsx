@@ -6,8 +6,9 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { CookieConsent } from "./components/CookieConsent";
 import { AnalyticsInjector } from "./components/AnalyticsInjector";
+import { AdBanner } from "@/components/AdBanner";
 import Home from "./pages/Home";
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { trackPageView } from "./hooks/useAnalytics";
 
 const Admin = lazy(() => import("./pages/Admin"));
@@ -95,10 +96,51 @@ function RouteTracker() {
   return null;
 }
 
+/**
+ * GlobalAdBanner — banner de anúncio fixo exibido em todas as páginas públicas.
+ * Não aparece no painel admin nem na página de Shorts (fullscreen).
+ * Fica posicionado logo abaixo do conteúdo de cada página, de forma sticky no topo
+ * após o scroll inicial, garantindo visibilidade máxima sem bloquear conteúdo.
+ */
+function GlobalAdBanner() {
+  const [location] = useLocation();
+  const [adIndex, setAdIndex] = useState(0);
+
+  // Rotate ad every 8 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setAdIndex(prev => (prev + 1) % 3);
+    }, 8000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Hide on admin and shorts pages (fullscreen experiences)
+  const isAdminPage = location.startsWith("/admin");
+  const isShortsPage = location === "/shorts";
+  if (isAdminPage || isShortsPage) return null;
+
+  return (
+    <div
+      className="w-full bg-gray-50 border-b border-gray-200 py-1.5 flex justify-center items-center"
+      style={{ minHeight: 0 }}
+    >
+      <div className="flex flex-col items-center gap-0.5 w-full max-w-[730px] px-2">
+        <span className="text-[9px] text-gray-400 uppercase tracking-widest font-medium self-start">Publicidade</span>
+        <AdBanner
+          placement="horizontal"
+          fallbackIndex={adIndex}
+          className="w-full max-w-[728px]"
+        />
+      </div>
+    </div>
+  );
+}
+
 function Router() {
   return (
     <>
       <RouteTracker />
+      <GlobalAdBanner />
       <Switch>
       <Route path={"/"} component={HomeOrAdminRedirect} />
       <Route path={"/admin"}>

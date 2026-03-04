@@ -495,11 +495,6 @@ export default function Home() {
           </aside>
         </div>
 
-        {/* ===== AD BANNER (below hero) — Dynamic from DB ===== */}
-        <div className="w-full flex justify-center mb-8 px-4">
-          <AdBanner placement="horizontal" fallbackIndex={1} className="w-full max-w-[728px]" />
-        </div>
-
         {/* ===== SECTION TITLE ===== */}
         <div className="flex items-center border-b-2 border-cnn-blue pb-3 mb-8">
           <h3 className="text-lg font-bold uppercase tracking-tight text-cnn-blue">

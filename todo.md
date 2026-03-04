@@ -575,3 +575,8 @@
 - [x] Estado "sem resultados" com mensagem amigável
 - [x] Histórico de buscas recentes (localStorage)
 - [x] Animações suaves (entrada/saída do overlay)
+## Sprint 48 — Banner de Anúncio Global
+- [x] Remover banner de anúncio abaixo do hero na Home
+- [x] Adicionar banner de anúncio fixo no layout global (App.tsx) abaixo do header/ticker
+- [x] Banner aparece em todas as páginas (Home, Artigo, Busca, Shorts, etc.)
+- [x] Banner responsivo: 728x90 desktop, 320x50 mobile
