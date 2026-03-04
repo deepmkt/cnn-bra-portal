@@ -454,3 +454,11 @@
 - [x] Badges de fonte (YouTube, IA)
 - [x] Indicador de posição lateral (dots)
 - [ ] Transição suave entre shorts
+
+## Sprint 34 — Google Analytics
+
+- [x] Adicionar script gtag.js no index.html (carregamento global, G-DCKDKHYWY9)
+- [x] GA4 ID salvo no banco de configurações (via AnalyticsInjector)
+- [x] Rastreamento automático de mudança de rota SPA (RouteTracker no App.tsx)
+- [x] Eventos rastreados: clique em artigo (home + hero), leitura (10s), compartilhamento WhatsApp, busca, inscrição newsletter
+- [x] Hook useAnalytics com funções para todos os eventos do site

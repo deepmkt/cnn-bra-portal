@@ -4,6 +4,7 @@ import { Link, useLocation } from "wouter";
 import { Search, X, Menu } from "lucide-react";
 import { capitalizeTitle } from "@shared/titleUtils";
 import { AdBanner } from "@/components/AdBanner";
+import { trackArticleClick, trackArticleShare, trackSearch, trackWhatsAppClick, trackNewsletterSignup } from "@/hooks/useAnalytics";
 
 // ===== CATEGORIES =====
 const NAV_ITEMS = [
@@ -32,10 +33,11 @@ function timeAgo(date: Date | string) {
   return `Há ${Math.floor(diff / 86400)}d`;
 }
 
-function shareOnWhatsApp(title: string) {
+function shareOnWhatsApp(title: string, articleId?: number) {
   const url = window.location.href;
   const text = encodeURIComponent(`*${title}*\n\nLeia agora no portal CNN BRA:\n${url}`);
   window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+  if (articleId) trackArticleShare(articleId, title, 'whatsapp');
 }
 
 function WhatsAppIcon({ className }: { className?: string }) {
@@ -150,6 +152,7 @@ export default function Home() {
       setNlSuccess(true);
       setNlName("");
       setNlEmail("");
+      trackNewsletterSignup();
     } catch {}
   };
 
@@ -305,7 +308,7 @@ export default function Home() {
           {currentHero && (
             <section
               className="relative w-full lg:w-2/3 h-[50vh] md:h-[65vh] rounded-2xl overflow-hidden shadow-xl group cursor-pointer animate-slide-up"
-              onClick={() => setLocation(`/artigo/${currentHero.id}`)}
+              onClick={() => { setLocation(`/artigo/${currentHero.id}`); trackArticleClick(currentHero.id, currentHero.title, currentHero.category); }}
             >
               <div
                 className={`absolute inset-0 bg-cover bg-center hero-zoom ${heroZoomed ? "hero-active-zoom" : ""}`}
@@ -400,7 +403,7 @@ export default function Home() {
               <div key={article.id}>
                 <article className="flex flex-col md:flex-row gap-5 group mb-8 pb-8 border-b border-gray-100 last:border-0 animate-slide-up hover:bg-gray-50 rounded-xl transition-colors p-3 -mx-3">
                   <div
-                    onClick={() => setLocation(`/artigo/${article.id}`)}
+                    onClick={() => { setLocation(`/artigo/${article.id}`); trackArticleClick(article.id, article.title, article.category); }}
                     className="w-full md:w-[280px] aspect-[4/3] overflow-hidden rounded-xl relative cursor-pointer shadow-md flex-shrink-0"
                   >
                     <img
@@ -418,7 +421,7 @@ export default function Home() {
                     </div>
                   </div>
                   <div className="flex-1 flex flex-col justify-between py-1">
-                    <div onClick={() => setLocation(`/artigo/${article.id}`)} className="cursor-pointer">
+                    <div onClick={() => { setLocation(`/artigo/${article.id}`); trackArticleClick(article.id, article.title, article.category); }} className="cursor-pointer">
                       <h4 className="text-lg md:text-xl font-bold leading-snug mb-2 group-hover:text-red-600 transition-colors tracking-tight">
                         {capitalizeTitle(article.title)}
                       </h4>
@@ -432,7 +435,7 @@ export default function Home() {
                         {article.publishedAt ? timeAgo(article.publishedAt) : "Recente"}
                       </span>
                       <button
-                        onClick={() => shareOnWhatsApp(article.title)}
+                        onClick={() => shareOnWhatsApp(article.title, article.id)}
                         className="flex items-center text-gray-400 hover:text-green-600 text-[10px] font-semibold tracking-wider transition-all"
                       >
                         <WhatsAppIcon className="w-3.5 h-3.5 mr-1" />

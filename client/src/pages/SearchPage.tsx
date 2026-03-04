@@ -4,6 +4,7 @@ import { Link } from "wouter";
 import { Search, ArrowLeft, Clock, Eye, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OptimizedImage } from "@/components/OptimizedImage";
+import { trackSearch } from "@/hooks/useAnalytics";
 
 const CATEGORIES = ["TODOS", "POLÍTICA", "ECONOMIA", "ESPORTES", "TECNOLOGIA", "SAÚDE", "ENTRETENIMENTO", "MUNDO", "BRASIL", "GERAL"];
 
@@ -24,7 +25,10 @@ export default function SearchPage() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim()) setSearchTerm(query.trim());
+    if (query.trim()) {
+      setSearchTerm(query.trim());
+      trackSearch(query.trim());
+    }
   };
 
   return (

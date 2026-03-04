@@ -1,0 +1,8 @@
+{
+  "query": "\nINSERT INTO site_settings (setting_key, setting_value, updated_at)\nVALUES ('ga4_id', 'G-DCKDKHYWY9', NOW())\nON DUPLICATE KEY UPDATE setting_value = 'G-DCKDKHYWY9', updated_at = NOW();\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AGjn9SpCJUmEG7Z.root --database 6wzLmWaAhQKjEBEoadSqJc --execute \nINSERT INTO site_settings (setting_key, setting_value, updated_at)\nVALUES ('ga4_id', 'G-DCKDKHYWY9', NOW())\nON DUPLICATE KEY UPDATE setting_value = 'G-DCKDKHYWY9', updated_at = NOW();\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 2: Unknown column 'setting_key' in 'field list'"
+  ]
+}

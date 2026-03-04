@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { capitalizeTitle } from "@shared/titleUtils";
 import AdBanner from "@/components/AdBanner";
+import { trackArticleRead, trackArticleShare } from "@/hooks/useAnalytics";
 
 function timeAgo(date: Date | string) {
   const now = new Date();
@@ -207,13 +208,18 @@ export default function ArticlePage({ id }: { id: number }) {
   useEffect(() => {
     incrementView.mutate({ id });
     window.scrollTo({ top: 0, behavior: "smooth" });
+    // Rastrear leitura no GA4 após 10s na página
+    const readTimer = setTimeout(() => {
+      if (article) trackArticleRead(id, article.title, article.category);
+    }, 10_000);
     return () => {
+      clearTimeout(readTimer);
       if (isAuthenticated && article) {
         const duration = Math.floor((Date.now() - startTime.current) / 1000);
         trackRead.mutate({ articleId: id, category: article.category, readDurationSeconds: duration });
       }
     };
-  }, [id]);
+  }, [id]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   // IA Voice - SpeechSynthesis
   const handleIAVoice = () => {
@@ -234,6 +240,7 @@ export default function ArticlePage({ id }: { id: number }) {
     if (article) {
       shareOnWhatsApp(article.title);
       incrementShare.mutate({ id });
+      trackArticleShare(id, article.title, 'whatsapp');
     }
   };
 

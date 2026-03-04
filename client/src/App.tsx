@@ -1,13 +1,14 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { CookieConsent } from "./components/CookieConsent";
 import { AnalyticsInjector } from "./components/AnalyticsInjector";
 import Home from "./pages/Home";
 import { lazy, Suspense, useEffect } from "react";
+import { trackPageView } from "./hooks/useAnalytics";
 
 const Admin = lazy(() => import("./pages/Admin"));
 const ArticlePage = lazy(() => import("./pages/ArticlePage"));
@@ -85,9 +86,20 @@ function HomeOrAdminRedirect() {
   return <Home />;
 }
 
+/** RouteTracker — dispara pageview no GA4 a cada mudança de rota */
+function RouteTracker() {
+  const [location] = useLocation();
+  useEffect(() => {
+    trackPageView(location, document.title);
+  }, [location]);
+  return null;
+}
+
 function Router() {
   return (
-    <Switch>
+    <>
+      <RouteTracker />
+      <Switch>
       <Route path={"/"} component={HomeOrAdminRedirect} />
       <Route path={"/admin"}>
         <AdminGuard>
@@ -115,6 +127,7 @@ function Router() {
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
+    </>
   );
 }
 
