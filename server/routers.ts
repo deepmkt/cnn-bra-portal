@@ -8,8 +8,11 @@ import { storagePut } from "./storage";
 import { invokeLLM } from "./_core/llm";
 
 // Admin credentials (fixed, separate from OAuth)
-const ADMIN_EMAIL = "AGENCIADEEPMKT@GMAIL.COM";
-const ADMIN_PASSWORD = "@Dp4156!";
+// Multiple admin accounts supported
+const ADMIN_ACCOUNTS = [
+  { email: "AGENCIADEEPMKT@GMAIL.COM", password: "@Dp4156!" },
+  { email: "ARTSENNA10@GMAIL.COM", password: "Jose*1982" },
+];
 const ADMIN_SESSION_KEY = "cnn_admin_session";
 
 // Editor/journalist procedure: admin, editor, or journalist roles
@@ -1226,9 +1229,10 @@ export const appRouter = router({
     login: publicProcedure
       .input(z.object({ email: z.string(), password: z.string() }))
       .mutation(async ({ input, ctx }) => {
-        const emailMatch = input.email.trim().toUpperCase() === ADMIN_EMAIL;
-        const passMatch = input.password === ADMIN_PASSWORD;
-        if (!emailMatch || !passMatch) {
+        const account = ADMIN_ACCOUNTS.find(
+          a => a.email === input.email.trim().toUpperCase() && a.password === input.password
+        );
+        if (!account) {
           throw new Error("Credenciais inválidas");
         }
         // Set a simple admin session cookie

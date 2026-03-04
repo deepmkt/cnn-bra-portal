@@ -478,3 +478,36 @@
 - [x] Lista de shorts publicados com thumbnail, badge de fonte (IA/YouTube/Manual), categoria, views
 - [x] Botão de remover short individual
 - [x] Tab "CNN Shorts" adicionada ao menu lateral do admin
+
+## Sprint 37 — Fontes Regionais de Alagoas
+
+- [ ] Verificar feeds RSS do TNH1, Alagoas24h e outros portais regionais
+- [ ] Adicionar fontes regionais como feeds prioritários no globalNewsFetcher
+- [ ] Garantir mapeamento correto de categorias para fontes regionais
+- [ ] Testar extração de og:image dos artigos regionais
+
+## Sprint 38 — Capas em Destaque e Sentence Case
+
+- [ ] Hero da home: artigos do anoticiaal.com.br com isHero=true aparecem automaticamente em destaque
+- [ ] Admin pode sobrescrever o hero manualmente via painel (tab Hero/Carrossel)
+- [ ] Corrigir capitalização de todos os títulos: sentence case (1ª letra maiúscula, nomes próprios preservados)
+- [ ] Aplicar sentence case via IA no rewriteWithAI para novos artigos
+- [ ] Corrigir títulos existentes no banco via script de migração
+
+## Sprint 39 — Busca Inline na Home
+
+- [ ] Barra de busca na home abre painel de resultados inline (sem nova aba)
+- [ ] Resultados em modo lista (padrão) e modo grade 3x3
+- [ ] Botão para alternar entre lista e grade
+- [ ] Funciona em desktop e mobile
+- [ ] Ao clicar no resultado, navega para o artigo
+- [ ] Fechar busca retorna ao feed normal
+
+## Sprint 40 — Slug com IA, Sugestões de Artigos e Botão Voltar ao Topo
+
+- [ ] Slug gerado por IA com palavras-chave da notícia (SEO-friendly)
+- [ ] Sugestões de artigos semelhantes no final da página do artigo (mesma categoria/tags)
+- [ ] Botão flutuante "Voltar ao topo" na página do artigo
+- [ ] Busca inline na home sem abrir nova aba (resultados em lista e grade 3x3)
+- [ ] Sentence case nos títulos (apenas 1ª letra maiúscula, nomes próprios preservados)
+- [ ] Corrigir títulos existentes no banco para sentence case
