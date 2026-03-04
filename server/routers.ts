@@ -970,6 +970,31 @@ export const appRouter = router({
       }
       return { converted, total: videoArticles.length };
     }),
+    // Run shorts automation manually (admin)
+    runAutomation: adminProcedure.mutation(async () => {
+      const { runShortsAutomation } = await import("./shortsAutomation");
+      const result = await runShortsAutomation();
+      return result;
+    }),
+    // Infinite scroll feed with cursor pagination
+    feedInfinite: publicProcedure
+      .input(z.object({
+        limit: z.number().default(10),
+        cursor: z.number().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        const limit = input?.limit ?? 10;
+        const cursor = input?.cursor;
+        const allShorts = await db.getShorts({ status: "online", limit: 200 });
+        let filtered = allShorts;
+        if (cursor) {
+          const idx = allShorts.findIndex((s: any) => s.id === cursor);
+          if (idx >= 0) filtered = allShorts.slice(idx + 1);
+        }
+        const page = filtered.slice(0, limit);
+        const nextCursor = page.length === limit ? page[page.length - 1]?.id : undefined;
+        return { items: page, nextCursor };
+      }),
   }),
 
   // ===== NEWSLETTER =====

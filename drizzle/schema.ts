@@ -348,6 +348,9 @@ export const shorts = mysqlTable("shorts", {
   shareCount: int("shareCount").default(0).notNull(),
   commentCount: int("commentCount").default(0).notNull(),
   isHighlight: boolean("isHighlight").default(false).notNull(),
+  articleId: int("articleId"), // linked article (if from article)
+  youtubeId: varchar("youtubeId", { length: 50 }), // YouTube video ID
+  sourceType: mysqlEnum("sourceType", ["manual", "article", "youtube", "ai"]).default("manual").notNull(),
   publishedAt: timestamp("publishedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

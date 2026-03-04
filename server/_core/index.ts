@@ -162,6 +162,29 @@ async function startServer() {
       }
     }, FETCH_INTERVAL_MS);
   }, 60_000);
+
+  // ===== CRON: Auto-generate CNN Shorts every 2 hours =====
+  const SHORTS_INTERVAL_MS = 2 * 60 * 60 * 1000; // 2 hours
+  setTimeout(async () => {
+    console.log("[Cron] Running initial shorts automation...");
+    try {
+      const { runShortsAutomation } = await import("../shortsAutomation");
+      const result = await runShortsAutomation();
+      console.log(`[Cron] Shorts: ${result.youtubeImported} YouTube, ${result.aiGenerated} AI generated`);
+    } catch (err) {
+      console.error("[Cron] Shorts automation error:", err);
+    }
+    setInterval(async () => {
+      console.log("[Cron] Running scheduled shorts automation...");
+      try {
+        const { runShortsAutomation } = await import("../shortsAutomation");
+        const result = await runShortsAutomation();
+        console.log(`[Cron] Shorts: ${result.youtubeImported} YouTube, ${result.aiGenerated} AI generated`);
+      } catch (err) {
+        console.error("[Cron] Shorts automation error:", err);
+      }
+    }, SHORTS_INTERVAL_MS);
+  }, 90_000); // 90s after server start
 }
 
 startServer().catch(console.error);

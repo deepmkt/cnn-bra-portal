@@ -426,3 +426,31 @@
 - [x] Adicionar feed RSS do anoticiaal.com.br como fonte prioritária
 - [x] Matérias do anoticiaal.com.br devem ser marcadas como isHero=true automaticamente
 - [x] Garantir que matérias do anoticiaal.com.br apareçam em destaque na home
+
+## Sprint 32 — Fontes Regionais de Alagoas
+
+- [ ] Pesquisar portais de notícias de Alagoas e verificar feeds RSS disponíveis
+- [ ] Adicionar feeds RSS dos portais regionais ao sistema de importação
+- [ ] Garantir que matérias regionais de AL sejam marcadas com tags locais (alagoas, nordeste)
+- [ ] Testar scraping de imagens dos portais regionais
+
+## Sprint 33 — CNN Shorts Reformulado
+
+### Backend
+- [x] Busca automática de vídeos de notícias via YouTube RSS público (6 canais: CNN Brasil, Jovem Pan, Record, Band, SBT, GloboNews)
+- [x] Geração automática de shorts via IA a partir de artigos recentes (descrição estilo Reels)
+- [x] Cron job a cada 2 horas para alimentar shorts automaticamente
+- [x] Contagem de visualizações de shorts (viewCount no banco, incrementado após 2s de visualização)
+- [x] Schema: campos articleId, youtubeId, sourceType adicionados à tabela shorts
+- [x] Endpoint admin: runAutomation para gerar shorts manualmente
+- [x] Endpoint: feedInfinite com cursor pagination para rolagem infinita
+
+### Frontend
+- [x] Rolagem infinita no feed de shorts (carregar mais ao chegar no fim)
+- [x] Publicidade intercalada a cada 5 shorts (card de anúncio pulável após 5s)
+- [x] Notícias sem vídeo: efeito Ken Burns (zoom-in, zoom-out, pan-left, pan-right)
+- [x] Player YouTube embed para shorts do YouTube
+- [x] Clique em "Ver matéria" navega para o artigo original
+- [x] Badges de fonte (YouTube, IA)
+- [x] Indicador de posição lateral (dots)
+- [ ] Transição suave entre shorts
