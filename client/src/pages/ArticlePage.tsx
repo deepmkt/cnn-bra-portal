@@ -131,18 +131,18 @@ function RecentNewsWidget({ currentId }: { currentId: number }) {
 // ===== RELATED POSTS BY TAGS =====
 function RelatedPosts({ articleId, tags }: { articleId: number; tags: string[] }) {
   const [, setLocation] = useLocation();
-  const { data: similar = [] } = trpc.recommendations.similar.useQuery({ articleId, limit: 4 });
+  const { data: similar = [] } = trpc.recommendations.similar.useQuery({ articleId, limit: 6 });
   // Also fetch by category/tag as fallback
   const { data: byTag = [] } = trpc.articles.list.useQuery(
-    tags.length > 0 ? { tag: tags[0], limit: 8, status: "online" } : undefined,
-    { enabled: similar.length < 2 }
+    tags.length > 0 ? { tag: tags[0], limit: 12, status: "online" } : undefined,
+    { enabled: similar.length < 3 }
   );
 
-  const candidates = similar.length >= 2 ? similar : [
+  const candidates = similar.length >= 3 ? similar : [
     ...similar,
     ...byTag.filter((a: any) => a.id !== articleId && !similar.find((s: any) => s.id === a.id))
   ];
-  const posts = candidates.filter((a: any) => a.id !== articleId).slice(0, 4);
+  const posts = candidates.filter((a: any) => a.id !== articleId).slice(0, 6);
 
   if (posts.length === 0) return null;
 
@@ -152,7 +152,7 @@ function RelatedPosts({ articleId, tags }: { articleId: number; tags: string[] }
         <div className="w-1 h-8 bg-red-600 rounded-full" />
         <h3 className="font-black text-2xl text-gray-900 uppercase tracking-tighter">Notícias Relacionadas</h3>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {posts.map((r: any) => (
           <button
             key={r.id}
@@ -160,11 +160,17 @@ function RelatedPosts({ articleId, tags }: { articleId: number; tags: string[] }
             className="text-left group flex flex-col"
           >
             <div className="aspect-video overflow-hidden rounded-2xl mb-3 shadow-md">
-              <img
-                src={r.imageUrl || "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=600&q=70"}
-                alt={r.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
+              {r.imageUrl ? (
+                <img
+                  src={r.imageUrl}
+                  alt={r.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-[#001c56] to-[#003080] flex items-center justify-center">
+                  <span className="text-white font-black text-2xl opacity-30">CNN</span>
+                </div>
+              )}
             </div>
             <span className="text-[10px] font-black text-red-600 uppercase tracking-wider mb-1">{r.category}</span>
             <h4 className="font-black text-base leading-tight text-gray-900 group-hover:text-[#001c56] transition-colors line-clamp-2 tracking-tight">
@@ -177,6 +183,31 @@ function RelatedPosts({ articleId, tags }: { articleId: number; tags: string[] }
         ))}
       </div>
     </div>
+  );
+}
+
+// ===== BACK TO TOP BUTTON =====
+function BackToTopButton() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setVisible(window.scrollY > 400);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  if (!visible) return null;
+
+  return (
+    <button
+      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      className="fixed bottom-6 right-6 z-50 w-12 h-12 bg-[#001c56] hover:bg-[#002a7a] text-white rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+      aria-label="Voltar ao topo"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M18 15l-6-6-6 6"/>
+      </svg>
+    </button>
   );
 }
 
@@ -497,6 +528,9 @@ export default function ArticlePage({ id }: { id: number }) {
           <p className="text-gray-800 text-[11px] font-black uppercase tracking-[0.5em] opacity-50">© 2026 CNN BRA. TODOS OS DIREITOS RESERVADOS.</p>
         </div>
       </footer>
+
+      {/* Back to Top */}
+      <BackToTopButton />
     </div>
   );
 }

@@ -528,3 +528,39 @@
 - [x] Corrigido: parseAdminSession() agora faz JSON.parse do cookie e aceita qualquer role válido (admin/editor/contributor)
 - [x] Dois admins inseridos diretamente no banco (agenciadeepmkt@gmail.com e artsenna10@gmail.com)
 - [x] 93 testes passando após a correção
+
+## Sprint 43 — Concluir Aba Equipe Editorial
+
+- [ ] Registrar tab "adminUsers" no menu lateral do painel admin
+- [ ] Conectar render do AdminUsersTab no main content
+- [ ] Verificar endpoints: listUsers, createUser, updateUser, deleteUser
+- [ ] Testar criação e edição de usuários admin no painel
+
+## Sprint 44 — Backup Automático do Banco de Dados
+
+- [ ] Backup automático a cada hora: exportar artigos, configurações, admin_users, shorts para S3
+- [ ] Manter os últimos 24 backups (1 por hora, rotação automática)
+- [ ] Aba "Backup & Restauração" no painel admin: listar backups disponíveis, baixar, restaurar
+- [ ] Botão "Fazer Backup Agora" para backup manual imediato
+- [ ] Notificação ao admin quando backup falhar
+
+## Sprint 45 — Dashboard Google Analytics no Painel Admin
+
+- [ ] Integrar Google Analytics Data API (GA4) no backend
+- [ ] Endpoint admin: buscar métricas (usuários ativos, pageviews, sessões, bounce rate, top páginas)
+- [ ] Dashboard visual no painel admin com gráficos de linha e cards de métricas
+- [ ] Filtro de período: hoje, 7 dias, 30 dias
+- [ ] Top 10 artigos mais lidos (por pageviews do GA4)
+- [ ] Usuários em tempo real (active users agora)
+## Sprint 46 — Melhorias de UX e Admin (Sessão Atual)
+- [x] Corrigir erros de TypeScript no backupService.ts (usar getDb() em vez de drizzleDb)
+- [x] Adicionar funções de stats ricas no db.ts (getArticlesPerDay, getTopArticles, getCategoryDistribution)
+- [x] Expandir endpoint stats.overview com dados ricos para o Dashboard
+- [x] Reescrever DashboardTab com métricas ricas (cards, gráfico de artigos por dia, top artigos, distribuição por categoria)
+- [x] Criar BackupTab no painel admin (backup manual, histórico de backups, informações)
+- [x] Conectar BackupTab ao menu lateral do admin
+- [x] Verificar AdminUsersTab — já estava completo com CRUD de usuários
+- [x] Adicionar fontes regionais de Alagoas ao globalNewsFetcher (TNH1, Alagoas24h, Correio de Alagoas)
+- [x] Melhorar RelatedPosts para grade 3x3 com 6 posts relacionados
+- [x] Adicionar BackToTopButton flutuante na página do artigo
+- [x] Implementar busca inline na home (campo de busca com dropdown de resultados em tempo real)

@@ -1219,3 +1219,71 @@ export async function updateAdminLastLogin(id: number) {
   if (!db) return;
   await db.update(adminUsers).set({ lastLogin: new Date() }).where(eq(adminUsers.id, id));
 }
+
+// ===== RICH STATS =====
+
+export async function getArticlesPerDay(days: number = 30) {
+  const db = await getDb();
+  if (!db) return [];
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+  const result = await db.select({
+    date: sql<string>`DATE(${articles.publishedAt})`,
+    count: sql<number>`count(*)`,
+  })
+    .from(articles)
+    .where(and(
+      eq(articles.status, "online"),
+      sql`${articles.publishedAt} >= ${since}`
+    ))
+    .groupBy(sql`DATE(${articles.publishedAt})`)
+    .orderBy(sql`DATE(${articles.publishedAt}) ASC`);
+  return result;
+}
+
+export async function getTopArticles(limit: number = 10) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({
+    id: articles.id,
+    title: articles.title,
+    slug: articles.slug,
+    category: articles.category,
+    viewCount: articles.viewCount,
+    publishedAt: articles.publishedAt,
+  })
+    .from(articles)
+    .where(eq(articles.status, "online"))
+    .orderBy(desc(articles.viewCount))
+    .limit(limit);
+}
+
+export async function getCategoryDistribution() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({
+    category: articles.category,
+    count: sql<number>`count(*)`,
+  })
+    .from(articles)
+    .where(eq(articles.status, "online"))
+    .groupBy(articles.category)
+    .orderBy(sql`count(*) DESC`);
+}
+
+export async function getRecentActivity(limit: number = 10) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({
+    id: articles.id,
+    title: articles.title,
+    slug: articles.slug,
+    category: articles.category,
+    status: articles.status,
+    publishedAt: articles.publishedAt,
+    createdAt: articles.createdAt,
+  })
+    .from(articles)
+    .orderBy(desc(articles.createdAt))
+    .limit(limit);
+}

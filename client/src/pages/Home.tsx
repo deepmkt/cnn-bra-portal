@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
 import { Search, X, Menu } from "lucide-react";
@@ -64,6 +64,8 @@ export default function Home() {
   const [nlEmail, setNlEmail] = useState("");
   const [nlSuccess, setNlSuccess] = useState(false);
   const [exitPhone, setExitPhone] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch articles
   const { data: articlesData } = trpc.articles.list.useQuery({ status: "online", limit: 20 });
@@ -87,6 +89,13 @@ export default function Home() {
 
   // Newsletter mutation
   const subscribeMutation = trpc.newsletter.subscribe.useMutation();
+
+  // Inline search query (debounced via useMemo)
+  const debouncedSearch = useMemo(() => searchQuery.trim(), [searchQuery]);
+  const { data: searchResults = [] } = trpc.articles.list.useQuery(
+    { status: "online", search: debouncedSearch, limit: 9 },
+    { enabled: debouncedSearch.length >= 2 }
+  );
 
   // Filter articles by category and tag
   let filteredArticles = currentCategory === "home"
@@ -259,11 +268,72 @@ export default function Home() {
             <button onClick={() => setShortsOpen(true)} className="hidden md:flex items-center text-[11px] font-bold bg-black text-white px-4 py-1.5 rounded-full hover:bg-gray-800 shadow-lg transition-transform hover:scale-105 active:scale-95">
               <span className="text-red-500 mr-1.5">▶</span> Shorts
             </button>
-            <Link href="/busca">
-              <button className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
-                <Search size={18} strokeWidth={2.5} />
-              </button>
-            </Link>
+            {/* Inline Search */}
+            <div className="relative">
+              {searchOpen ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    autoFocus
+                    type="text"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Escape") { setSearchOpen(false); setSearchQuery(""); } }}
+                    placeholder="Buscar notícias..."
+                    className="border border-gray-300 rounded-full px-4 py-1.5 text-sm focus:outline-none focus:border-[#001c56] w-48 md:w-64"
+                  />
+                  <button onClick={() => { setSearchOpen(false); setSearchQuery(""); }} className="p-1.5 text-gray-400 hover:text-gray-700">
+                    <X size={16} />
+                  </button>
+                </div>
+              ) : (
+                <button onClick={() => setSearchOpen(true)} className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
+                  <Search size={18} strokeWidth={2.5} />
+                </button>
+              )}
+              {/* Search Results Dropdown */}
+              {searchOpen && debouncedSearch.length >= 2 && searchResults.length > 0 && (
+                <div className="absolute right-0 top-full mt-2 w-[380px] bg-white shadow-2xl border rounded-2xl z-[200] overflow-hidden">
+                  <div className="p-3 border-b bg-gray-50">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">{searchResults.length} resultado(s) para "{debouncedSearch}"</p>
+                  </div>
+                  <div className="max-h-[480px] overflow-y-auto divide-y">
+                    {searchResults.map((a: any) => (
+                      <button
+                        key={a.id}
+                        onClick={() => { setLocation(`/artigo/${a.id}`); setSearchOpen(false); setSearchQuery(""); trackSearch(debouncedSearch); }}
+                        className="w-full text-left flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors"
+                      >
+                        {a.imageUrl ? (
+                          <img src={a.imageUrl} alt="" className="w-14 h-10 object-cover rounded-lg shrink-0" />
+                        ) : (
+                          <div className="w-14 h-10 bg-gradient-to-br from-[#001c56] to-[#003080] rounded-lg shrink-0 flex items-center justify-center">
+                            <span className="text-white text-[8px] font-black">CNN</span>
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-black text-gray-800 line-clamp-2 leading-tight">{capitalizeTitle(a.title)}</p>
+                          <p className="text-[10px] text-red-600 font-bold mt-0.5">{a.category}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="p-2 border-t bg-gray-50">
+                    <Link href={`/busca?q=${encodeURIComponent(debouncedSearch)}`}>
+                      <button onClick={() => { setSearchOpen(false); trackSearch(debouncedSearch); }} className="w-full text-center text-xs font-bold text-[#001c56] hover:underline py-1">
+                        Ver todos os resultados para "{debouncedSearch}" →
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+              )}
+              {searchOpen && debouncedSearch.length >= 2 && searchResults.length === 0 && (
+                <div className="absolute right-0 top-full mt-2 w-[320px] bg-white shadow-2xl border rounded-2xl z-[200] p-6 text-center">
+                  <Search className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500 font-semibold">Nenhum resultado encontrado</p>
+                  <p className="text-xs text-gray-400 mt-1">Tente outros termos de busca</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>

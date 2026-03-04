@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 // ===== TYPES =====
-type Tab = "dashboard" | "articles" | "hero" | "media" | "ads" | "ticker" | "seo" | "import" | "comments" | "users" | "ugc" | "shorts" | "gamification" | "adminUsers";
+type Tab = "dashboard" | "articles" | "hero" | "media" | "ads" | "ticker" | "seo" | "import" | "comments" | "users" | "ugc" | "shorts" | "gamification" | "adminUsers" | "backup";
 type AdminRole = "admin" | "editor" | "contributor";
 
 const CATEGORIES = ["GERAL", "POLÍTICA", "ECONOMIA", "ESPORTES", "TECNOLOGIA", "SAÚDE", "ENTRETENIMENTO", "MUNDO", "BRASIL", "DIA A DIA", "GLOBAL"];
@@ -1039,6 +1039,7 @@ function ImportTab() {
 // ===== DASHBOARD TAB =====
 function DashboardTab() {
   const { data: stats } = trpc.stats.overview.useQuery();
+  const { data: rich } = trpc.stats.rich.useQuery();
   const [fixResult, setFixResult] = useState<{ fixed: number; errors: number; total: number } | null>(null);
 
   const fixAllImages = trpc.globalNews.fixAllImages.useMutation({
@@ -1051,26 +1052,120 @@ function DashboardTab() {
     },
   });
 
+  // Build articles-per-day chart data (fill missing days with 0)
+  const chartData = (() => {
+    const map: Record<string, number> = {};
+    (rich?.articlesPerDay ?? []).forEach((r: any) => { if (r.date) map[r.date] = Number(r.count); });
+    const result = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      result.push({ date: key.slice(5), count: map[key] ?? 0 });
+    }
+    return result;
+  })();
+
+  const CATEGORY_COLORS = ["#001c56","#e63946","#2a9d8f","#e9c46a","#f4a261","#264653","#a8dadc","#457b9d","#1d3557","#6d6875"];
+
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-black text-gray-800">Dashboard</h2>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {[
           { label: "Notícias", value: stats?.articleCount ?? "—", color: "blue", icon: FileText },
           { label: "Visualizações", value: stats?.totalViews ?? "—", color: "green", icon: Eye },
           { label: "Comentários", value: stats?.commentCount ?? "—", color: "purple", icon: MessageCircle },
           { label: "Usuários", value: stats?.userCount ?? "—", color: "orange", icon: Users },
+          { label: "Shorts", value: stats?.shortCount ?? "—", color: "red", icon: PlayCircle },
+          { label: "Newsletter", value: stats?.newsletterCount ?? "—", color: "teal", icon: Bell },
         ].map(({ label, value, color, icon: Icon }) => (
-          <div key={label} className="bg-white rounded-xl border p-5 shadow-sm">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 bg-${color}-100`}>
-              <Icon className={`w-5 h-5 text-${color}-600`} />
+          <div key={label} className="bg-white rounded-xl border p-4 shadow-sm">
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2 bg-${color}-100`}>
+              <Icon className={`w-4 h-4 text-${color}-600`} />
             </div>
             <p className="text-2xl font-black text-gray-800">{typeof value === "number" ? value.toLocaleString("pt-BR") : value}</p>
-            <p className="text-sm text-gray-500 font-medium">{label}</p>
+            <p className="text-xs text-gray-500 font-medium">{label}</p>
           </div>
         ))}
+      </div>
+
+      {/* Articles per day chart */}
+      <div className="bg-white rounded-xl border p-6 shadow-sm">
+        <h3 className="font-black text-gray-700 mb-4">Artigos Publicados (últimos 30 dias)</h3>
+        <div className="h-48">
+          {chartData.length > 0 ? (
+            <BarChartComponent data={chartData} />
+          ) : (
+            <div className="h-full flex items-center justify-center text-gray-400 text-sm">Carregando dados...</div>
+          )}
+        </div>
+      </div>
+
+      {/* Top Articles + Category Distribution */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Articles */}
+        <div className="bg-white rounded-xl border p-6 shadow-sm">
+          <h3 className="font-black text-gray-700 mb-4">Top 10 Artigos Mais Lidos</h3>
+          <div className="space-y-2">
+            {(rich?.topArticles ?? []).length === 0 && (
+              <p className="text-sm text-gray-400">Nenhum artigo com visualizações ainda.</p>
+            )}
+            {(rich?.topArticles ?? []).map((a: any, i: number) => (
+              <div key={a.id} className="flex items-center gap-3">
+                <span className="text-xs font-black text-gray-400 w-5 shrink-0">{i + 1}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-800 truncate">{a.title}</p>
+                  <p className="text-xs text-gray-400">{a.category}</p>
+                </div>
+                <span className="text-xs font-bold text-blue-600 shrink-0">{Number(a.viewCount).toLocaleString("pt-BR")} views</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Category Distribution */}
+        <div className="bg-white rounded-xl border p-6 shadow-sm">
+          <h3 className="font-black text-gray-700 mb-4">Distribuição por Categoria</h3>
+          <div className="space-y-2">
+            {(rich?.categoryDistribution ?? []).map((c: any, i: number) => {
+              const total = (rich?.categoryDistribution ?? []).reduce((s: number, x: any) => s + Number(x.count), 0);
+              const pct = total > 0 ? Math.round((Number(c.count) / total) * 100) : 0;
+              return (
+                <div key={c.category} className="flex items-center gap-3">
+                  <span className="text-xs font-semibold text-gray-600 w-28 shrink-0 truncate">{c.category}</span>
+                  <div className="flex-1 bg-gray-100 rounded-full h-2">
+                    <div className="h-2 rounded-full" style={{ width: `${pct}%`, backgroundColor: CATEGORY_COLORS[i % CATEGORY_COLORS.length] }} />
+                  </div>
+                  <span className="text-xs text-gray-500 w-12 text-right shrink-0">{Number(c.count)} ({pct}%)</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Activity */}
+      <div className="bg-white rounded-xl border p-6 shadow-sm">
+        <h3 className="font-black text-gray-700 mb-4">Atividade Recente</h3>
+        <div className="space-y-2">
+          {(rich?.recentActivity ?? []).map((a: any) => (
+            <div key={a.id} className="flex items-center gap-3 py-1">
+              <span className={`text-xs px-2 py-0.5 rounded-full font-semibold shrink-0 ${
+                a.status === "online" ? "bg-green-100 text-green-700" :
+                a.status === "draft" ? "bg-gray-100 text-gray-600" :
+                "bg-yellow-100 text-yellow-700"
+              }`}>{a.status}</span>
+              <p className="flex-1 text-sm text-gray-700 truncate">{a.title}</p>
+              <span className="text-xs text-gray-400 shrink-0">{a.category}</span>
+              <span className="text-xs text-gray-400 shrink-0">
+                {a.createdAt ? new Date(a.createdAt).toLocaleDateString("pt-BR") : "—"}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Maintenance Tools */}
@@ -1128,6 +1223,22 @@ function DashboardTab() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Simple bar chart component using recharts
+function BarChartComponent({ data }: { data: { date: string; count: number }[] }) {
+  // Use inline recharts import to avoid adding to global imports
+  const { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } = require("recharts");
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+        <XAxis dataKey="date" tick={{ fontSize: 10 }} interval={4} />
+        <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
+        <Tooltip formatter={(v: number) => [v, "Artigos"]} />
+        <Bar dataKey="count" fill="#001c56" radius={[3, 3, 0, 0]} />
+      </BarChart>
+    </ResponsiveContainer>
   );
 }
 
@@ -1588,6 +1699,108 @@ function ShortsTab() {
   );
 }
 
+// ===== BACKUP TAB =====
+function BackupTab() {
+  const utils = trpc.useUtils();
+  const { data: backups = [], isLoading } = trpc.stats.backup.useQuery();
+  const createBackupMut = trpc.stats.createBackup.useMutation({
+    onSuccess: (data: any) => {
+      utils.stats.backup.invalidate();
+      toast.success(`Backup criado com sucesso! ${Object.entries(data.tables || {}).map(([k, v]) => `${k}:${v}`).join(", ")}`);
+    },
+    onError: (err: any) => toast.error(`Erro ao criar backup: ${err.message}`),
+  });
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-xl font-black text-gray-800">Backup & Restauração</h2>
+
+      {/* Create Backup */}
+      <div className="bg-white rounded-xl border p-6 shadow-sm">
+        <h3 className="font-black text-gray-700 mb-1">Criar Backup Manual</h3>
+        <p className="text-sm text-gray-500 mb-4">
+          Exporta todos os artigos, shorts, configurações e dados do portal para um arquivo JSON no armazenamento em nuvem.
+          Backups automáticos são criados a cada hora.
+        </p>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <Download className="w-5 h-5 text-blue-600 shrink-0" />
+              <span className="font-bold text-gray-800">Backup Completo do Banco de Dados</span>
+            </div>
+            <p className="text-sm text-gray-500">
+              Inclui: artigos, shorts, configurações do site, itens do ticker e usuários admin (senhas não são exportadas).
+            </p>
+          </div>
+          <Button
+            onClick={() => createBackupMut.mutate()}
+            disabled={createBackupMut.isPending}
+            className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap shrink-0"
+          >
+            {createBackupMut.isPending ? (
+              <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Criando...</>
+            ) : (
+              <><Download className="w-4 h-4 mr-2" />Criar Backup Agora</>
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {/* Backup History */}
+      <div className="bg-white rounded-xl border p-6 shadow-sm">
+        <h3 className="font-black text-gray-700 mb-4">Histórico de Backups</h3>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <RefreshCw className="w-6 h-6 animate-spin text-gray-400" />
+          </div>
+        ) : backups.length === 0 ? (
+          <div className="text-center py-8 text-gray-400">
+            <Download className="w-10 h-10 mx-auto mb-2 opacity-30" />
+            <p className="text-sm">Nenhum backup disponível ainda.</p>
+            <p className="text-xs mt-1">O primeiro backup automático será criado em 5 minutos após o servidor iniciar.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {backups.map((b: any) => (
+              <div key={b.key} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                <Download className="w-4 h-4 text-blue-500 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-700 truncate">{b.key}</p>
+                  <p className="text-xs text-gray-400">
+                    {b.createdAt ? new Date(b.createdAt).toLocaleString("pt-BR") : "—"}
+                    {b.sizeBytes ? ` • ${(b.sizeBytes / 1024).toFixed(1)} KB` : ""}
+                  </p>
+                </div>
+                {b.url && (
+                  <a
+                    href={b.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-blue-600 hover:underline shrink-0 font-semibold"
+                  >
+                    Download
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Info */}
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+        <p className="text-sm text-amber-800 font-semibold">Informações sobre Backup</p>
+        <ul className="text-sm text-amber-700 mt-2 space-y-1 list-disc list-inside">
+          <li>Backups automáticos são criados a cada hora</li>
+          <li>Os últimos 48 backups são mantidos (2 dias de histórico)</li>
+          <li>Senhas de administradores nunca são incluídas nos backups</li>
+          <li>Para restaurar, entre em contato com o suporte técnico</li>
+        </ul>
+      </div>
+    </div>
+  );
+}
+
 // ===== MAIN ADMIN COMPONENT =====
 export default function Admin() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean | null>(null);
@@ -1635,6 +1848,8 @@ export default function Admin() {
     { id: "comments", label: "Comentários", icon: MessageCircle },
     { id: "users", label: "Usuários", icon: Users },
     { id: "shorts", label: "CNN Shorts", icon: PlayCircle },
+    { id: "adminUsers", label: "Equipe Editorial", icon: Shield },
+    { id: "backup", label: "Backup & Restauração", icon: Download },
   ];
 
   return (
@@ -1699,6 +1914,8 @@ export default function Admin() {
           {activeTab === "comments" && <CommentsTab />}
           {activeTab === "users" && <UsersTab />}
           {activeTab === "shorts" && <ShortsTab />}
+          {activeTab === "adminUsers" && <AdminUsersTab />}
+          {activeTab === "backup" && <BackupTab />}
         </div>
       </div>
     </div>

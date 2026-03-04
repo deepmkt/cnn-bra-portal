@@ -19,6 +19,14 @@ const parser = new RSSParser();
 // ===== PRIORITY SOURCE: anoticiaal.com.br =====
 const ANOTICIA_RSS = "https://anoticiaal.com.br/feed/";
 
+// ===== REGIONAL SOURCES: Alagoas =====
+// These feeds are included in the POLÍTICA rotation to bring local AL news
+const ALAGOAS_FEEDS = [
+  "https://tnh1.com.br/feed/",           // TNH1 - Tribuna do Norte Nordeste
+  "https://alagoas24horas.com.br/feed/", // Alagoas 24 Horas
+  "https://correiodealagoas.com.br/feed/", // Correio de Alagoas
+];
+
 // Category rotation order
 // Each cycle posts 1 article from the next category in the rotation
 const CATEGORY_ROTATION: Array<{ category: string; label: string; feeds: string[] }> = [
@@ -28,6 +36,7 @@ const CATEGORY_ROTATION: Array<{ category: string; label: string; feeds: string[
     feeds: [
       "https://news.google.com/rss/topics/CAAqIQgKIhtDQkFTRGdvSUwyMHZNRFZxYVhjU0FuQjBLQUFQAQ?hl=pt-BR&gl=BR&ceid=BR:pt-419", // Politics
       "https://news.google.com/rss?hl=pt-BR&gl=BR&ceid=BR:pt-419",
+      ...ALAGOAS_FEEDS, // Regional Alagoas sources
     ],
   },
   {

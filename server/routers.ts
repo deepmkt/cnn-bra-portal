@@ -7,6 +7,8 @@ import * as db from "./db";
 import { storagePut } from "./storage";
 import { invokeLLM } from "./_core/llm";
 import bcrypt from "bcryptjs";
+import { sql } from "drizzle-orm";
+import { articles, shorts, newsletterSubscribers } from "../drizzle/schema";
 
 // Admin session cookie key
 const ADMIN_SESSION_KEY = "cnn_admin_session";
@@ -584,13 +586,36 @@ export const appRouter = router({
   // ===== STATS =====
   stats: router({
     overview: adminProcedure.query(async () => {
-      const [articleCount, totalViews, commentCount, userCount] = await Promise.all([
+      const [articleCount, totalViews, commentCount, userCount, shortCount, newsletterCount] = await Promise.all([
         db.getArticleCount(),
         db.getTotalViews(),
         db.getCommentCount(),
         db.getUserCount(),
+        db.getShortCount(),
+        db.getNewsletterCount(),
       ]);
-      return { articleCount, totalViews, commentCount, userCount };
+      return { articleCount, totalViews, commentCount, userCount, shortCount, newsletterCount };
+    }),
+
+    rich: adminProcedure.query(async () => {
+      const [articlesPerDay, topArticles, categoryDistribution, recentActivity] = await Promise.all([
+        db.getArticlesPerDay(30),
+        db.getTopArticles(10),
+        db.getCategoryDistribution(),
+        db.getRecentActivity(10),
+      ]);
+      return { articlesPerDay, topArticles, categoryDistribution, recentActivity };
+    }),
+
+    backup: adminProcedure.query(async () => {
+      const { listBackups } = await import("./backupService");
+      return listBackups();
+    }),
+
+    createBackup: adminProcedure.mutation(async () => {
+      const { createBackup, listBackups } = await import("./backupService");
+      const result = await createBackup();
+      return result;
     }),
   }),
 
