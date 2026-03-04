@@ -409,3 +409,20 @@
 - [x] Diagnosticar o fluxo completo: RSS → decodeUrl → scrapeArticle → validateImage → banco
 - [x] Corrigir o decoder para usar o algoritmo correto (signature + timestamp + batchexecute API)
 - [x] Testar com notícias reais e confirmar imagens corretas no banco (R7, CNN Brasil, Valor, BBC)
+
+## Sprint 31 — Imagens Originais, 1 Post/Hora e Prioridade anoticiaal.com.br
+
+### Imagens
+- [x] Remover fallback Unsplash (não publicar artigo sem imagem real)
+- [x] Remover fallback de geração de imagem via IA
+- [x] Usar apenas og:image do artigo original; se não encontrar, pular o artigo
+
+### Frequência e Rotação de Categorias
+- [x] Limitar a 1 postagem por ciclo (não mais 3)
+- [x] Implementar rotação de categorias: Política, Dia a Dia, Global, Esportes, Economia
+- [x] Salvar no banco qual categoria foi postada por último para alternar no próximo ciclo
+
+### Prioridade anoticiaal.com.br
+- [x] Adicionar feed RSS do anoticiaal.com.br como fonte prioritária
+- [x] Matérias do anoticiaal.com.br devem ser marcadas como isHero=true automaticamente
+- [x] Garantir que matérias do anoticiaal.com.br apareçam em destaque na home

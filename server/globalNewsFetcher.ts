@@ -7,8 +7,7 @@
 import RSSParser from "rss-parser";
 import * as cheerio from "cheerio";
 import { invokeLLM } from "./_core/llm";
-import { storagePut } from "./storage";
-import { getDb } from "./db";
+import { getDb, getSetting, upsertSetting } from "./db";
 import { articles, globalNewsCache, shorts } from "../drizzle/schema";
 import { eq, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -17,7 +16,55 @@ import { decodeGoogleNewsUrl as decodeUrl } from "./decodeGoogleNewsUrl";
 
 const parser = new RSSParser();
 
-// Google News RSS feeds for international news in Portuguese
+// ===== PRIORITY SOURCE: anoticiaal.com.br =====
+const ANOTICIA_RSS = "https://anoticiaal.com.br/feed/";
+
+// Category rotation order
+// Each cycle posts 1 article from the next category in the rotation
+const CATEGORY_ROTATION: Array<{ category: string; label: string; feeds: string[] }> = [
+  {
+    category: "POLÍTICA",
+    label: "Política",
+    feeds: [
+      "https://news.google.com/rss/topics/CAAqIQgKIhtDQkFTRGdvSUwyMHZNRFZxYVhjU0FuQjBLQUFQAQ?hl=pt-BR&gl=BR&ceid=BR:pt-419", // Politics
+      "https://news.google.com/rss?hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    ],
+  },
+  {
+    category: "GERAL",
+    label: "Dia a Dia",
+    feeds: [
+      "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx1YlY4U0FuQjBHZ0pDVWlnQVAB?hl=pt-BR&gl=BR&ceid=BR:pt-419", // Top stories
+      "https://news.google.com/rss?hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    ],
+  },
+  {
+    category: "GLOBAL",
+    label: "Global",
+    feeds: [
+      "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx6TVdZU0FuQjBHZ0pDVWlnQVAB?hl=pt-BR&gl=BR&ceid=BR:pt-419", // World
+      "https://news.google.com/rss?hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    ],
+  },
+  {
+    category: "ESPORTES",
+    label: "Esportes",
+    feeds: [
+      "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp1ZEdvU0FuQjBHZ0pDVWlnQVAB?hl=pt-BR&gl=BR&ceid=BR:pt-419", // Sports
+      "https://news.google.com/rss?hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    ],
+  },
+  {
+    category: "GERAL",
+    label: "Economia",
+    feeds: [
+      "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx6TVdZU0FuQjBHZ0pDVWlnQVAB?hl=pt-BR&gl=BR&ceid=BR:pt-419",
+      "https://news.google.com/rss?hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    ],
+  },
+];
+
+// Fallback feeds (used if rotation feed fails)
 const RSS_FEEDS = [
   "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx1YlY4U0FuQjBHZ0pDVWlnQVAB?hl=pt-BR&gl=BR&ceid=BR:pt-419",  // Top stories
   "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx6TVdZU0FuQjBHZ0pDVWlnQVAB?hl=pt-BR&gl=BR&ceid=BR:pt-419",  // World
@@ -583,7 +630,148 @@ Responda APENAS "SIM" se for relevante para brasileiros, ou "NÃO" se não for.`
 }
 
 /**
- * Main function: fetch, scrape, rewrite, and publish global news
+ * Map category from anoticiaal.com.br to CNN BRA category
+ */
+function mapAnoticiaCategory(cats: string[]): string {
+  const catStr = cats.join(" ").toUpperCase();
+  if (catStr.includes("POLÍT") || catStr.includes("POLITI") || catStr.includes("ELEIÇÃO") || catStr.includes("ELEI")) return "POLÍTICA";
+  if (catStr.includes("ESPORTE") || catStr.includes("FUTEBOL") || catStr.includes("SPORT")) return "ESPORTES";
+  if (catStr.includes("ECONOMIA") || catStr.includes("NEGÓCIO") || catStr.includes("FINANÇ")) return "GERAL";
+  return "GERAL";
+}
+
+/**
+ * Try to publish one article from a given feed URL.
+ * Returns true if published, false if skipped/failed.
+ */
+async function tryPublishFromFeed(
+  feedUrl: string,
+  targetCategory: string,
+  isAnoticia: boolean,
+  isHero: boolean,
+  tagsPrefix: string,
+): Promise<boolean> {
+  try {
+    const feed = await parser.parseURL(feedUrl);
+    console.log(`[GlobalNews] Feed: ${feed.title} — ${feed.items.length} items`);
+
+    for (const item of feed.items.slice(0, 15)) {
+      const rawUrl = item.link || "";
+      if (!rawUrl) continue;
+
+      // For anoticiaal.com.br, URL is already real — no Google decode needed
+      const realUrl = isAnoticia ? rawUrl : await decodeUrl(rawUrl);
+      const googleUrl = rawUrl;
+
+      // Deduplication check
+      if (await isAlreadyImported(realUrl) || await isAlreadyImported(googleUrl)) continue;
+
+      console.log(`[GlobalNews] Processing: ${item.title}`);
+      console.log(`[GlobalNews] Resolved URL: ${realUrl}`);
+
+      // Relevance check (skip for anoticiaal — always relevant)
+      if (!isAnoticia) {
+        const isRelevant = await checkBrazilRelevance(item.title || "", item.contentSnippet || "");
+        if (!isRelevant) {
+          console.log(`[GlobalNews] Skipped (not relevant): ${item.title}`);
+          continue;
+        }
+      }
+
+      // Scrape article from the REAL URL
+      const scraped = await scrapeArticle(realUrl);
+      const sourceName = isAnoticia ? "A Notícia AL" : getSourceName(realUrl);
+
+      // Content for AI rewrite
+      const contentForAI = scraped.content.length > 100
+        ? scraped.content
+        : `${item.title}. ${item.contentSnippet || item.content || ""}`;
+
+      if (contentForAI.length < 50) {
+        console.log(`[GlobalNews] Skipping (too short): ${item.title}`);
+        continue;
+      }
+
+      // Rewrite with AI
+      const rewritten = await rewriteWithAI(item.title || "", contentForAI, sourceName, realUrl);
+      if (!rewritten) continue;
+
+      // ===== IMAGE: ONLY use real image from article. NO Unsplash, NO AI. =====
+      let finalImageUrl: string | null = null;
+      if (scraped.imageUrl) {
+        finalImageUrl = await validateImageUrl(scraped.imageUrl);
+        if (!finalImageUrl) {
+          console.log(`[GlobalNews] Image validation failed: ${scraped.imageUrl} — SKIPPING article`);
+        }
+      }
+
+      // If no valid image found, skip this article entirely
+      if (!finalImageUrl) {
+        console.log(`[GlobalNews] No real image found for: ${item.title} — skipping`);
+        continue;
+      }
+
+      // Determine final category
+      const finalCategory = isAnoticia
+        ? mapAnoticiaCategory(item.categories || [])
+        : targetCategory;
+
+      // Create slug
+      const slug = createSlug(rewritten.title) + "-" + nanoid(6);
+
+      // Build source tag
+      const sourceTag = `<p class="text-sm text-gray-500 mt-6 pt-4 border-t border-gray-200"><strong>Fonte:</strong> <a href="${realUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">${sourceName}</a></p>`;
+      const contentWithSource = rewritten.content + "\n" + sourceTag;
+
+      const db = await getDb();
+      if (!db) return false;
+
+      try {
+        const result = await db.insert(articles).values({
+          title: rewritten.title,
+          slug,
+          excerpt: rewritten.excerpt,
+          content: contentWithSource,
+          category: finalCategory,
+          imageUrl: finalImageUrl,
+          videoUrl: scraped.videoUrl || "",
+          status: "online",
+          isHero,
+          tags: `${tagsPrefix},${rewritten.tags}`,
+          publishedAt: item.pubDate ? new Date(item.pubDate) : new Date(),
+        });
+
+        const insertId = (result as any)[0]?.insertId;
+
+        if (scraped.videoUrl) {
+          await createShortFromArticle(insertId, rewritten.title, scraped.videoUrl, finalImageUrl, finalCategory);
+        }
+
+        await cacheImportedUrl(realUrl, rewritten.title, item.title || "", sourceName);
+        if (googleUrl !== realUrl) {
+          await cacheImportedUrl(googleUrl, rewritten.title, item.title || "", sourceName);
+        }
+
+        console.log(`[GlobalNews] Published: ${rewritten.title} (cat: ${finalCategory}, hero: ${isHero}, image: YES)`);
+        return true;
+      } catch (err) {
+        console.error(`[GlobalNews] Insert error:`, err);
+        return false;
+      }
+    }
+  } catch (err) {
+    console.error(`[GlobalNews] Feed error for ${feedUrl}:`, err);
+  }
+  return false;
+}
+
+/**
+ * Main function: fetch, scrape, rewrite, and publish global news.
+ * Strategy:
+ * 1. Always try anoticiaal.com.br first (priority source, isHero=true)
+ * 2. If no anoticiaal article, rotate through categories (Política, Dia a Dia, Global, Esportes, ...)
+ * 3. Publish exactly 1 article per cycle
+ * 4. Never use Unsplash or AI-generated images — skip articles without real images
  */
 export async function fetchAndPublishGlobalNews(): Promise<{ imported: number; errors: number }> {
   console.log("[GlobalNews] Starting auto-fetch cycle...");
@@ -595,142 +783,59 @@ export async function fetchAndPublishGlobalNews(): Promise<{ imported: number; e
   }
 
   let imported = 0;
-  let errors = 0;
-  const maxPerCycle = 3; // Max articles per cycle (focus on quality over quantity)
+  const errors = 0;
 
-  for (const feedUrl of RSS_FEEDS) {
-    if (imported >= maxPerCycle) break;
+  // ===== STEP 1: Try anoticiaal.com.br first (priority source) =====
+  console.log("[GlobalNews] Trying priority source: anoticiaal.com.br...");
+  const anoticiaPublished = await tryPublishFromFeed(
+    ANOTICIA_RSS,
+    "GERAL",
+    true,  // isAnoticia
+    true,  // isHero — anoticiaal articles always get hero treatment
+    "alagoas,nordeste",
+  );
 
-    try {
-      const feed = await parser.parseURL(feedUrl);
-      console.log(`[GlobalNews] Feed: ${feed.title} — ${feed.items.length} items`);
+  if (anoticiaPublished) {
+    imported++;
+    console.log(`[GlobalNews] Cycle complete (anoticiaal): ${imported} imported`);
+    return { imported, errors };
+  }
 
-      for (const item of feed.items.slice(0, 8)) {
-        if (imported >= maxPerCycle) break;
+  // ===== STEP 2: Rotate through categories =====
+  // Read last category index from settings
+  const lastIndexStr = await getSetting("globalNews_lastCategoryIndex");
+  const lastIndex = lastIndexStr ? parseInt(lastIndexStr, 10) : -1;
+  const nextIndex = (lastIndex + 1) % CATEGORY_ROTATION.length;
+  const rotation = CATEGORY_ROTATION[nextIndex];
 
-        const googleUrl = item.link || "";
-        if (!googleUrl) continue;
+  console.log(`[GlobalNews] Rotating to category: ${rotation.label} (index ${nextIndex})`);
 
-        // Resolve real URL using decoder
-        const realUrl = await decodeUrl(googleUrl);
+  for (const feedUrl of rotation.feeds) {
+    const published = await tryPublishFromFeed(
+      feedUrl,
+      rotation.category,
+      false, // isAnoticia
+      false, // isHero
+      rotation.label.toLowerCase(),
+    );
 
-        // Deduplication check
-        if (await isAlreadyImported(realUrl) || await isAlreadyImported(googleUrl)) {
-          continue;
-        }
+    if (published) {
+      imported++;
+      // Save the new category index
+      await upsertSetting("globalNews_lastCategoryIndex", String(nextIndex));
+      break;
+    }
+  }
 
-        console.log(`[GlobalNews] Processing: ${item.title}`);
-        console.log(`[GlobalNews] Resolved URL: ${realUrl}`);
-
-        // ===== RELEVANCE FILTER: Check if news is relevant for Brazilian audience =====
-        const isRelevant = await checkBrazilRelevance(item.title || "", item.contentSnippet || "");
-        if (!isRelevant) {
-          console.log(`[GlobalNews] Skipped (not relevant for Brazil): ${item.title}`);
-          continue;
-        }
-
-        // Scrape article from the REAL URL (not Google News)
-        const scraped = await scrapeArticle(realUrl);
-        
-        // Get proper source name
-        const sourceName = getSourceName(realUrl);
-
-        // If no content scraped, use RSS title/description
-        const contentForAI = scraped.content.length > 100 
-          ? scraped.content 
-          : `${item.title}. ${item.contentSnippet || item.content || ""}`;
-
-        if (contentForAI.length < 50) {
-          console.log(`[GlobalNews] Skipping (too short): ${item.title}`);
-          continue;
-        }
-
-        // Rewrite with AI (pass real URL, not Google News URL)
-        const rewritten = await rewriteWithAI(
-          item.title || "",
-          contentForAI,
-          sourceName,
-          realUrl
-        );
-
-        if (!rewritten) {
-          errors++;
-          continue;
-        }
-
-        // Validate and use original image URL directly (no S3 upload)
-        let finalImageUrl: string | null = null;
-        if (scraped.imageUrl) {
-          finalImageUrl = await validateImageUrl(scraped.imageUrl);
-          // NOTE: Do NOT fall back to scraped.imageUrl if validation fails —
-          // a failed validation means the image is a Google logo or inaccessible.
-          // We prefer the Unsplash placeholder over a broken/wrong image.
-          if (!finalImageUrl) {
-            console.log(`[GlobalNews] Image validation failed for: ${scraped.imageUrl} — will use placeholder`);
-          }
-        }
-        
-        // If no image at all, use a generic news placeholder from Unsplash
-        if (!finalImageUrl) {
-          console.log(`[GlobalNews] No image found for article, using placeholder`);
-          finalImageUrl = "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=1200&q=80";
-        }
-
-        // Create slug
-        const slug = createSlug(rewritten.title) + "-" + nanoid(6);
-
-        // Insert article with proper source link
-        try {
-          // Build the source tag — clickable link to the REAL article URL
-          const sourceTag = `<p class="text-sm text-gray-500 mt-6 pt-4 border-t border-gray-200"><strong>Fonte:</strong> <a href="${realUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">${sourceName}</a></p>`;
-          const contentWithSource = rewritten.content + "\n" + sourceTag;
-
-          const result = await db.insert(articles).values({
-            title: rewritten.title,
-            slug,
-            excerpt: rewritten.excerpt,
-            content: contentWithSource,
-            category: "GLOBAL",
-            imageUrl: finalImageUrl || "",
-            videoUrl: scraped.videoUrl || "",
-            status: "online",
-            isHero: false,
-            tags: `global,internacional,${rewritten.tags}`,
-            publishedAt: item.pubDate ? new Date(item.pubDate) : new Date(),
-          });
-
-          const insertId = (result as any)[0]?.insertId;
-
-          // If article has video, create a CNN Short
-          if (scraped.videoUrl) {
-            await createShortFromArticle(
-              insertId,
-              rewritten.title,
-              scraped.videoUrl,
-              finalImageUrl,
-              "GLOBAL"
-            );
-          }
-
-          // Cache the URL
-          await cacheImportedUrl(realUrl, rewritten.title, item.title || "", sourceName);
-          if (googleUrl !== realUrl) {
-            await cacheImportedUrl(googleUrl, rewritten.title, item.title || "", sourceName);
-          }
-
-          imported++;
-          console.log(`[GlobalNews] Published: ${rewritten.title} (image: ${finalImageUrl ? "YES" : "NO"})`);
-        } catch (err) {
-          console.error(`[GlobalNews] Insert error:`, err);
-          errors++;
-        }
-
-        // Small delay between articles to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 2000));
+  if (imported === 0) {
+    // Fallback: try general feeds
+    console.log("[GlobalNews] Rotation failed, trying fallback feeds...");
+    for (const feedUrl of RSS_FEEDS) {
+      const published = await tryPublishFromFeed(feedUrl, "GERAL", false, false, "geral");
+      if (published) {
+        imported++;
+        break;
       }
-    } catch (err) {
-      console.error(`[GlobalNews] Feed error:`, err);
-      errors++;
     }
   }
 
