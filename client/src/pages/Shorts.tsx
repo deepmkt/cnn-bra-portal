@@ -228,16 +228,37 @@ function ShortItem({ short, isActive, isMuted, onToggleMute, likedShorts, onNext
           <span className="text-white font-semibold text-sm">{short.authorName || "CNN BRA"}</span>
           <span className="text-white/60 text-xs bg-white/10 px-2 py-0.5 rounded-full">{short.category}</span>
         </div>
-        <h3 className="text-white font-bold text-base leading-tight mb-1 line-clamp-2">{short.title}</h3>
-        {short.description && <p className="text-white/70 text-sm line-clamp-2">{short.description}</p>}
+
+        {/* Título e resumo clícaveis para abrir o artigo */}
+        {short.articleId ? (
+          <button
+            onClick={handleArticleClick}
+            className="text-left w-full group"
+          >
+            <h3 className="text-white font-bold text-base leading-tight mb-1.5 line-clamp-2 group-hover:text-red-300 transition-colors">
+              {short.title}
+            </h3>
+            {short.description && (
+              <p className="text-white/80 text-sm leading-snug line-clamp-3 mb-2">
+                {short.description}
+              </p>
+            )}
+            <span className="inline-flex items-center gap-1.5 text-red-400 group-hover:text-red-300 text-xs font-semibold transition-colors">
+              <ExternalLink className="w-3 h-3" /> Ler matéria completa
+            </span>
+          </button>
+        ) : (
+          <>
+            <h3 className="text-white font-bold text-base leading-tight mb-1.5 line-clamp-2">{short.title}</h3>
+            {short.description && (
+              <p className="text-white/80 text-sm leading-snug line-clamp-3">{short.description}</p>
+            )}
+          </>
+        )}
+
         <div className="flex items-center gap-3 mt-2 text-white/50 text-xs">
           <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{formatCount(short.viewCount)}</span>
           {short.duration > 0 && <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatDuration(short.duration)}</span>}
-          {short.articleId && (
-            <button onClick={handleArticleClick} className="flex items-center gap-1 text-red-400 hover:text-red-300 transition-colors">
-              <ExternalLink className="w-3 h-3" /> Ver matéria
-            </button>
-          )}
         </div>
       </div>
 

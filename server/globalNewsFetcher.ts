@@ -586,6 +586,9 @@ async function createShortFromArticle(articleId: number, title: string, videoUrl
       viewCount: 0,
       status: "online",
       publishedAt: new Date(),
+      articleId,
+      sourceType: "article",
+      authorName: "CNN BRA",
     });
     console.log(`[GlobalNews] Created CNN Short from article: ${title}`);
   } catch (err) {

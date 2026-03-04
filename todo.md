@@ -583,3 +583,8 @@
 
 ## Sprint 49 — Reordenação do Topo
 - [x] Mover barra ticker "De Última Hora" para o topo absoluto (acima da publicidade)
+
+## Sprint 50 — Correções de UI
+- [x] Remover ticker duplicado do ArticlePage.tsx
+- [x] Shorts: clicar no card abre o artigo correspondente
+- [x] Shorts: exibir breve resumo nos cards com link para o artigo

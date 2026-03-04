@@ -294,20 +294,8 @@ export default function ArticlePage({ id }: { id: number }) {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Ticker */}
-      <div className="bg-[#001c56] text-white text-sm h-10 flex items-center w-full overflow-hidden sticky top-0 z-[60]">
-        <div className="font-bold uppercase px-4 h-full flex items-center bg-[#001c56] z-20 relative border-r border-white/20 shadow-xl whitespace-nowrap">
-          <span className="text-red-500 mr-2 animate-pulse">●</span> De Última Hora
-        </div>
-        <div className="flex-1 overflow-hidden relative h-full flex items-center">
-          <div className="animate-marquee whitespace-nowrap inline-block pl-4 font-medium">
-            Acompanhe as últimas notícias do Brasil e do mundo no CNN BRA
-          </div>
-        </div>
-      </div>
-
       {/* Header */}
-      <header className="border-b border-gray-200 bg-white z-50 sticky top-10 shadow-sm">
+      <header className="border-b border-gray-200 bg-white z-50 sticky top-0 shadow-sm">
         <div className="container mx-auto px-4 h-16 md:h-20 flex items-center justify-between">
           <Link href="/">
             <button className="flex items-end group transition-transform active:scale-95">
