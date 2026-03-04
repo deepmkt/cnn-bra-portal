@@ -27,6 +27,7 @@ import {
   shortLikes, InsertShortLike,
   newsletterSubscribers, InsertNewsletterSubscriber,
   globalNewsCache, InsertGlobalNewsItem,
+  adminUsers, InsertAdminUser,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -1158,4 +1159,63 @@ export async function getAllGlobalNews(limit = 50) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(globalNewsCache).orderBy(desc(globalNewsCache.fetchedAt)).limit(limit);
+}
+
+// ===== ADMIN USERS =====
+export async function getAdminUserByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(adminUsers)
+    .where(eq(adminUsers.email, email.toLowerCase().trim()))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+export async function getAdminUserById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(adminUsers).where(eq(adminUsers.id, id)).limit(1);
+  return rows[0] ?? null;
+}
+
+export async function createAdminUser(data: Omit<InsertAdminUser, 'id' | 'createdAt' | 'updatedAt'>) {
+  const db = await getDb();
+  if (!db) return null;
+  // Normalize email to lowercase
+  const normalized = { ...data, email: data.email.toLowerCase().trim() };
+  await db.insert(adminUsers).values(normalized);
+  return getAdminUserByEmail(normalized.email);
+}
+
+export async function listAdminUsers() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({
+    id: adminUsers.id,
+    name: adminUsers.name,
+    email: adminUsers.email,
+    role: adminUsers.role,
+    isActive: adminUsers.isActive,
+    lastLogin: adminUsers.lastLogin,
+    createdAt: adminUsers.createdAt,
+    createdBy: adminUsers.createdBy,
+  }).from(adminUsers).orderBy(adminUsers.createdAt);
+}
+
+export async function updateAdminUser(id: number, data: Partial<Pick<InsertAdminUser, 'name' | 'role' | 'isActive' | 'passwordHash'>>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(adminUsers).set({ ...data, updatedAt: new Date() }).where(eq(adminUsers.id, id));
+}
+
+export async function deleteAdminUser(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(adminUsers).where(eq(adminUsers.id, id));
+}
+
+export async function updateAdminLastLogin(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(adminUsers).set({ lastLogin: new Date() }).where(eq(adminUsers.id, id));
 }

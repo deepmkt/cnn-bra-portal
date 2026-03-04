@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO admin_users (email, name, passwordHash, role, isActive, createdAt) VALUES ('agenciadeepmkt@gmail.com', 'Agência DeepMKT', '$2b$10$HBfWs1FtrHgErPzGFFg6NOW649MeTLsxffIYhcS0NnacBfl2RXlOq', 'admin', 1, NOW()), ('artsenna10@gmail.com', 'Art Senna', '$2b$10$KJcizyQ4WXUg8YsVlSohpu4tuokbfzBUQBBgDvtVw8zmmmMhaZAEG', 'admin', 1, NOW());",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AGjn9SpCJUmEG7Z.root --database 6wzLmWaAhQKjEBEoadSqJc --execute INSERT INTO admin_users (email, name, passwordHash, role, isActive, createdAt) VALUES ('agenciadeepmkt@gmail.com', 'Agência DeepMKT', '$2b$10$HBfWs1FtrHgErPzGFFg6NOW649MeTLsxffIYhcS0NnacBfl2RXlOq', 'admin', 1, NOW()), ('artsenna10@gmail.com', 'Art Senna', '$2b$10$KJcizyQ4WXUg8YsVlSohpu4tuokbfzBUQBBgDvtVw8zmmmMhaZAEG', 'admin', 1, NOW());",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 66
+}

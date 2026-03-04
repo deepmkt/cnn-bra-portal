@@ -15,7 +15,8 @@ import {
 } from "lucide-react";
 
 // ===== TYPES =====
-type Tab = "dashboard" | "articles" | "hero" | "media" | "ads" | "ticker" | "seo" | "import" | "comments" | "users" | "ugc" | "shorts" | "gamification";
+type Tab = "dashboard" | "articles" | "hero" | "media" | "ads" | "ticker" | "seo" | "import" | "comments" | "users" | "ugc" | "shorts" | "gamification" | "adminUsers";
+type AdminRole = "admin" | "editor" | "contributor";
 
 const CATEGORIES = ["GERAL", "POLÍTICA", "ECONOMIA", "ESPORTES", "TECNOLOGIA", "SAÚDE", "ENTRETENIMENTO", "MUNDO", "BRASIL", "DIA A DIA", "GLOBAL"];
 
@@ -1173,7 +1174,8 @@ function UsersTab() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-black text-gray-800">Gerenciar Usuários</h2>
+      <h2 className="text-xl font-black text-gray-800">Usuários do Portal</h2>
+      <p className="text-sm text-gray-500">Usuários cadastrados via login OAuth (leitores e colaboradores do portal).</p>
       <div className="space-y-2">
         {users.map((u: any) => (
           <div key={u.id} className="bg-white rounded-xl border p-4 flex items-center gap-3">
@@ -1194,6 +1196,185 @@ function UsersTab() {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+// ===== ADMIN USERS TAB (manage CMS access accounts) =====
+function AdminUsersTab() {
+  const utils = trpc.useUtils();
+  const { data: adminUsers = [], isLoading } = trpc.adminAuth.listUsers.useQuery();
+  const [showForm, setShowForm] = useState(false);
+  const [editUser, setEditUser] = useState<any>(null);
+  const [form, setForm] = useState({ name: "", email: "", password: "", role: "contributor" as AdminRole });
+  const [editForm, setEditForm] = useState({ name: "", role: "contributor" as AdminRole, isActive: true, password: "" });
+
+  const createMut = trpc.adminAuth.createUser.useMutation({
+    onSuccess: () => { toast.success("Usuário criado!"); utils.adminAuth.listUsers.invalidate(); setShowForm(false); setForm({ name: "", email: "", password: "", role: "contributor" }); },
+    onError: (e) => toast.error(e.message),
+  });
+  const updateMut = trpc.adminAuth.updateUser.useMutation({
+    onSuccess: () => { toast.success("Usuário atualizado!"); utils.adminAuth.listUsers.invalidate(); setEditUser(null); },
+    onError: (e) => toast.error(e.message),
+  });
+  const deleteMut = trpc.adminAuth.deleteUser.useMutation({
+    onSuccess: () => { toast.success("Usuário removido!"); utils.adminAuth.listUsers.invalidate(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const ROLE_LABELS: Record<AdminRole, string> = { admin: "Administrador", editor: "Editor", contributor: "Contribuidor" };
+  const ROLE_COLORS: Record<AdminRole, string> = {
+    admin: "bg-red-100 text-red-700",
+    editor: "bg-blue-100 text-blue-700",
+    contributor: "bg-green-100 text-green-700",
+  };
+  const ROLE_PERMISSIONS: Record<AdminRole, string[]> = {
+    admin: ["Acesso total", "Gerenciar usuários do painel", "Configurações do site", "Publicar/remover qualquer conteúdo"],
+    editor: ["Criar e editar notícias", "Gerenciar hero/carrossel", "Aprovar comentários", "Gerenciar mídia", "Gerenciar anúncios", "Gerenciar shorts"],
+    contributor: ["Criar notícias (ficam em rascunho)", "Enviar para revisão", "Editar próprias notícias"],
+  };
+
+  const startEdit = (u: any) => {
+    setEditUser(u);
+    setEditForm({ name: u.name, role: u.role, isActive: u.isActive, password: "" });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-black text-gray-800">Equipe Editorial</h2>
+          <p className="text-sm text-gray-500 mt-1">Gerencie quem tem acesso ao painel administrativo.</p>
+        </div>
+        <Button onClick={() => setShowForm(true)} className="bg-[#001c56] hover:bg-[#002a7a] text-white">
+          <Plus className="w-4 h-4 mr-2" /> Novo Usuário
+        </Button>
+      </div>
+
+      {/* Permission levels reference */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {(["admin", "editor", "contributor"] as AdminRole[]).map(role => (
+          <div key={role} className="bg-white rounded-xl border p-4">
+            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold mb-3 ${ROLE_COLORS[role]}`}>
+              <Shield className="w-3 h-3" /> {ROLE_LABELS[role]}
+            </div>
+            <ul className="space-y-1">
+              {ROLE_PERMISSIONS[role].map(p => (
+                <li key={p} className="text-xs text-gray-600 flex items-start gap-1.5">
+                  <Check className="w-3 h-3 text-green-500 mt-0.5 shrink-0" /> {p}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      {/* Create user form */}
+      {showForm && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 space-y-4">
+          <h3 className="font-bold text-gray-800">Novo Usuário do Painel</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-sm font-semibold">Nome</Label>
+              <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Nome completo" className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-sm font-semibold">E-mail</Label>
+              <Input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="email@exemplo.com" className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-sm font-semibold">Senha</Label>
+              <Input type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} placeholder="Mínimo 6 caracteres" className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-sm font-semibold">Nível de Acesso</Label>
+              <select value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value as AdminRole }))}
+                className="mt-1 w-full border rounded-lg px-3 py-2 text-sm bg-white">
+                <option value="contributor">Contribuidor</option>
+                <option value="editor">Editor</option>
+                <option value="admin">Administrador</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={() => createMut.mutate(form)} disabled={createMut.isPending} className="bg-[#001c56] text-white">
+              {createMut.isPending ? "Criando..." : "Criar Usuário"}
+            </Button>
+            <Button variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button>
+          </div>
+        </div>
+      )}
+
+      {/* Users list */}
+      {isLoading ? (
+        <div className="text-center py-8 text-gray-400">Carregando...</div>
+      ) : (
+        <div className="space-y-3">
+          {(adminUsers as any[]).map((u: any) => (
+            <div key={u.id} className="bg-white rounded-xl border p-4">
+              {editUser?.id === u.id ? (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <Label className="text-xs font-semibold">Nome</Label>
+                      <Input value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} className="mt-1 text-sm" />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-semibold">Nível de Acesso</Label>
+                      <select value={editForm.role} onChange={e => setEditForm(f => ({ ...f, role: e.target.value as AdminRole }))}
+                        className="mt-1 w-full border rounded-lg px-3 py-1.5 text-sm bg-white">
+                        <option value="contributor">Contribuidor</option>
+                        <option value="editor">Editor</option>
+                        <option value="admin">Administrador</option>
+                      </select>
+                    </div>
+                    <div>
+                      <Label className="text-xs font-semibold">Nova Senha (opcional)</Label>
+                      <Input type="password" value={editForm.password} onChange={e => setEditForm(f => ({ ...f, password: e.target.value }))} placeholder="Deixe em branco para manter" className="mt-1 text-sm" />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Switch checked={editForm.isActive} onCheckedChange={v => setEditForm(f => ({ ...f, isActive: v }))} />
+                    <Label className="text-sm">{editForm.isActive ? "Conta ativa" : "Conta desativada"}</Label>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={() => updateMut.mutate({ id: u.id, name: editForm.name, role: editForm.role, isActive: editForm.isActive, ...(editForm.password ? { password: editForm.password } : {}) })} disabled={updateMut.isPending} className="bg-[#001c56] text-white">
+                      {updateMut.isPending ? "Salvando..." : "Salvar"}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setEditUser(null)}>Cancelar</Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-[#001c56] to-[#002a7a] rounded-full flex items-center justify-center shrink-0">
+                    <span className="text-white font-bold text-sm">{u.name?.charAt(0)?.toUpperCase() || "?"}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-semibold text-sm text-gray-800">{u.name}</p>
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${ROLE_COLORS[u.role as AdminRole] || "bg-gray-100 text-gray-600"}`}>
+                        <Shield className="w-2.5 h-2.5" /> {ROLE_LABELS[u.role as AdminRole] || u.role}
+                      </span>
+                      {!u.isActive && <span className="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-500">Desativado</span>}
+                    </div>
+                    <p className="text-xs text-gray-400">{u.email}</p>
+                    {u.lastLogin && <p className="text-xs text-gray-300">Último acesso: {new Date(u.lastLogin).toLocaleString("pt-BR")}</p>}
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <Button size="sm" variant="outline" onClick={() => startEdit(u)}>
+                      <Edit className="w-3 h-3" />
+                    </Button>
+                    <Button size="sm" variant="outline" className="text-red-500 hover:bg-red-50"
+                      onClick={() => { if (confirm(`Remover ${u.name}?`)) deleteMut.mutate({ id: u.id }); }}>
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

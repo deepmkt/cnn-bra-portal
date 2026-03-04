@@ -511,3 +511,20 @@
 - [ ] Busca inline na home sem abrir nova aba (resultados em lista e grade 3x3)
 - [ ] Sentence case nos títulos (apenas 1ª letra maiúscula, nomes próprios preservados)
 - [ ] Corrigir títulos existentes no banco para sentence case
+
+## Sprint 41 — Níveis de Permissão no Painel Admin
+
+- [ ] Definir 3 níveis: Administrador (acesso total), Editor (gerencia artigos/shorts/ticker), Contribuidor (cria artigos, aguarda aprovação)
+- [ ] Migrar sistema de contas fixas para tabela de usuários admin no banco
+- [ ] Administrador pode criar/editar/remover contas de Editor e Contribuidor
+- [ ] Controle de acesso por nível em cada aba do painel
+- [ ] Aba "Usuários" no painel admin para gerenciar permissões
+- [ ] Editor pode publicar, editar e remover artigos, mas não gerencia usuários
+- [ ] Contribuidor pode criar artigos (ficam em rascunho para aprovação do editor/admin)
+
+## Sprint 42 — Correção de Permissões do Painel Admin
+
+- [x] Diagnosticado: adminProcedure verificava cookie === "authenticated" mas o cookie passou a armazenar JSON após Sprint 41
+- [x] Corrigido: parseAdminSession() agora faz JSON.parse do cookie e aceita qualquer role válido (admin/editor/contributor)
+- [x] Dois admins inseridos diretamente no banco (agenciadeepmkt@gmail.com e artsenna10@gmail.com)
+- [x] 93 testes passando após a correção

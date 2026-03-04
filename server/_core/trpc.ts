@@ -30,13 +30,34 @@ export const protectedProcedure = t.procedure.use(requireUser);
 // Session key for fixed-credentials admin login (CNN BRA editorial panel)
 const CNN_ADMIN_SESSION_KEY = "cnn_admin_session";
 
+/**
+ * Parse the admin session cookie.
+ * The cookie stores a JSON object: { id, role, name }
+ * Returns the session data if valid, null otherwise.
+ */
+export function parseAdminSession(
+  cookies: Record<string, string> | undefined,
+): { id: number; role: string; name: string } | null {
+  const raw = cookies?.[CNN_ADMIN_SESSION_KEY];
+  if (!raw) return null;
+  try {
+    const data = JSON.parse(raw);
+    if (data?.id && data?.role) return data;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export const adminProcedure = t.procedure.use(
   t.middleware(async opts => {
     const { ctx, next } = opts;
 
-    // Accept either: Manus OAuth admin user OR fixed-credentials admin session cookie
+    // Accept either: Manus OAuth admin user OR fixed-credentials admin session cookie (JSON)
     const hasOAuthAdmin = ctx.user && ctx.user.role === 'admin';
-    const hasCookieAdmin = (ctx.req as any).cookies?.[CNN_ADMIN_SESSION_KEY] === "authenticated";
+    const cookieSession = parseAdminSession((ctx.req as any).cookies);
+    // Any valid session role (admin / editor / contributor) grants access to admin procedures
+    const hasCookieAdmin = cookieSession !== null;
 
     if (!hasOAuthAdmin && !hasCookieAdmin) {
       throw new TRPCError({ code: "FORBIDDEN", message: NOT_ADMIN_ERR_MSG });
@@ -46,6 +67,7 @@ export const adminProcedure = t.procedure.use(
       ctx: {
         ...ctx,
         user: ctx.user,
+        adminSession: cookieSession, // expose role for downstream use if needed
       },
     });
   }),

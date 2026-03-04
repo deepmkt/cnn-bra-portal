@@ -6,14 +6,28 @@ import { z } from "zod";
 import * as db from "./db";
 import { storagePut } from "./storage";
 import { invokeLLM } from "./_core/llm";
+import bcrypt from "bcryptjs";
 
-// Admin credentials (fixed, separate from OAuth)
-// Multiple admin accounts supported
-const ADMIN_ACCOUNTS = [
-  { email: "AGENCIADEEPMKT@GMAIL.COM", password: "@Dp4156!" },
-  { email: "ARTSENNA10@GMAIL.COM", password: "Jose*1982" },
-];
+// Admin session cookie key
 const ADMIN_SESSION_KEY = "cnn_admin_session";
+
+// Bootstrap admin accounts (seeded on first login if not in DB)
+// These are migrated to the admin_users table on first use
+const BOOTSTRAP_ADMINS = [
+  { name: "Agência DeepMkt", email: "agenciadeepmkt@gmail.com", password: "@Dp4156!", role: "admin" as const },
+  { name: "Art Senna", email: "artsenna10@gmail.com", password: "Jose*1982", role: "admin" as const },
+];
+
+// Ensure bootstrap admins exist in DB
+async function ensureBootstrapAdmins() {
+  for (const acc of BOOTSTRAP_ADMINS) {
+    const existing = await db.getAdminUserByEmail(acc.email);
+    if (!existing) {
+      const hash = await bcrypt.hash(acc.password, 10);
+      await db.createAdminUser({ name: acc.name, email: acc.email, passwordHash: hash, role: acc.role, isActive: true });
+    }
+  }
+};
 
 // Editor/journalist procedure: admin, editor, or journalist roles
 const editorProcedure = protectedProcedure.use(async ({ ctx, next }) => {
@@ -1224,37 +1238,116 @@ export const appRouter = router({
     }),
   }),
 
-  // ===== ADMIN AUTH (fixed credentials, separate from OAuth) =====
+    // ===== ADMIN AUTH (DB-backed with bcrypt + role in session) =====
   adminAuth: router({
     login: publicProcedure
       .input(z.object({ email: z.string(), password: z.string() }))
       .mutation(async ({ input, ctx }) => {
-        const account = ADMIN_ACCOUNTS.find(
-          a => a.email === input.email.trim().toUpperCase() && a.password === input.password
-        );
-        if (!account) {
+        // Ensure bootstrap admins exist
+        await ensureBootstrapAdmins();
+        const adminUser = await db.getAdminUserByEmail(input.email.trim());
+        if (!adminUser || !adminUser.isActive) {
           throw new Error("Credenciais inválidas");
         }
-        // Set a simple admin session cookie
-        ctx.res.cookie(ADMIN_SESSION_KEY, "authenticated", {
+        const passwordValid = await bcrypt.compare(input.password, adminUser.passwordHash);
+        if (!passwordValid) {
+          throw new Error("Credenciais inválidas");
+        }
+        // Store role + id in session cookie (JSON encoded)
+        const sessionData = JSON.stringify({ id: adminUser.id, role: adminUser.role, name: adminUser.name });
+        ctx.res.cookie(ADMIN_SESSION_KEY, sessionData, {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
           sameSite: "lax",
           maxAge: 24 * 60 * 60 * 1000, // 24 hours
           path: "/",
         });
-        return { success: true };
+        await db.updateAdminLastLogin(adminUser.id);
+        return { success: true, role: adminUser.role, name: adminUser.name };
       }),
-
     logout: publicProcedure.mutation(async ({ ctx }) => {
       ctx.res.clearCookie(ADMIN_SESSION_KEY, { path: "/" });
       return { success: true };
     }),
-
     check: publicProcedure.query(async ({ ctx }) => {
       const session = ctx.req.cookies?.[ADMIN_SESSION_KEY];
-      return { authenticated: session === "authenticated" };
+      if (!session) return { authenticated: false, role: null, name: null };
+      try {
+        const data = JSON.parse(session);
+        if (!data?.id || !data?.role) return { authenticated: false, role: null, name: null };
+        return { authenticated: true, role: data.role as string, name: data.name as string, id: data.id as number };
+      } catch {
+        return { authenticated: false, role: null, name: null };
+      }
     }),
+    // ===== ADMIN USER MANAGEMENT (admin only) =====
+    listUsers: publicProcedure.query(async ({ ctx }) => {
+      const session = ctx.req.cookies?.[ADMIN_SESSION_KEY];
+      if (!session) throw new Error("Não autorizado");
+      try {
+        const data = JSON.parse(session);
+        if (data?.role !== "admin") throw new Error("Apenas administradores podem gerenciar usuários");
+      } catch (e: any) { throw new Error(e.message || "Não autorizado"); }
+      return db.listAdminUsers();
+    }),
+    createUser: publicProcedure
+      .input(z.object({
+        name: z.string().min(2),
+        email: z.string().email(),
+        password: z.string().min(6),
+        role: z.enum(["admin", "editor", "contributor"]),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const session = ctx.req.cookies?.[ADMIN_SESSION_KEY];
+        if (!session) throw new Error("Não autorizado");
+        let creatorId: number;
+        try {
+          const data = JSON.parse(session);
+          if (data?.role !== "admin") throw new Error("Apenas administradores podem criar usuários");
+          creatorId = data.id;
+        } catch (e: any) { throw new Error(e.message || "Não autorizado"); }
+        const existing = await db.getAdminUserByEmail(input.email);
+        if (existing) throw new Error("Já existe um usuário com este e-mail");
+        const hash = await bcrypt.hash(input.password, 10);
+        await db.createAdminUser({ name: input.name, email: input.email, passwordHash: hash, role: input.role, isActive: true, createdBy: creatorId });
+        return { success: true };
+      }),
+    updateUser: publicProcedure
+      .input(z.object({
+        id: z.number(),
+        name: z.string().min(2).optional(),
+        role: z.enum(["admin", "editor", "contributor"]).optional(),
+        isActive: z.boolean().optional(),
+        password: z.string().min(6).optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const session = ctx.req.cookies?.[ADMIN_SESSION_KEY];
+        if (!session) throw new Error("Não autorizado");
+        try {
+          const data = JSON.parse(session);
+          if (data?.role !== "admin") throw new Error("Apenas administradores podem editar usuários");
+        } catch (e: any) { throw new Error(e.message || "Não autorizado"); }
+        const updates: any = {};
+        if (input.name) updates.name = input.name;
+        if (input.role) updates.role = input.role;
+        if (input.isActive !== undefined) updates.isActive = input.isActive;
+        if (input.password) updates.passwordHash = await bcrypt.hash(input.password, 10);
+        await db.updateAdminUser(input.id, updates);
+        return { success: true };
+      }),
+    deleteUser: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        const session = ctx.req.cookies?.[ADMIN_SESSION_KEY];
+        if (!session) throw new Error("Não autorizado");
+        try {
+          const data = JSON.parse(session);
+          if (data?.role !== "admin") throw new Error("Apenas administradores podem remover usuários");
+          if (data?.id === input.id) throw new Error("Você não pode remover sua própria conta");
+        } catch (e: any) { throw new Error(e.message || "Não autorizado"); }
+        await db.deleteAdminUser(input.id);
+        return { success: true };
+      }),
   }),
 
   // ===== MEDIA UPLOAD =====

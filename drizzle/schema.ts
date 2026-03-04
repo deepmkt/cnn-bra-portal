@@ -417,3 +417,20 @@ export const globalNewsCache = mysqlTable("global_news_cache", {
 
 export type GlobalNewsItem = typeof globalNewsCache.$inferSelect;
 export type InsertGlobalNewsItem = typeof globalNewsCache.$inferInsert;
+
+// ===== ADMIN USERS (CMS access with role-based permissions) =====
+export const adminUsers = mysqlTable("admin_users", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  passwordHash: text("passwordHash").notNull(), // bcrypt hash
+  role: mysqlEnum("role", ["admin", "editor", "contributor"]).default("contributor").notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdBy: int("createdBy"), // id of admin who created this account
+  lastLogin: timestamp("lastLogin"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AdminUser = typeof adminUsers.$inferSelect;
+export type InsertAdminUser = typeof adminUsers.$inferInsert;
