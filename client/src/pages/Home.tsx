@@ -202,6 +202,23 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [heroIndex, currentCategory]);
 
+  // SEO: set document title and meta keywords for home page
+  useEffect(() => {
+    document.title = "CNN BRA — Notícias do Brasil e do Mundo";
+    // Ensure meta keywords are present and up-to-date
+    let metaKeywords = document.querySelector<HTMLMetaElement>('meta[name="keywords"]');
+    if (!metaKeywords) {
+      metaKeywords = document.createElement("meta");
+      metaKeywords.name = "keywords";
+      document.head.appendChild(metaKeywords);
+    }
+    metaKeywords.content = "notícias, brasil, política, economia, esportes, entretenimento, últimas notícias, CNN BRA, jornalismo, Alagoas, mundo";
+    return () => {
+      // Restore generic title when navigating away
+      document.title = "CNN BRA — Notícias do Brasil e do Mundo";
+    };
+  }, []);
+
   // Exit intent
   useEffect(() => {
     const handleMouseLeave = (e: MouseEvent) => {
@@ -445,6 +462,9 @@ export default function Home() {
       {/* ===== MAIN CONTENT ===== */}
       <main className="container mx-auto px-4 py-6">
 
+        {/* SEO H1 — visually integrated as section label, semantically correct for crawlers */}
+        <h1 className="sr-only">CNN BRA — Últimas Notícias do Brasil e do Mundo</h1>
+
         {/* ===== HERO SECTION: 2/3 Banner + 1/3 Sidebar ===== */}
         <div className="flex flex-col lg:flex-row gap-6 mb-8">
           {/* Hero Banner (2/3 width on desktop) */}
@@ -466,8 +486,13 @@ export default function Home() {
                 <span className="bg-red-600 px-3 py-1 rounded-md text-[10px] font-bold uppercase mb-4 inline-block tracking-wider shadow-lg">
                   {currentHero.category}
                 </span>
-                <h2 className="text-2xl md:text-4xl lg:text-5xl font-black leading-[1.05] mb-3 line-clamp-3 tracking-tight drop-shadow-xl">
-                  {capitalizeTitle(currentHero.title)}
+                <h2
+                  className="text-2xl md:text-4xl lg:text-5xl font-black leading-[1.05] mb-3 line-clamp-3 tracking-tight drop-shadow-xl"
+                  aria-label={capitalizeTitle(currentHero.title)}
+                >
+                  {capitalizeTitle(currentHero.title).length > 80
+                    ? capitalizeTitle(currentHero.title).slice(0, 77) + "..."
+                    : capitalizeTitle(currentHero.title)}
                 </h2>
                 {currentHero.excerpt && (
                   <p className="text-sm text-gray-200 line-clamp-2 max-w-2xl">{currentHero.excerpt}</p>

@@ -622,3 +622,9 @@
 - [ ] UI da seção Mais Lidas atualizada com trending topics e métricas de buscas
 - [x] Corrigir erro 'require is not defined' na página admin.cnnbra.com.br/admin
 - [x] Setas de navegação no hero carousel (anterior/próximo, dots, pausa hover, swipe mobile)
+
+## Sprint 60 — Correções de SEO (Home /)
+- [x] Corrigir document.title para 30-60 caracteres
+- [x] Adicionar H1 visível na página inicial
+- [x] Adicionar meta keywords na home
+- [x] Encurtar H2 longos (máx 80 caracteres)
