@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1228,8 +1229,6 @@ function DashboardTab() {
 
 // Simple bar chart component using recharts
 function BarChartComponent({ data }: { data: { date: string; count: number }[] }) {
-  // Use inline recharts import to avoid adding to global imports
-  const { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } = require("recharts");
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>

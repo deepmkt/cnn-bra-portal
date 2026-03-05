@@ -620,3 +620,4 @@
 - [x] Endpoint tRPC trends.getTopics
 - [ ] Publicação automática de artigos sobre temas em alta
 - [ ] UI da seção Mais Lidas atualizada com trending topics e métricas de buscas
+- [x] Corrigir erro 'require is not defined' na página admin.cnnbra.com.br/admin
