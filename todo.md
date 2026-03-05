@@ -621,3 +621,4 @@
 - [ ] Publicação automática de artigos sobre temas em alta
 - [ ] UI da seção Mais Lidas atualizada com trending topics e métricas de buscas
 - [x] Corrigir erro 'require is not defined' na página admin.cnnbra.com.br/admin
+- [x] Setas de navegação no hero carousel (anterior/próximo, dots, pausa hover, swipe mobile)

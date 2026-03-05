@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
-import { Search, X, Menu } from "lucide-react";
+import { Search, X, Menu, ChevronLeft, ChevronRight } from "lucide-react";
 import { capitalizeTitle } from "@shared/titleUtils";
 import { AdBanner } from "@/components/AdBanner";
 import { trackArticleClick, trackArticleShare, trackSearch, trackWhatsAppClick, trackNewsletterSignup } from "@/hooks/useAnalytics";
@@ -71,6 +71,8 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobileSearchQuery, setMobileSearchQuery] = useState("");
+  const [heroPaused, setHeroPaused] = useState(false);
+  const heroTouchStartX = useRef<number | null>(null);
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem("cnnbra_recent_searches") || "[]"); } catch { return []; }
   });
@@ -159,15 +161,40 @@ export default function Home() {
   const carouselArticles = heroArticles.length > 0 ? heroArticles : filteredArticles.slice(0, 5);
   const currentHero = carouselArticles.length > 0 ? carouselArticles[heroIndex % carouselArticles.length] : filteredArticles[0];
 
-  // Hero auto-rotation
+  // Hero auto-rotation (pauses when heroPaused is true)
   useEffect(() => {
-    if (carouselArticles.length <= 1) return;
+    if (carouselArticles.length <= 1 || heroPaused) return;
     const interval = setInterval(() => {
       setHeroIndex(prev => (prev + 1) % carouselArticles.length);
       setHeroZoomed(false);
     }, 10000);
     return () => clearInterval(interval);
-  }, [carouselArticles.length]);
+  }, [carouselArticles.length, heroPaused]);
+
+  // Hero navigation helpers
+  const goPrevHero = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setHeroIndex(prev => (prev - 1 + carouselArticles.length) % carouselArticles.length);
+    setHeroZoomed(false);
+  };
+  const goNextHero = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setHeroIndex(prev => (prev + 1) % carouselArticles.length);
+    setHeroZoomed(false);
+  };
+  const handleHeroTouchStart = (e: React.TouchEvent) => {
+    heroTouchStartX.current = e.touches[0].clientX;
+  };
+  const handleHeroTouchEnd = (e: React.TouchEvent) => {
+    if (heroTouchStartX.current === null) return;
+    const diff = heroTouchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) setHeroIndex(prev => (prev + 1) % carouselArticles.length);
+      else setHeroIndex(prev => (prev - 1 + carouselArticles.length) % carouselArticles.length);
+      setHeroZoomed(false);
+    }
+    heroTouchStartX.current = null;
+  };
 
   useEffect(() => {
     setHeroZoomed(false);
@@ -425,6 +452,10 @@ export default function Home() {
             <section
               className="relative w-full lg:w-2/3 h-[50vh] md:h-[65vh] rounded-2xl overflow-hidden shadow-xl group cursor-pointer animate-slide-up"
               onClick={() => { setLocation(`/artigo/${currentHero.id}`); trackArticleClick(currentHero.id, currentHero.title, currentHero.category); }}
+              onMouseEnter={() => setHeroPaused(true)}
+              onMouseLeave={() => setHeroPaused(false)}
+              onTouchStart={handleHeroTouchStart}
+              onTouchEnd={handleHeroTouchEnd}
             >
               <div
                 className={`absolute inset-0 bg-cover bg-center hero-zoom ${heroZoomed ? "hero-active-zoom" : ""}`}
@@ -442,13 +473,49 @@ export default function Home() {
                   <p className="text-sm text-gray-200 line-clamp-2 max-w-2xl">{currentHero.excerpt}</p>
                 )}
               </div>
-              {/* Hero dots */}
+
+              {/* Navigation arrows — visible on hover */}
               {carouselArticles.length > 1 && (
-                <div className="absolute bottom-4 right-6 flex gap-1.5">
+                <>
+                  <button
+                    onClick={goPrevHero}
+                    aria-label="Notícia anterior"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 z-10 bg-black/50 hover:bg-black/80 text-white rounded-full w-10 h-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-sm shadow-lg"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={goNextHero}
+                    aria-label="Próxima notícia"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 z-10 bg-black/50 hover:bg-black/80 text-white rounded-full w-10 h-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-sm shadow-lg"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </>
+              )}
+
+              {/* Hero dots + progress bar */}
+              {carouselArticles.length > 1 && (
+                <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-2 px-6">
                   {carouselArticles.map((_, i) => (
-                    <button key={i} onClick={(e) => { e.stopPropagation(); setHeroIndex(i); }}
-                      className={`w-2 h-2 rounded-full transition-all ${i === heroIndex % carouselArticles.length ? "bg-white w-6" : "bg-white/40"}`} />
+                    <button
+                      key={i}
+                      onClick={(e) => { e.stopPropagation(); setHeroIndex(i); setHeroZoomed(false); }}
+                      aria-label={`Ir para notícia ${i + 1}`}
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
+                        i === heroIndex % carouselArticles.length
+                          ? "bg-white w-8"
+                          : "bg-white/40 hover:bg-white/70 w-2"
+                      }`}
+                    />
                   ))}
+                </div>
+              )}
+
+              {/* Slide counter badge */}
+              {carouselArticles.length > 1 && (
+                <div className="absolute top-4 right-4 bg-black/50 text-white text-xs font-bold px-2 py-1 rounded-full backdrop-blur-sm">
+                  {(heroIndex % carouselArticles.length) + 1} / {carouselArticles.length}
                 </div>
               )}
             </section>
