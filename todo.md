@@ -596,3 +596,7 @@
 ## Sprint 51 — Migração de Dados
 - [x] Script de vinculação de shorts a artigos (link-shorts-to-articles.mjs)
 - [x] Executar script e verificar resultados
+
+## Sprint 52 — Cron Job de Vinculação Automática
+- [x] Criar serviço linkShortsToArticles.ts com lógica de correspondência
+- [x] Integrar ao cron job do servidor (execução a cada 30 minutos)

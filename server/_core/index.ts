@@ -185,6 +185,34 @@ async function startServer() {
       }
     }, SHORTS_INTERVAL_MS);
   }, 90_000); // 90s after server start
+
+  // ===== CRON: Link unlinked shorts to articles every 30 minutes =====
+  const LINK_SHORTS_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
+  setTimeout(async () => {
+    // Run once at startup (120s delay to let other crons stabilize)
+    try {
+      const { linkShortsToArticles } = await import("../linkShortsToArticles");
+      const result = await linkShortsToArticles();
+      if (result.linked > 0) {
+        console.log(`[Cron] LinkShorts: ${result.linked} vinculados, ${result.skipped} sem correspondência, ${result.errors} erros`);
+      }
+    } catch (err) {
+      console.error("[Cron] LinkShorts initial error:", err);
+    }
+
+    // Then run every 30 minutes
+    setInterval(async () => {
+      try {
+        const { linkShortsToArticles } = await import("../linkShortsToArticles");
+        const result = await linkShortsToArticles();
+        if (result.linked > 0) {
+          console.log(`[Cron] LinkShorts: ${result.linked} vinculados, ${result.skipped} sem correspondência, ${result.errors} erros`);
+        }
+      } catch (err) {
+        console.error("[Cron] LinkShorts scheduled error:", err);
+      }
+    }, LINK_SHORTS_INTERVAL_MS);
+  }, 120_000); // 120s after server start
 }
 
 startServer().catch(console.error);
