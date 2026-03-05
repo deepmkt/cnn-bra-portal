@@ -588,3 +588,11 @@
 - [x] Remover ticker duplicado do ArticlePage.tsx
 - [x] Shorts: clicar no card abre o artigo correspondente
 - [x] Shorts: exibir breve resumo nos cards com link para o artigo
+
+## Sprint 51 — Migração de Dados
+- [x] Script de vinculação de shorts a artigos (link-shorts-to-articles.mjs)
+- [x] Executar script e verificar resultados
+
+## Sprint 51 — Migração de Dados
+- [x] Script de vinculação de shorts a artigos (link-shorts-to-articles.mjs)
+- [x] Executar script e verificar resultados

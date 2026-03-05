@@ -1,0 +1,100 @@
+{
+  "query": "SELECT id, title, videoUrl, thumbnailUrl, sourceType, articleId, createdAt\nFROM shorts\nWHERE articleId IS NULL\nORDER BY createdAt DESC\nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AGjn9SpCJUmEG7Z.root --database 6wzLmWaAhQKjEBEoadSqJc --execute SELECT id, title, videoUrl, thumbnailUrl, sourceType, articleId, createdAt\nFROM shorts\nWHERE articleId IS NULL\nORDER BY createdAt DESC\nLIMIT 10;",
+  "rows": [
+    {
+      "id": "300003",
+      "title": "Cpmi do INSS Vota Quebras de Sigilo e Ouve Presidente da Dataprev Nesta Quinta-feira",
+      "videoUrl": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20260302171252212-768x473.jpeg",
+      "thumbnailUrl": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20260302171252212-768x473.jpeg",
+      "sourceType": "manual",
+      "articleId": "NULL",
+      "createdAt": "2026-03-05 13:43:17"
+    },
+    {
+      "id": "300002",
+      "title": "Câmara dos Deputados Aprova PEC da Segurança Pública em Segundo Turno",
+      "videoUrl": "https://anoticiaal.com.br/wp-content/uploads/2026/03/0d9a4419.jpg",
+      "thumbnailUrl": "https://anoticiaal.com.br/wp-content/uploads/2026/03/0d9a4419.jpg",
+      "sourceType": "manual",
+      "articleId": "NULL",
+      "createdAt": "2026-03-05 13:43:14"
+    },
+    {
+      "id": "300001",
+      "title": "Procon-al Promove Feirão de Negociação de Dívidas em Maceió",
+      "videoUrl": "https://anoticiaal.com.br/wp-content/uploads/2026/03/GOVERNO-DE-ALAGOAS-Procon-AL-realiza-Feirao-de-Negociacao-nos.jpg",
+      "thumbnailUrl": "https://anoticiaal.com.br/wp-content/uploads/2026/03/GOVERNO-DE-ALAGOAS-Procon-AL-realiza-Feirao-de-Negociacao-nos.jpg",
+      "sourceType": "manual",
+      "articleId": "NULL",
+      "createdAt": "2026-03-05 13:43:11"
+    },
+    {
+      "id": "270002",
+      "title": "Cpmi do INSS Vota Quebras de Sigilo e Ouve Presidente da Dataprev Nesta Quinta-feira",
+      "videoUrl": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20260302171252212-768x473.jpeg",
+      "thumbnailUrl": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20260302171252212-768x473.jpeg",
+      "sourceType": "manual",
+      "articleId": "NULL",
+      "createdAt": "2026-03-05 13:15:58"
+    },
+    {
+      "id": "270001",
+      "title": "Câmara dos Deputados Aprova PEC da Segurança Pública em Segundo Turno",
+      "videoUrl": "https://anoticiaal.com.br/wp-content/uploads/2026/03/0d9a4419.jpg",
+      "thumbnailUrl": "https://anoticiaal.com.br/wp-content/uploads/2026/03/0d9a4419.jpg",
+      "sourceType": "manual",
+      "articleId": "NULL",
+      "createdAt": "2026-03-05 13:15:53"
+    },
+    {
+      "id": "240001",
+      "title": "Cpmi do INSS Vota Quebras de Sigilo e Ouve Presidente da Dataprev Nesta Quinta-feira",
+      "videoUrl": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20260302171252212-768x473.jpeg",
+      "thumbnailUrl": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20260302171252212-768x473.jpeg",
+      "sourceType": "manual",
+      "articleId": "NULL",
+      "createdAt": "2026-03-05 12:22:30"
+    },
+    {
+      "id": "210003",
+      "title": "Lula Confirma Viagem à Espanha para Abril e Discute Cenário Internacional com Pedro Sánchez",
+      "videoUrl": "https://anoticiaal.com.br/wp-content/uploads/2026/03/lula_pedro_sanchez_03.jpg",
+      "thumbnailUrl": "https://anoticiaal.com.br/wp-content/uploads/2026/03/lula_pedro_sanchez_03.jpg",
+      "sourceType": "manual",
+      "articleId": "NULL",
+      "createdAt": "2026-03-05 10:21:05"
+    },
+    {
+      "id": "210002",
+      "title": "PEC da Segurança Pública Propõe Endurecimento Contra Facções e Limita Poder do Cnj",
+      "videoUrl": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304174154209-768x473.jpg",
+      "thumbnailUrl": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304174154209-768x473.jpg",
+      "sourceType": "manual",
+      "articleId": "NULL",
+      "createdAt": "2026-03-05 10:21:02"
+    },
+    {
+      "id": "210001",
+      "title": "Câmara dos Deputados Debate Economia e Empreendedorismo nas Favelas",
+      "videoUrl": "https://anoticiaal.com.br/wp-content/uploads/2026/03/comercio-comunidade-empreendedorismo-favela-768x512.jpeg",
+      "thumbnailUrl": "https://anoticiaal.com.br/wp-content/uploads/2026/03/comercio-comunidade-empreendedorismo-favela-768x512.jpeg",
+      "sourceType": "manual",
+      "articleId": "NULL",
+      "createdAt": "2026-03-05 10:20:59"
+    },
+    {
+      "id": "180003",
+      "title": "Frente Ambientalista Lança Agenda Legislativa 2026 com Foco na Transição Energética",
+      "videoUrl": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304112341633-768x473.jpeg",
+      "thumbnailUrl": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304112341633-768x473.jpeg",
+      "sourceType": "manual",
+      "articleId": "NULL",
+      "createdAt": "2026-03-05 09:37:24"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tvideoUrl\tthumbnailUrl\tsourceType\tarticleId\tcreatedAt\n300003\tCpmi do INSS Vota Quebras de Sigilo e Ouve Presidente da Dataprev Nesta Quinta-feira\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20260302171252212-768x473.jpeg\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20260302171252212-768x473.jpeg\tmanual\tNULL\t2026-03-05 13:43:17\n300002\tCâmara dos Deputados Aprova PEC da Segurança Pública em Segundo Turno\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/0d9a4419.jpg\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/0d9a4419.jpg\tmanual\tNULL\t2026-03-05 13:43:14\n300001\tProcon-al Promove Feirão de Negociação de Dívidas em Maceió\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/GOVERNO-DE-ALAGOAS-Procon-AL-realiza-Feirao-de-Negociacao-nos.jpg\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/GOVERNO-DE-ALAGOAS-Procon-AL-realiza-Feirao-de-Negociacao-nos.jpg\tmanual\tNULL\t2026-03-05 13:43:11\n270002\tCpmi do INSS Vota Quebras de Sigilo e Ouve Presidente da Dataprev Nesta Quinta-feira\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20260302171252212-768x473.jpeg\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20260302171252212-768x473.jpeg\tmanual\tNULL\t2026-03-05 13:15:58\n270001\tCâmara dos Deputados Aprova PEC da Segurança Pública em Segundo Turno\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/0d9a4419.jpg\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/0d9a4419.jpg\tmanual\tNULL\t2026-03-05 13:15:53\n240001\tCpmi do INSS Vota Quebras de Sigilo e Ouve Presidente da Dataprev Nesta Quinta-feira\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20260302171252212-768x473.jpeg\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20260302171252212-768x473.jpeg\tmanual\tNULL\t2026-03-05 12:22:30\n210003\tLula Confirma Viagem à Espanha para Abril e Discute Cenário Internacional com Pedro Sánchez\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/lula_pedro_sanchez_03.jpg\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/lula_pedro_sanchez_03.jpg\tmanual\tNULL\t2026-03-05 10:21:05\n210002\tPEC da Segurança Pública Propõe Endurecimento Contra Facções e Limita Poder do Cnj\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304174154209-768x473.jpg\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304174154209-768x473.jpg\tmanual\tNULL\t2026-03-05 10:21:02\n210001\tCâmara dos Deputados Debate Economia e Empreendedorismo nas Favelas\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/comercio-comunidade-empreendedorismo-favela-768x512.jpeg\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/comercio-comunidade-empreendedorismo-favela-768x512.jpeg\tmanual\tNULL\t2026-03-05 10:20:59\n180003\tFrente Ambientalista Lança Agenda Legislativa 2026 com Foco na Transição Energética\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304112341633-768x473.jpeg\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304112341633-768x473.jpeg\tmanual\tNULL\t2026-03-05 09:37:24\n",
+  "stderr": "",
+  "execution_time_ms": 47
+}

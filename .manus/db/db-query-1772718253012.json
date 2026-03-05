@@ -1,0 +1,19 @@
+{
+  "query": "SELECT \n  COUNT(*) as total_shorts,\n  SUM(CASE WHEN articleId IS NOT NULL THEN 1 ELSE 0 END) as with_article,\n  SUM(CASE WHEN articleId IS NULL THEN 1 ELSE 0 END) as without_article,\n  SUM(CASE WHEN sourceType = 'ai' THEN 1 ELSE 0 END) as ai_shorts,\n  SUM(CASE WHEN sourceType = 'article' THEN 1 ELSE 0 END) as article_shorts,\n  SUM(CASE WHEN sourceType = 'youtube' THEN 1 ELSE 0 END) as youtube_shorts,\n  SUM(CASE WHEN sourceType = 'manual' THEN 1 ELSE 0 END) as manual_shorts\nFROM shorts;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AGjn9SpCJUmEG7Z.root --database 6wzLmWaAhQKjEBEoadSqJc --execute SELECT \n  COUNT(*) as total_shorts,\n  SUM(CASE WHEN articleId IS NOT NULL THEN 1 ELSE 0 END) as with_article,\n  SUM(CASE WHEN articleId IS NULL THEN 1 ELSE 0 END) as without_article,\n  SUM(CASE WHEN sourceType = 'ai' THEN 1 ELSE 0 END) as ai_shorts,\n  SUM(CASE WHEN sourceType = 'article' THEN 1 ELSE 0 END) as article_shorts,\n  SUM(CASE WHEN sourceType = 'youtube' THEN 1 ELSE 0 END) as youtube_shorts,\n  SUM(CASE WHEN sourceType = 'manual' THEN 1 ELSE 0 END) as manual_shorts\nFROM shorts;",
+  "rows": [
+    {
+      "total_shorts": "65",
+      "with_article": "0",
+      "without_article": "65",
+      "ai_shorts": "0",
+      "article_shorts": "0",
+      "youtube_shorts": "0",
+      "manual_shorts": "65"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_shorts\twith_article\twithout_article\tai_shorts\tarticle_shorts\tyoutube_shorts\tmanual_shorts\n65\t0\t65\t0\t0\t0\t65\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

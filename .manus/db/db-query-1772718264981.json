@@ -1,0 +1,70 @@
+{
+  "query": "SELECT id, LEFT(title, 80) as title_preview, LEFT(imageUrl, 80) as image_preview, status\nFROM articles\nORDER BY createdAt DESC\nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AGjn9SpCJUmEG7Z.root --database 6wzLmWaAhQKjEBEoadSqJc --execute SELECT id, LEFT(title, 80) as title_preview, LEFT(imageUrl, 80) as image_preview, status\nFROM articles\nORDER BY createdAt DESC\nLIMIT 10;",
+  "rows": [
+    {
+      "id": "5700002",
+      "title_preview": "Câmara dos Deputados Debate Qualidade da Formação Médica no Brasil",
+      "image_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20210712121308924-768x57",
+      "status": "online"
+    },
+    {
+      "id": "5700001",
+      "title_preview": "Alagoas Lança Projeto para Valorizar Mulheres do Campo e Combater a Violência Ru",
+      "image_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/GOVERNO-DE-ALAGOAS-Projeto-",
+      "status": "online"
+    },
+    {
+      "id": "5670001",
+      "title_preview": "Procon-al Promove Feirão de Negociação de Dívidas em Maceió",
+      "image_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/GOVERNO-DE-ALAGOAS-Procon-A",
+      "status": "online"
+    },
+    {
+      "id": "5640001",
+      "title_preview": "Câmara dos Deputados Aprova PEC da Segurança Pública em Segundo Turno",
+      "image_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/0d9a4419.jpg",
+      "status": "online"
+    },
+    {
+      "id": "5610001",
+      "title_preview": "Cpmi do INSS Vota Quebras de Sigilo e Ouve Presidente da Dataprev Nesta Quinta-f",
+      "image_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20260302171252212-768x47",
+      "status": "online"
+    },
+    {
+      "id": "5580001",
+      "title_preview": "Senado Aprova Ampliação da Licença-paternidade para até 20 Dias",
+      "image_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/1078374-tnrgo_rj_abr_28.05.",
+      "status": "online"
+    },
+    {
+      "id": "5550001",
+      "title_preview": "Câmara dos Deputados Debate Economia e Empreendedorismo nas Favelas",
+      "image_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/comercio-comunidade-empreen",
+      "status": "online"
+    },
+    {
+      "id": "5520001",
+      "title_preview": "PEC da Segurança Pública Propõe Endurecimento Contra Facções e Limita Poder do C",
+      "image_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304174154209-768x47",
+      "status": "online"
+    },
+    {
+      "id": "5490001",
+      "title_preview": "Lula Confirma Viagem à Espanha para Abril e Discute Cenário Internacional com Pe",
+      "image_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/lula_pedro_sanchez_03.jpg",
+      "status": "online"
+    },
+    {
+      "id": "5460001",
+      "title_preview": "Frente Ambientalista Lança Agenda Legislativa 2026 com Foco na Transição Energét",
+      "image_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304112341633-768x47",
+      "status": "online"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle_preview\timage_preview\tstatus\n5700002\tCâmara dos Deputados Debate Qualidade da Formação Médica no Brasil\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20210712121308924-768x57\tonline\n5700001\tAlagoas Lança Projeto para Valorizar Mulheres do Campo e Combater a Violência Ru\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/GOVERNO-DE-ALAGOAS-Projeto-\tonline\n5670001\tProcon-al Promove Feirão de Negociação de Dívidas em Maceió\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/GOVERNO-DE-ALAGOAS-Procon-A\tonline\n5640001\tCâmara dos Deputados Aprova PEC da Segurança Pública em Segundo Turno\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/0d9a4419.jpg\tonline\n5610001\tCpmi do INSS Vota Quebras de Sigilo e Ouve Presidente da Dataprev Nesta Quinta-f\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20260302171252212-768x47\tonline\n5580001\tSenado Aprova Ampliação da Licença-paternidade para até 20 Dias\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/1078374-tnrgo_rj_abr_28.05.\tonline\n5550001\tCâmara dos Deputados Debate Economia e Empreendedorismo nas Favelas\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/comercio-comunidade-empreen\tonline\n5520001\tPEC da Segurança Pública Propõe Endurecimento Contra Facções e Limita Poder do C\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304174154209-768x47\tonline\n5490001\tLula Confirma Viagem à Espanha para Abril e Discute Cenário Internacional com Pe\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/lula_pedro_sanchez_03.jpg\tonline\n5460001\tFrente Ambientalista Lança Agenda Legislativa 2026 com Foco na Transição Energét\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304112341633-768x47\tonline\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

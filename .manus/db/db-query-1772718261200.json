@@ -1,0 +1,115 @@
+{
+  "query": "SELECT id, LEFT(title, 80) as title_preview, LEFT(videoUrl, 80) as video_preview, LEFT(thumbnailUrl, 80) as thumb_preview, sourceType\nFROM shorts\nWHERE articleId IS NULL\nORDER BY createdAt DESC\nLIMIT 15;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AGjn9SpCJUmEG7Z.root --database 6wzLmWaAhQKjEBEoadSqJc --execute SELECT id, LEFT(title, 80) as title_preview, LEFT(videoUrl, 80) as video_preview, LEFT(thumbnailUrl, 80) as thumb_preview, sourceType\nFROM shorts\nWHERE articleId IS NULL\nORDER BY createdAt DESC\nLIMIT 15;",
+  "rows": [
+    {
+      "id": "300003",
+      "title_preview": "Cpmi do INSS Vota Quebras de Sigilo e Ouve Presidente da Dataprev Nesta Quinta-f",
+      "video_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20260302171252212-768x47",
+      "thumb_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20260302171252212-768x47",
+      "sourceType": "manual"
+    },
+    {
+      "id": "300002",
+      "title_preview": "Câmara dos Deputados Aprova PEC da Segurança Pública em Segundo Turno",
+      "video_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/0d9a4419.jpg",
+      "thumb_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/0d9a4419.jpg",
+      "sourceType": "manual"
+    },
+    {
+      "id": "300001",
+      "title_preview": "Procon-al Promove Feirão de Negociação de Dívidas em Maceió",
+      "video_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/GOVERNO-DE-ALAGOAS-Procon-A",
+      "thumb_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/GOVERNO-DE-ALAGOAS-Procon-A",
+      "sourceType": "manual"
+    },
+    {
+      "id": "270002",
+      "title_preview": "Cpmi do INSS Vota Quebras de Sigilo e Ouve Presidente da Dataprev Nesta Quinta-f",
+      "video_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20260302171252212-768x47",
+      "thumb_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20260302171252212-768x47",
+      "sourceType": "manual"
+    },
+    {
+      "id": "270001",
+      "title_preview": "Câmara dos Deputados Aprova PEC da Segurança Pública em Segundo Turno",
+      "video_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/0d9a4419.jpg",
+      "thumb_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/0d9a4419.jpg",
+      "sourceType": "manual"
+    },
+    {
+      "id": "240001",
+      "title_preview": "Cpmi do INSS Vota Quebras de Sigilo e Ouve Presidente da Dataprev Nesta Quinta-f",
+      "video_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20260302171252212-768x47",
+      "thumb_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20260302171252212-768x47",
+      "sourceType": "manual"
+    },
+    {
+      "id": "210003",
+      "title_preview": "Lula Confirma Viagem à Espanha para Abril e Discute Cenário Internacional com Pe",
+      "video_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/lula_pedro_sanchez_03.jpg",
+      "thumb_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/lula_pedro_sanchez_03.jpg",
+      "sourceType": "manual"
+    },
+    {
+      "id": "210002",
+      "title_preview": "PEC da Segurança Pública Propõe Endurecimento Contra Facções e Limita Poder do C",
+      "video_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304174154209-768x47",
+      "thumb_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304174154209-768x47",
+      "sourceType": "manual"
+    },
+    {
+      "id": "210001",
+      "title_preview": "Câmara dos Deputados Debate Economia e Empreendedorismo nas Favelas",
+      "video_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/comercio-comunidade-empreen",
+      "thumb_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/comercio-comunidade-empreen",
+      "sourceType": "manual"
+    },
+    {
+      "id": "180003",
+      "title_preview": "Frente Ambientalista Lança Agenda Legislativa 2026 com Foco na Transição Energét",
+      "video_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304112341633-768x47",
+      "thumb_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304112341633-768x47",
+      "sourceType": "manual"
+    },
+    {
+      "id": "180002",
+      "title_preview": "Lula Confirma Viagem à Espanha para Abril e Discute Cenário Internacional com Pe",
+      "video_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/lula_pedro_sanchez_03.jpg",
+      "thumb_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/lula_pedro_sanchez_03.jpg",
+      "sourceType": "manual"
+    },
+    {
+      "id": "180001",
+      "title_preview": "PEC da Segurança Pública Propõe Endurecimento Contra Facções e Limita Poder do C",
+      "video_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304174154209-768x47",
+      "thumb_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304174154209-768x47",
+      "sourceType": "manual"
+    },
+    {
+      "id": "150003",
+      "title_preview": "Câmara dos Deputados Debate PEC da Segurança Pública em Plenário",
+      "video_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/1772685962_img2026030417145",
+      "thumb_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/1772685962_img2026030417145",
+      "sourceType": "manual"
+    },
+    {
+      "id": "150002",
+      "title_preview": "Frente Ambientalista Lança Agenda Legislativa 2026 com Foco na Transição Energét",
+      "video_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304112341633-768x47",
+      "thumb_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304112341633-768x47",
+      "sourceType": "manual"
+    },
+    {
+      "id": "150001",
+      "title_preview": "Lula Confirma Viagem à Espanha para Abril e Discute Cenário Internacional com Pe",
+      "video_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/lula_pedro_sanchez_03.jpg",
+      "thumb_preview": "https://anoticiaal.com.br/wp-content/uploads/2026/03/lula_pedro_sanchez_03.jpg",
+      "sourceType": "manual"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle_preview\tvideo_preview\tthumb_preview\tsourceType\n300003\tCpmi do INSS Vota Quebras de Sigilo e Ouve Presidente da Dataprev Nesta Quinta-f\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20260302171252212-768x47\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20260302171252212-768x47\tmanual\n300002\tCâmara dos Deputados Aprova PEC da Segurança Pública em Segundo Turno\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/0d9a4419.jpg\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/0d9a4419.jpg\tmanual\n300001\tProcon-al Promove Feirão de Negociação de Dívidas em Maceió\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/GOVERNO-DE-ALAGOAS-Procon-A\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/GOVERNO-DE-ALAGOAS-Procon-A\tmanual\n270002\tCpmi do INSS Vota Quebras de Sigilo e Ouve Presidente da Dataprev Nesta Quinta-f\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20260302171252212-768x47\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20260302171252212-768x47\tmanual\n270001\tCâmara dos Deputados Aprova PEC da Segurança Pública em Segundo Turno\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/0d9a4419.jpg\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/0d9a4419.jpg\tmanual\n240001\tCpmi do INSS Vota Quebras de Sigilo e Ouve Presidente da Dataprev Nesta Quinta-f\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20260302171252212-768x47\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20260302171252212-768x47\tmanual\n210003\tLula Confirma Viagem à Espanha para Abril e Discute Cenário Internacional com Pe\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/lula_pedro_sanchez_03.jpg\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/lula_pedro_sanchez_03.jpg\tmanual\n210002\tPEC da Segurança Pública Propõe Endurecimento Contra Facções e Limita Poder do C\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304174154209-768x47\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304174154209-768x47\tmanual\n210001\tCâmara dos Deputados Debate Economia e Empreendedorismo nas Favelas\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/comercio-comunidade-empreen\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/comercio-comunidade-empreen\tmanual\n180003\tFrente Ambientalista Lança Agenda Legislativa 2026 com Foco na Transição Energét\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304112341633-768x47\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304112341633-768x47\tmanual\n180002\tLula Confirma Viagem à Espanha para Abril e Discute Cenário Internacional com Pe\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/lula_pedro_sanchez_03.jpg\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/lula_pedro_sanchez_03.jpg\tmanual\n180001\tPEC da Segurança Pública Propõe Endurecimento Contra Facções e Limita Poder do C\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304174154209-768x47\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304174154209-768x47\tmanual\n150003\tCâmara dos Deputados Debate PEC da Segurança Pública em Plenário\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/1772685962_img2026030417145\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/1772685962_img2026030417145\tmanual\n150002\tFrente Ambientalista Lança Agenda Legislativa 2026 com Foco na Transição Energét\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304112341633-768x47\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/img20260304112341633-768x47\tmanual\n150001\tLula Confirma Viagem à Espanha para Abril e Discute Cenário Internacional com Pe\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/lula_pedro_sanchez_03.jpg\thttps://anoticiaal.com.br/wp-content/uploads/2026/03/lula_pedro_sanchez_03.jpg\tmanual\n",
+  "stderr": "",
+  "execution_time_ms": 52
+}
