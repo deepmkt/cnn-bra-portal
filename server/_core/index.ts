@@ -214,6 +214,32 @@ async function startServer() {
     }, LINK_SHORTS_INTERVAL_MS);
   }, 120_000); // 120s after server start
 
+  // ===== CRON: Fetch Google Trends BR every 2 hours =====
+  const TRENDS_INTERVAL_MS = 2 * 60 * 60 * 1000; // 2 hours
+  setTimeout(async () => {
+    try {
+      const { fetchAndSaveTrending } = await import("../trendingFetcher");
+      const result = await fetchAndSaveTrending(true);
+      if (result.saved > 0) {
+        console.log(`[Cron] Trends: ${result.saved} tópicos salvos, ${result.articlesPublished} artigos publicados`);
+      }
+    } catch (err) {
+      console.error("[Cron] Trends initial error:", err);
+    }
+
+    setInterval(async () => {
+      try {
+        const { fetchAndSaveTrending } = await import("../trendingFetcher");
+        const result = await fetchAndSaveTrending(true);
+        if (result.saved > 0) {
+          console.log(`[Cron] Trends: ${result.saved} tópicos salvos, ${result.articlesPublished} artigos publicados`);
+        }
+      } catch (err) {
+        console.error("[Cron] Trends scheduled error:", err);
+      }
+    }, TRENDS_INTERVAL_MS);
+  }, 60_000); // 60s after server start
+
   // ===== CRON: Deduplicate articles once per day =====
   const DEDUP_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
   // Run immediately at startup (after 30s delay) and then once per day

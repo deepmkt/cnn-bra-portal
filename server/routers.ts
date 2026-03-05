@@ -1426,6 +1426,23 @@ export const appRouter = router({
         return result;
       }),
   }),
+
+  // ===== TRENDING TOPICS (Google Trends BR) =====
+  trends: router({
+    // Get latest trending topics from the last 24h
+    getTopics: publicProcedure
+      .input(z.object({ limit: z.number().min(1).max(20).default(10) }).optional())
+      .query(async ({ input }) => {
+        const { getLatestTrending } = await import("./trendingFetcher");
+        return getLatestTrending(input?.limit ?? 10);
+      }),
+    // Manually trigger a fetch (admin only)
+    triggerFetch: adminProcedure
+      .mutation(async () => {
+        const { fetchAndSaveTrending } = await import("./trendingFetcher");
+        return fetchAndSaveTrending(true);
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

@@ -613,3 +613,10 @@
 ## Sprint 55 — VLibras e Deduplicação Diária
 - [x] Corrigir VLibras no site
 - [x] Cron job diário de deduplicação de artigos no servidor
+
+## Sprint 56 — Google Trends BR na seção Mais Lidas
+- [x] Serviço trendingFetcher.ts para buscar e salvar trending topics do Google Trends BR
+- [ ] Tabela trending_topics no banco de dados
+- [x] Endpoint tRPC trends.getTopics
+- [ ] Publicação automática de artigos sobre temas em alta
+- [ ] UI da seção Mais Lidas atualizada com trending topics e métricas de buscas

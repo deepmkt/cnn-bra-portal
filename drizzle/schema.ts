@@ -434,3 +434,23 @@ export const adminUsers = mysqlTable("admin_users", {
 
 export type AdminUser = typeof adminUsers.$inferSelect;
 export type InsertAdminUser = typeof adminUsers.$inferInsert;
+
+// ===== TRENDING TOPICS (Google Trends BR) =====
+export const trendingTopics = mysqlTable("trending_topics", {
+  id: int("id").autoincrement().primaryKey(),
+  topic: varchar("topic", { length: 300 }).notNull(),           // ex: "predio desaba em bh"
+  topicNormalized: varchar("topicNormalized", { length: 300 }), // lowercase, sem acentos
+  approxTraffic: varchar("approxTraffic", { length: 50 }),      // ex: "200+", "50K+"
+  trafficValue: int("trafficValue").default(0),                  // parsed numeric value for sorting
+  imageUrl: text("imageUrl"),                                    // thumbnail do Google
+  imageSource: varchar("imageSource", { length: 200 }),         // fonte da imagem
+  relatedArticleTitle: varchar("relatedArticleTitle", { length: 500 }), // primeira notícia relacionada
+  relatedArticleUrl: text("relatedArticleUrl"),
+  relatedArticleSource: varchar("relatedArticleSource", { length: 200 }),
+  linkedArticleId: int("linkedArticleId"),                      // artigo publicado no CNN BRA
+  pubDate: timestamp("pubDate"),                                 // data de trending no Google
+  fetchedAt: timestamp("fetchedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type TrendingTopic = typeof trendingTopics.$inferSelect;
+export type InsertTrendingTopic = typeof trendingTopics.$inferInsert;
