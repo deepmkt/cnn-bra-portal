@@ -58,7 +58,10 @@ export default function Home() {
   const [tagsOpen, setTagsOpen] = useState(false);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [shortsOpen, setShortsOpen] = useState(false);
-  const [exitPopupShown, setExitPopupShown] = useState(false);
+  const EXIT_POPUP_KEY = "cnnbra_exit_popup_shown";
+  const [exitPopupShown, setExitPopupShown] = useState(() => {
+    try { return localStorage.getItem(EXIT_POPUP_KEY) === "1"; } catch { return false; }
+  });
   const [exitPopupVisible, setExitPopupVisible] = useState(false);
   const [nlName, setNlName] = useState("");
   const [nlEmail, setNlEmail] = useState("");
@@ -174,6 +177,7 @@ export default function Home() {
       if (e.clientY <= 0 && !exitPopupShown) {
         setExitPopupVisible(true);
         setExitPopupShown(true);
+        try { localStorage.setItem(EXIT_POPUP_KEY, "1"); } catch {}
       }
     };
     document.addEventListener("mouseleave", handleMouseLeave);

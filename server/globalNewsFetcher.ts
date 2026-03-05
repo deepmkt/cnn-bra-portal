@@ -9,7 +9,7 @@ import * as cheerio from "cheerio";
 import { invokeLLM } from "./_core/llm";
 import { getDb, getSetting, upsertSetting } from "./db";
 import { articles, globalNewsCache, shorts } from "../drizzle/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, gte } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { capitalizeTitle } from "../shared/titleUtils";
 import { decodeGoogleNewsUrl as decodeUrl } from "./decodeGoogleNewsUrl";
@@ -534,6 +534,64 @@ async function isAlreadyImported(sourceUrl: string): Promise<boolean> {
 }
 
 /**
+ * Normaliza título para comparação (remove acentos, lowercase, sem pontuação)
+ */
+function normalizeTitleForDedupe(title: string): string {
+  return title
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\w\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Verifica se já existe um artigo com título muito similar (≥80% Jaccard)
+ */
+async function isTitleAlreadyPublished(rawTitle: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  try {
+    const STOPWORDS = new Set(["de","da","do","das","dos","e","em","no","na","nos","nas",
+      "o","a","os","as","um","uma","com","por","para","que","se","ao","e","foi",
+      "ser","ter","mais","mas","ou","nao","ja","como","sobre","apos","entre",
+      "ate","pelo","pela","pelos","pelas","seu","sua","seus","suas","isso",
+    ]);
+    const extractKw = (t: string) => normalizeTitleForDedupe(t).split(" ").filter((w) => w.length > 2 && !STOPWORDS.has(w));
+    const incomingKw = extractKw(rawTitle);
+    if (incomingKw.length < 3) return false;
+
+    // Check exact title match first (fast path)
+    const exactMatch = await db.select({ id: articles.id })
+      .from(articles)
+      .where(eq(articles.title, rawTitle))
+      .limit(1);
+    if (exactMatch.length > 0) return true;
+
+    // Fuzzy check: load recent 500 articles (last 7 days) to avoid full table scan
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const recent = await db.select({ id: articles.id, title: articles.title })
+      .from(articles)
+      .where(gte(articles.createdAt, sevenDaysAgo))
+      .limit(500);
+
+    for (const existing of recent) {
+      const existingKw = extractKw(existing.title || "");
+      if (existingKw.length < 3) continue;
+      const setB = new Set(existingKw);
+      const intersection = incomingKw.filter((w) => setB.has(w)).length;
+      const unionSet = new Set(incomingKw);
+      existingKw.forEach((w) => unionSet.add(w));
+      const jaccard = intersection / unionSet.size;
+      if (jaccard >= 0.80) return true;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Cache the imported article URL
  */
 async function cacheImportedUrl(sourceUrl: string, rewrittenTitle: string, originalTitle: string, source: string) {
@@ -675,8 +733,14 @@ async function tryPublishFromFeed(
       const realUrl = isAnoticia ? rawUrl : await decodeUrl(rawUrl);
       const googleUrl = rawUrl;
 
-      // Deduplication check
+      // Deduplication check — by URL
       if (await isAlreadyImported(realUrl) || await isAlreadyImported(googleUrl)) continue;
+
+      // Deduplication check — by title (prevent near-duplicate articles)
+      if (await isTitleAlreadyPublished(item.title || "")) {
+        console.log(`[GlobalNews] Skipped (title duplicate): ${item.title}`);
+        continue;
+      }
 
       console.log(`[GlobalNews] Processing: ${item.title}`);
       console.log(`[GlobalNews] Resolved URL: ${realUrl}`);

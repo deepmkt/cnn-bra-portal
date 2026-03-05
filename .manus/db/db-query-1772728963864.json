@@ -1,0 +1,74 @@
+{
+  "query": "SELECT status, COUNT(*) as cnt FROM articles GROUP BY status ORDER BY cnt DESC;\n\nSELECT slug, COUNT(*) as cnt FROM articles WHERE slug IS NOT NULL AND slug != '' GROUP BY slug HAVING COUNT(*) > 1 ORDER BY cnt DESC LIMIT 10;\n\nSELECT LEFT(title, 60) as title_prefix, COUNT(*) as cnt FROM articles GROUP BY LEFT(title, 60) HAVING COUNT(*) > 1 ORDER BY cnt DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AGjn9SpCJUmEG7Z.root --database 6wzLmWaAhQKjEBEoadSqJc --execute SELECT status, COUNT(*) as cnt FROM articles GROUP BY status ORDER BY cnt DESC;\n\nSELECT slug, COUNT(*) as cnt FROM articles WHERE slug IS NOT NULL AND slug != '' GROUP BY slug HAVING COUNT(*) > 1 ORDER BY cnt DESC LIMIT 10;\n\nSELECT LEFT(title, 60) as title_prefix, COUNT(*) as cnt FROM articles GROUP BY LEFT(title, 60) HAVING COUNT(*) > 1 ORDER BY cnt DESC LIMIT 20;",
+  "rows": [
+    {
+      "status": "online",
+      "cnt": "824"
+    },
+    {
+      "status": "draft",
+      "cnt": "14"
+    },
+    {
+      "status": "title_prefix",
+      "cnt": "cnt"
+    },
+    {
+      "status": "Rascunho automático",
+      "cnt": "14"
+    },
+    {
+      "status": "Braço Direito de 'el Mencho' Morre em Confronto e Intensific",
+      "cnt": "2"
+    },
+    {
+      "status": "Presos Políticos na Venezuela Iniciam Greve de Fome por Libe",
+      "cnt": "2"
+    },
+    {
+      "status": "Filhote de Macaco Rejeitado Pela Mãe Encontra Consolo em Pel",
+      "cnt": "2"
+    },
+    {
+      "status": "Trump acusa Obama de vazar segredos sobre vida extraterrestr",
+      "cnt": "2"
+    },
+    {
+      "status": "Governo de Minas Gerais Anuncia Anel Viário em São João del-",
+      "cnt": "2"
+    },
+    {
+      "status": "Irã Afirma que EUA Não Exigiram Fim do Enriquecimento de Urâ",
+      "cnt": "2"
+    },
+    {
+      "status": "Economia Brasileira Projeta Crescimento de 2,3% em 2025, Apo",
+      "cnt": "2"
+    },
+    {
+      "status": "Emirados Árabes Unidos Estabelecem Corredores Aéreos Seguros",
+      "cnt": "2"
+    },
+    {
+      "status": "Estados Unidos Enviam Caças F-22 para Israel em Meio a Tensõ",
+      "cnt": "2"
+    },
+    {
+      "status": "Suécia Intercepta Drone Próximo a Porta-aviões Nuclear Franc",
+      "cnt": "2"
+    },
+    {
+      "status": "Presidente do Brb Alerta para Paralisação de Bilhetagem sem ",
+      "cnt": "2"
+    },
+    {
+      "status": "Tripulação de voo é hospitalizada após ingerir balas de cann",
+      "cnt": "2"
+    }
+  ],
+  "messages": [],
+  "stdout": "status\tcnt\nonline\t824\ndraft\t14\ntitle_prefix\tcnt\nRascunho automático\t14\nBraço Direito de 'el Mencho' Morre em Confronto e Intensific\t2\nPresos Políticos na Venezuela Iniciam Greve de Fome por Libe\t2\nFilhote de Macaco Rejeitado Pela Mãe Encontra Consolo em Pel\t2\nTrump acusa Obama de vazar segredos sobre vida extraterrestr\t2\nGoverno de Minas Gerais Anuncia Anel Viário em São João del-\t2\nIrã Afirma que EUA Não Exigiram Fim do Enriquecimento de Urâ\t2\nEconomia Brasileira Projeta Crescimento de 2,3% em 2025, Apo\t2\nEmirados Árabes Unidos Estabelecem Corredores Aéreos Seguros\t2\nEstados Unidos Enviam Caças F-22 para Israel em Meio a Tensõ\t2\nSuécia Intercepta Drone Próximo a Porta-aviões Nuclear Franc\t2\nPresidente do Brb Alerta para Paralisação de Bilhetagem sem \t2\nTripulação de voo é hospitalizada após ingerir balas de cann\t2\n",
+  "stderr": "",
+  "execution_time_ms": 97
+}

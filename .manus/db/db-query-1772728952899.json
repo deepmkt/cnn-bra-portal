@@ -1,0 +1,23 @@
+{
+  "query": "SELECT \n  COUNT(*) as total_articles,\n  COUNT(DISTINCT title) as unique_titles,\n  (COUNT(*) - COUNT(DISTINCT title)) as exact_duplicates\nFROM articles;\n\nSELECT title, COUNT(*) as cnt\nFROM articles\nGROUP BY title\nHAVING COUNT(*) > 1\nORDER BY cnt DESC\nLIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AGjn9SpCJUmEG7Z.root --database 6wzLmWaAhQKjEBEoadSqJc --execute SELECT \n  COUNT(*) as total_articles,\n  COUNT(DISTINCT title) as unique_titles,\n  (COUNT(*) - COUNT(DISTINCT title)) as exact_duplicates\nFROM articles;\n\nSELECT title, COUNT(*) as cnt\nFROM articles\nGROUP BY title\nHAVING COUNT(*) > 1\nORDER BY cnt DESC\nLIMIT 20;",
+  "rows": [
+    {
+      "total_articles": "838",
+      "unique_titles": "820",
+      "exact_duplicates": "18"
+    }
+  ],
+  "messages": [
+    "title\tcnt",
+    "Rascunho automático\t14",
+    "Economia Brasileira Projeta Crescimento de 2,3% em 2025, Aponta IBGE\t2",
+    "Trump acusa Obama de vazar segredos sobre vida extraterrestre e promete abertura de arquivos\t2",
+    "Suécia Intercepta Drone Próximo a Porta-aviões Nuclear Francês, Gerando Alerta\t2",
+    "Tripulação de voo é hospitalizada após ingerir balas de cannabis oferecidas por passageiro\t2",
+    "Irã Afirma que EUA Não Exigiram Fim do Enriquecimento de Urânio em Negociações\t2"
+  ],
+  "stdout": "total_articles\tunique_titles\texact_duplicates\n838\t820\t18\ntitle\tcnt\nRascunho automático\t14\nEconomia Brasileira Projeta Crescimento de 2,3% em 2025, Aponta IBGE\t2\nTrump acusa Obama de vazar segredos sobre vida extraterrestre e promete abertura de arquivos\t2\nSuécia Intercepta Drone Próximo a Porta-aviões Nuclear Francês, Gerando Alerta\t2\nTripulação de voo é hospitalizada após ingerir balas de cannabis oferecidas por passageiro\t2\nIrã Afirma que EUA Não Exigiram Fim do Enriquecimento de Urânio em Negociações\t2\n",
+  "stderr": "",
+  "execution_time_ms": 71
+}

@@ -1,0 +1,21 @@
+{
+  "query": "SELECT status, COUNT(*) as cnt FROM articles GROUP BY status ORDER BY cnt DESC;\n\nSELECT \n  COUNT(*) as total,\n  SUM(CASE WHEN title = 'Rascunho automático' THEN 1 ELSE 0 END) as rascunhos_automaticos,\n  SUM(CASE WHEN title LIKE '%Rascunho%' THEN 1 ELSE 0 END) as todos_rascunhos\nFROM articles;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AGjn9SpCJUmEG7Z.root --database 6wzLmWaAhQKjEBEoadSqJc --execute SELECT status, COUNT(*) as cnt FROM articles GROUP BY status ORDER BY cnt DESC;\n\nSELECT \n  COUNT(*) as total,\n  SUM(CASE WHEN title = 'Rascunho automático' THEN 1 ELSE 0 END) as rascunhos_automaticos,\n  SUM(CASE WHEN title LIKE '%Rascunho%' THEN 1 ELSE 0 END) as todos_rascunhos\nFROM articles;",
+  "rows": [
+    {
+      "status": "online",
+      "cnt": "824"
+    },
+    {
+      "status": "draft",
+      "cnt": "14"
+    }
+  ],
+  "messages": [
+    "total\trascunhos_automaticos\ttodos_rascunhos",
+    "838\t14\t14"
+  ],
+  "stdout": "status\tcnt\nonline\t824\ndraft\t14\ntotal\trascunhos_automaticos\ttodos_rascunhos\n838\t14\t14\n",
+  "stderr": "",
+  "execution_time_ms": 70
+}

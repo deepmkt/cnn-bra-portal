@@ -600,3 +600,12 @@
 ## Sprint 52 — Cron Job de Vinculação Automática
 - [x] Criar serviço linkShortsToArticles.ts com lógica de correspondência
 - [x] Integrar ao cron job do servidor (execução a cada 30 minutos)
+
+## Sprint 53 — Pop-up, Trending Topics e Hero Carousel
+- [ ] Pop-up de saída: exibir apenas uma vez por sessão (localStorage)
+- [ ] Trending topics: integração Google Trends BR com métricas e publicação automática
+- [ ] Hero carousel: setas de navegação anterior/próximo
+
+## Sprint 54 — Deduplicação de Artigos
+- [x] Script deduplicate-articles.mjs para remover artigos duplicados
+- [x] Prevenção de duplicatas no globalNewsFetcher
