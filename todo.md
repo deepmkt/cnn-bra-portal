@@ -609,3 +609,7 @@
 ## Sprint 54 — Deduplicação de Artigos
 - [x] Script deduplicate-articles.mjs para remover artigos duplicados
 - [x] Prevenção de duplicatas no globalNewsFetcher
+
+## Sprint 55 — VLibras e Deduplicação Diária
+- [x] Corrigir VLibras no site
+- [x] Cron job diário de deduplicação de artigos no servidor

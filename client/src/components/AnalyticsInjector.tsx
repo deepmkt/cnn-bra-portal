@@ -67,27 +67,46 @@ export function AnalyticsInjector() {
     }
 
     // ── VLibras ───────────────────────────────────────────────────────────────
+    // URL atualizada: o vlibras.gov.br redireciona para o CDN jsDelivr
+    // O Widget agora usa o endpoint https://www.vlibras.gov.br/app/
     if (vlibrasEnabled && !document.getElementById("cnn-vlibras-script")) {
-      const s = document.createElement("script");
-      s.id = "cnn-vlibras-script";
-      s.src = "https://vlibras.gov.br/app/vlibras-plugin.js";
-      s.async = true;
-      s.onload = () => {
-        try {
-          // @ts-ignore
-          new window.VLibras.Widget("https://vlibras.gov.br/app");
-        } catch {}
-      };
-      document.head.appendChild(s);
-
-      // VLibras container div
-      if (!document.getElementById("vw-plugin-wrapper")) {
+      // Inject VLibras container div BEFORE loading the script
+      if (!document.querySelector("[vw]")) {
         const div = document.createElement("div");
         div.setAttribute("vw", "");
         div.className = "enabled";
         div.innerHTML = `<div vw-access-button class="active"></div><div vw-plugin-wrapper><div class="vw-plugin-top-wrapper"></div></div>`;
         document.body.appendChild(div);
       }
+
+      const s = document.createElement("script");
+      s.id = "cnn-vlibras-script";
+      // Use the CDN URL directly (vlibras.gov.br 302-redirects here)
+      s.src = "https://cdn.jsdelivr.net/gh/spbgovbr-vlibras/vlibras-portal@dev/app/vlibras-plugin.js";
+      s.async = true;
+      s.onload = () => {
+        try {
+          // @ts-ignore
+          new window.VLibras.Widget("https://www.vlibras.gov.br/app/");
+        } catch (e) {
+          console.warn("[VLibras] Widget init failed:", e);
+        }
+      };
+      s.onerror = () => {
+        // Fallback: try the original gov.br URL
+        const fallback = document.createElement("script");
+        fallback.id = "cnn-vlibras-script-fallback";
+        fallback.src = "https://vlibras.gov.br/app/vlibras-plugin.js";
+        fallback.async = true;
+        fallback.onload = () => {
+          try {
+            // @ts-ignore
+            new window.VLibras.Widget("https://www.vlibras.gov.br/app/");
+          } catch {}
+        };
+        document.head.appendChild(fallback);
+      };
+      document.head.appendChild(s);
     }
 
     // ── TTS (Text-to-Speech) ──────────────────────────────────────────────────

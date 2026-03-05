@@ -213,6 +213,33 @@ async function startServer() {
       }
     }, LINK_SHORTS_INTERVAL_MS);
   }, 120_000); // 120s after server start
+
+  // ===== CRON: Deduplicate articles once per day =====
+  const DEDUP_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
+  // Run immediately at startup (after 30s delay) and then once per day
+  setTimeout(async () => {
+    try {
+      const { deduplicateArticles } = await import("../deduplicateArticles");
+      const result = await deduplicateArticles();
+      if (result.removed > 0) {
+        console.log(`[Cron] Dedup: ${result.removed} artigos removidos, ${result.shortsRedirected} shorts redirecionados (${result.groups} grupos)`);
+      }
+    } catch (err) {
+      console.error("[Cron] Dedup initial error:", err);
+    }
+
+    setInterval(async () => {
+      try {
+        const { deduplicateArticles } = await import("../deduplicateArticles");
+        const result = await deduplicateArticles();
+        if (result.removed > 0) {
+          console.log(`[Cron] Dedup: ${result.removed} artigos removidos, ${result.shortsRedirected} shorts redirecionados (${result.groups} grupos)`);
+        }
+      } catch (err) {
+        console.error("[Cron] Dedup scheduled error:", err);
+      }
+    }, DEDUP_INTERVAL_MS);
+  }, 30_000); // 30s after server start
 }
 
 startServer().catch(console.error);
