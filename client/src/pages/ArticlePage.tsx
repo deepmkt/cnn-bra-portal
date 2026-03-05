@@ -252,6 +252,80 @@ export default function ArticlePage({ id }: { id: number }) {
     };
   }, [id]);  // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ===== SEO dinâmico: title, meta description, og:image, JSON-LD =====
+  useEffect(() => {
+    if (!article) return;
+
+    const title = `${article.title} | CNN BRA`;
+    const description = article.excerpt || article.content?.replace(/<[^>]*>/g, '').slice(0, 160) || 'Leia a notícia completa no CNN BRA.';
+    const image = article.imageUrl || 'https://cnnbra.com.br/og-default.jpg';
+    const url = `https://cnnbra.com.br/artigo/${article.id}`;
+    const publishedAt = article.publishedAt ? new Date(article.publishedAt).toISOString() : new Date().toISOString();
+
+    // Page title
+    document.title = title;
+
+    // Helper to set/create meta tag
+    const setMeta = (selector: string, attr: string, value: string) => {
+      let el = document.querySelector<HTMLMetaElement>(selector);
+      if (!el) {
+        el = document.createElement('meta');
+        const [attrName, attrVal] = selector.replace('meta[', '').replace(']', '').split('="');
+        el.setAttribute(attrName, attrVal.replace('"', ''));
+        document.head.appendChild(el);
+      }
+      el.setAttribute(attr, value);
+    };
+
+    setMeta('meta[name="description"]', 'content', description);
+    setMeta('meta[name="keywords"]', 'content', `${article.category}, notícias, CNN BRA, ${article.tags ? JSON.parse(article.tags).join(', ') : ''}`);
+    setMeta('meta[property="og:title"]', 'content', title);
+    setMeta('meta[property="og:description"]', 'content', description);
+    setMeta('meta[property="og:image"]', 'content', image);
+    setMeta('meta[property="og:url"]', 'content', url);
+    setMeta('meta[property="og:type"]', 'content', 'article');
+    setMeta('meta[property="article:published_time"]', 'content', publishedAt);
+    setMeta('meta[property="article:section"]', 'content', article.category || 'Geral');
+    setMeta('meta[name="twitter:card"]', 'content', 'summary_large_image');
+    setMeta('meta[name="twitter:title"]', 'content', title);
+    setMeta('meta[name="twitter:description"]', 'content', description);
+    setMeta('meta[name="twitter:image"]', 'content', image);
+
+    // JSON-LD structured data (NewsArticle)
+    let jsonLd = document.getElementById('article-jsonld');
+    if (!jsonLd) {
+      jsonLd = document.createElement('script');
+      jsonLd.id = 'article-jsonld';
+      jsonLd.setAttribute('type', 'application/ld+json');
+      document.head.appendChild(jsonLd);
+    }
+    jsonLd.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'NewsArticle',
+      headline: article.title,
+      description: description,
+      image: [image],
+      datePublished: publishedAt,
+      dateModified: publishedAt,
+      author: [{ '@type': 'Organization', name: 'CNN BRA', url: 'https://cnnbra.com.br' }],
+      publisher: {
+        '@type': 'Organization',
+        name: 'CNN BRA',
+        logo: { '@type': 'ImageObject', url: 'https://cnnbra.com.br/logo.png' }
+      },
+      mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+      articleSection: article.category || 'Geral',
+      inLanguage: 'pt-BR',
+    });
+
+    // Cleanup: restore defaults when leaving the page
+    return () => {
+      document.title = 'CNN BRA — Notícias do Brasil e do Mundo';
+      const jsonLdEl = document.getElementById('article-jsonld');
+      if (jsonLdEl) jsonLdEl.remove();
+    };
+  }, [article]);
+
   // IA Voice - SpeechSynthesis
   const handleIAVoice = () => {
     if (isPlaying) {

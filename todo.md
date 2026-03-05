@@ -628,3 +628,11 @@
 - [x] Adicionar H1 visível na página inicial
 - [x] Adicionar meta keywords na home
 - [x] Encurtar H2 longos (máx 80 caracteres)
+
+## Sprint 61 — Otimização para Google AdSense
+- [ ] Sitemap.xml dinâmico (endpoint /sitemap.xml no servidor)
+- [ ] robots.txt com referência ao sitemap
+- [ ] SEO dinâmico nas páginas de artigo (title, meta description, og:image, JSON-LD)
+- [ ] Página "Sobre Nós" (/sobre)
+- [ ] Página "Contato" (/contato)
+- [ ] Links para Sobre e Contato no rodapé e navegação

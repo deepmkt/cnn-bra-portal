@@ -19,6 +19,8 @@ const SubmitContent = lazy(() => import("./pages/SubmitContent"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const Shorts = lazy(() => import("./pages/Shorts"));
+const About = lazy(() => import("./pages/About"));
+const Contact = lazy(() => import("./pages/Contact"));
 
 const ADMIN_SUBDOMAIN = "admin.cnnbra.com.br";
 
@@ -200,6 +202,12 @@ function Router() {
       </Route>
       <Route path={"/shorts"}>
         <Suspense fallback={<LazyFallback />}><Shorts /></Suspense>
+      </Route>
+      <Route path={"/sobre"}>
+        <Suspense fallback={<LazyFallback />}><About /></Suspense>
+      </Route>
+      <Route path={"/contato"}>
+        <Suspense fallback={<LazyFallback />}><Contact /></Suspense>
       </Route>
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />

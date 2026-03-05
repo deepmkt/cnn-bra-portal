@@ -903,6 +903,8 @@ export default function Home() {
             <button onClick={() => changeCategory("GLOBAL")} className="hover:text-white transition-colors">Giro Global</button>
             <Link href="/leaderboard" className="hover:text-white transition-colors">Ranking</Link>
             <Link href="/enviar-conteudo" className="hover:text-white transition-colors">Enviar Conteúdo</Link>
+            <Link href="/sobre" className="hover:text-white transition-colors">Sobre</Link>
+            <Link href="/contato" className="hover:text-white transition-colors">Contato</Link>
           </div>
           <div className="flex justify-center space-x-6 mb-10">
             <a href="#" className="bg-gray-900 p-3 rounded-full hover:bg-blue-600 hover:scale-110 transition-all shadow-lg text-xs font-bold">FB</a>
@@ -916,6 +918,10 @@ export default function Home() {
           </Link>
           <div className="flex justify-center gap-4 text-[10px] text-gray-600 mb-4">
             <Link href="/privacidade" className="hover:text-white transition-colors">Política de Privacidade</Link>
+            <span>•</span>
+            <Link href="/sobre" className="hover:text-white transition-colors">Sobre Nós</Link>
+            <span>•</span>
+            <Link href="/contato" className="hover:text-white transition-colors">Contato</Link>
             <span>•</span>
             <span>LGPD</span>
           </div>

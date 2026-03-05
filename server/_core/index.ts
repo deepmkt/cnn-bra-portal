@@ -99,6 +99,65 @@ async function startServer() {
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
 
+  // ===== SEO: robots.txt =====
+  app.get("/robots.txt", (_req: express.Request, res: express.Response) => {
+    res.type("text/plain");
+    res.send(
+`User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /shorts
+
+Sitemap: https://cnnbra.com.br/sitemap.xml
+`
+    );
+  });
+
+  // ===== SEO: sitemap.xml dinâmico =====
+  app.get("/sitemap.xml", async (_req: express.Request, res: express.Response) => {
+    try {
+      const { getArticles } = await import("../db");
+      const allArticles = await getArticles({ limit: 1000, status: "online" });
+      const baseUrl = "https://cnnbra.com.br";
+      const now = new Date().toISOString();
+
+      const staticPages = [
+        { url: "/", priority: "1.0", changefreq: "hourly" },
+        { url: "/busca", priority: "0.5", changefreq: "weekly" },
+        { url: "/ranking", priority: "0.5", changefreq: "daily" },
+        { url: "/shorts", priority: "0.6", changefreq: "hourly" },
+        { url: "/enviar-conteudo", priority: "0.4", changefreq: "monthly" },
+        { url: "/sobre", priority: "0.7", changefreq: "monthly" },
+        { url: "/contato", priority: "0.7", changefreq: "monthly" },
+        { url: "/privacidade", priority: "0.3", changefreq: "yearly" },
+      ];
+
+      const staticUrls = staticPages.map(p =>
+        `  <url>\n    <loc>${baseUrl}${p.url}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>${p.changefreq}</changefreq>\n    <priority>${p.priority}</priority>\n  </url>`
+      ).join("\n");
+
+      const articleUrls = allArticles.map(a => {
+        const lastmod = a.publishedAt ? new Date(a.publishedAt).toISOString() : now;
+        return `  <url>\n    <loc>${baseUrl}/artigo/${a.id}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>`;
+      }).join("\n");
+
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
+${staticUrls}
+${articleUrls}
+</urlset>`;
+
+      res.header("Content-Type", "application/xml");
+      res.header("Cache-Control", "public, max-age=3600");
+      res.send(xml);
+    } catch (err) {
+      console.error("[Sitemap] Error generating sitemap:", err);
+      res.status(500).send("Error generating sitemap");
+    }
+  });
+
   // tRPC API
   app.use(
     "/api/trpc",
