@@ -1,0 +1,18 @@
+{
+  "query": "SHOW COLUMNS FROM articles LIKE 'status';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AGjn9SpCJUmEG7Z.root --database 6wzLmWaAhQKjEBEoadSqJc --execute SHOW COLUMNS FROM articles LIKE 'status';",
+  "rows": [
+    {
+      "Field": "status",
+      "Type": "enum('online','draft','review','scheduled')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "draft",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nstatus\tenum('online','draft','review','scheduled')\tNO\t\tdraft\t\n",
+  "stderr": "",
+  "execution_time_ms": 61
+}

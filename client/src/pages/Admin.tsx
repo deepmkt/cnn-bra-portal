@@ -12,7 +12,7 @@ import {
   Plus, Trash2, Edit, Eye, EyeOff, Check, X, ArrowLeft, Star, StarOff,
   Bell, Newspaper, Type, LogOut, BarChart3, Upload, Image, Video,
   Globe, Code, Download, RefreshCw, MapPin, Zap, Volume2,
-  Search, AlertCircle, Trophy, PlayCircle
+  Search, AlertCircle, Trophy, PlayCircle, Clock, CalendarClock
 } from "lucide-react";
 
 // ===== TYPES =====
@@ -106,6 +106,7 @@ function ArticleForm({ article, onSave, onCancel, mediaItems }: {
     imageUrl: article?.imageUrl || "",
     videoUrl: article?.videoUrl || "",
     status: article?.status || "draft",
+    scheduledAt: article?.scheduledAt ? new Date(article.scheduledAt).toISOString().slice(0, 16) : "",
     isHero: article?.isHero || false,
     isFeatured: article?.isFeatured || false,
     isBreaking: article?.isBreaking || false,
@@ -163,7 +164,23 @@ function ArticleForm({ article, onSave, onCancel, mediaItems }: {
   });
 
   const handleSave = (status: string) => {
-    const data = { ...form, status: status as any };
+    const data: any = { ...form, status: status as any };
+    // If scheduling: validate date is in the future
+    if (status === "scheduled") {
+      if (!form.scheduledAt) {
+        toast.error("Selecione uma data e horário para agendar a publicação.");
+        return;
+      }
+      const scheduledDate = new Date(form.scheduledAt);
+      if (scheduledDate <= new Date()) {
+        toast.error("A data de agendamento deve ser no futuro.");
+        return;
+      }
+      data.scheduledAt = scheduledDate.toISOString();
+    } else {
+      // Clear scheduledAt when publishing immediately or saving as draft
+      data.scheduledAt = undefined;
+    }
     if (article?.id) updateMut.mutate({ id: article.id, ...data });
     else createMut.mutate(data);
   };
@@ -356,11 +373,44 @@ function ArticleForm({ article, onSave, onCancel, mediaItems }: {
             <p className="text-xs text-gray-400">Pressione Enter ou clique + para adicionar</p>
           </div>
 
+          {/* ===== SCHEDULING SECTION ===== */}
+          <div className="bg-amber-50 rounded-xl p-4 border border-amber-200 space-y-3">
+            <Label className="font-semibold text-sm flex items-center gap-1 text-amber-800">
+              <CalendarClock className="w-4 h-4" /> Agendar Publicação
+            </Label>
+            <p className="text-xs text-amber-700">Selecione data e horário para publicar automaticamente. Deixe em branco para publicar agora ou salvar como rascunho.</p>
+            <div className="space-y-1">
+              <Label className="text-xs text-amber-700 font-medium">Data e Horário</Label>
+              <input
+                type="datetime-local"
+                value={form.scheduledAt}
+                min={new Date(Date.now() + 60_000).toISOString().slice(0, 16)}
+                onChange={e => setForm(f => ({ ...f, scheduledAt: e.target.value }))}
+                className="w-full border border-amber-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+              />
+            </div>
+            {form.scheduledAt && (
+              <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-100 rounded-lg px-3 py-2">
+                <Clock className="w-3.5 h-3.5 shrink-0" />
+                <span>Será publicada em: <strong>{new Date(form.scheduledAt).toLocaleString("pt-BR", { dateStyle: "full", timeStyle: "short" })}</strong></span>
+                <button type="button" onClick={() => setForm(f => ({ ...f, scheduledAt: "" }))} className="ml-auto text-amber-500 hover:text-amber-700">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+
           <div className="space-y-2">
             <Button onClick={() => handleSave("online")} disabled={isPending || !form.title}
               className="w-full bg-green-600 hover:bg-green-700 text-white font-bold">
-              <Eye className="w-4 h-4 mr-1" />{isPending ? "Salvando..." : "Publicar (Online)"}
+              <Eye className="w-4 h-4 mr-1" />{isPending ? "Salvando..." : "Publicar Agora (Online)"}
             </Button>
+            {form.scheduledAt && (
+              <Button onClick={() => handleSave("scheduled")} disabled={isPending || !form.title}
+                className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold">
+                <CalendarClock className="w-4 h-4 mr-1" />{isPending ? "Agendando..." : `Agendar para ${new Date(form.scheduledAt).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}`}
+              </Button>
+            )}
             <Button onClick={() => handleSave("draft")} disabled={isPending || !form.title}
               variant="outline" className="w-full font-bold">
               <EyeOff className="w-4 h-4 mr-1" /> Salvar como Rascunho
@@ -453,6 +503,7 @@ function ArticlesTab() {
           <option value="online">Online</option>
           <option value="draft">Rascunho</option>
           <option value="review">Em revisão</option>
+          <option value="scheduled">Agendados</option>
         </select>
       </div>
       {isLoading ? (
@@ -468,7 +519,20 @@ function ArticlesTab() {
               {article.imageUrl && <img src={article.imageUrl} alt={article.title} className="w-16 h-12 object-cover rounded-lg shrink-0" />}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${article.status === "online" ? "bg-green-100 text-green-700" : article.status === "draft" ? "bg-gray-100 text-gray-600" : "bg-yellow-100 text-yellow-700"}`}>{article.status}</span>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                    article.status === "online" ? "bg-green-100 text-green-700" :
+                    article.status === "draft" ? "bg-gray-100 text-gray-600" :
+                    article.status === "scheduled" ? "bg-amber-100 text-amber-700" :
+                    "bg-yellow-100 text-yellow-700"
+                  }`}>
+                    {article.status === "scheduled" && <Clock className="w-3 h-3" />}
+                    {article.status === "online" ? "Online" : article.status === "draft" ? "Rascunho" : article.status === "scheduled" ? "Agendado" : article.status}
+                  </span>
+                  {article.status === "scheduled" && article.scheduledAt && (
+                    <span className="text-xs text-amber-600 font-medium">
+                      📅 {new Date(article.scheduledAt).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  )}
                   <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium">{article.category}</span>
                   {article.state && <span className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">{article.state}</span>}
                   {article.isHero && <span className="text-xs bg-yellow-50 text-yellow-700 px-2 py-0.5 rounded-full">⭐ Hero</span>}

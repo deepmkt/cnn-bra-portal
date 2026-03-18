@@ -328,6 +328,36 @@ ${articleUrls}
       }
     }, DEDUP_INTERVAL_MS);
   }, 30_000); // 30s after server start
+
+  // ===== SCHEDULED ARTICLES PUBLISHER =====
+  // Runs every 60 seconds to publish articles whose scheduledAt has passed.
+  const SCHEDULER_INTERVAL_MS = 60_000; // 1 minute
+  // Start after 10s so the DB connection is ready
+  setTimeout(async () => {
+    console.log("[Scheduler] Starting scheduled articles publisher (every 60s)...");
+    // First run
+    try {
+      const { publishScheduledArticles } = await import("../publishScheduledArticles");
+      const result = await publishScheduledArticles();
+      if (result.published > 0) {
+        console.log(`[Scheduler] Initial run: published ${result.published} article(s) — IDs: ${result.ids.join(", ")}`);
+      }
+    } catch (err) {
+      console.error("[Scheduler] Initial run error:", err);
+    }
+    // Recurring runs
+    setInterval(async () => {
+      try {
+        const { publishScheduledArticles } = await import("../publishScheduledArticles");
+        const result = await publishScheduledArticles();
+        if (result.published > 0) {
+          console.log(`[Scheduler] Published ${result.published} scheduled article(s) — IDs: ${result.ids.join(", ")}`);
+        }
+      } catch (err) {
+        console.error("[Scheduler] Recurring run error:", err);
+      }
+    }, SCHEDULER_INTERVAL_MS);
+  }, 10_000); // 10s after server start
 }
 
 startServer().catch(console.error);

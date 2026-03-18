@@ -636,3 +636,11 @@
 - [ ] Página "Sobre Nós" (/sobre)
 - [ ] Página "Contato" (/contato)
 - [ ] Links para Sobre e Contato no rodapé e navegação
+
+## Sprint — Agendamento de Publicação
+
+- [x] Agendamento de publicação: campo data/hora no editor de artigos do admin
+- [x] Coluna scheduledAt no banco de dados (drizzle schema + migração)
+- [x] Procedures tRPC: salvar scheduledAt, listar artigos agendados
+- [x] Badges de status na listagem do admin (Agendado / Publicado / Rascunho)
+- [x] Cron job que publica artigos agendados automaticamente a cada minuto
