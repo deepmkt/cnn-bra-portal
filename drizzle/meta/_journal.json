@@ -85,6 +85,13 @@
       "when": 1772730336881,
       "tag": "0011_living_overlord",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1774292816905,
+      "tag": "0012_sparkling_trauma",
+      "breakpoints": true
     }
   ]
 }

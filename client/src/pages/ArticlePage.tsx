@@ -413,9 +413,16 @@ export default function ArticlePage({ id }: { id: number }) {
             </div>
 
             {/* Title */}
-            <h1 className="text-3xl md:text-5xl font-black tracking-tighter leading-[0.95] mb-8 text-gray-900">
+            <h1 className="text-3xl md:text-5xl font-black tracking-tighter leading-[0.95] mb-3 text-gray-900">
               {capitalizeTitle(article.title)}
             </h1>
+
+            {/* Subtitle */}
+            {article.subtitle && (
+              <h2 className="text-lg md:text-2xl font-medium text-gray-500 mb-8 leading-snug">
+                {article.subtitle}
+              </h2>
+            )}
 
             {/* Meta bar */}
             <div className="flex flex-wrap items-center justify-between border-y py-4 mb-8 gap-4 border-gray-100">
@@ -449,11 +456,18 @@ export default function ArticlePage({ id }: { id: number }) {
             </div>
 
             {/* Featured Image */}
-            <img
-              src={article.imageUrl || "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=1200&q=80"}
-              alt={article.title}
-              className="w-full rounded-3xl shadow-xl mb-10"
-            />
+            <figure className="mb-10">
+              <img
+                src={article.imageUrl || "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=1200&q=80"}
+                alt={article.title}
+                className="w-full rounded-3xl shadow-xl"
+              />
+              {article.imageCredit && (
+                <figcaption className="text-xs text-gray-400 mt-2 text-right italic">
+                  {article.imageCredit}
+                </figcaption>
+              )}
+            </figure>
 
             {/* Article Body */}
             <div className="prose prose-lg max-w-none text-gray-800 font-serif leading-relaxed">

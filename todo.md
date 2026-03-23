@@ -644,3 +644,11 @@
 - [x] Procedures tRPC: salvar scheduledAt, listar artigos agendados
 - [x] Badges de status na listagem do admin (Agendado / Publicado / Rascunho)
 - [x] Cron job que publica artigos agendados automaticamente a cada minuto
+
+## Sprint — Upload de Imagem, Créditos e Subtítulo
+
+- [x] Upload direto de imagem no formulário de nova notícia (sem ir na aba Mídia)
+- [x] Campo de créditos da imagem (fotógrafo/fonte) no editor e exibição no frontend
+- [x] Campo de subtítulo em todas as notícias (editor + frontend)
+- [x] Colunas subtitle e imageCredit no banco de dados
+- [x] Atualizar procedures tRPC para aceitar os novos campos

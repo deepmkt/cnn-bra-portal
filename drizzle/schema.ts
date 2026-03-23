@@ -22,12 +22,14 @@ export type InsertUser = typeof users.$inferInsert;
 export const articles = mysqlTable("articles", {
   id: int("id").autoincrement().primaryKey(),
   title: varchar("title", { length: 500 }).notNull(),
+  subtitle: varchar("subtitle", { length: 500 }),
   slug: varchar("slug", { length: 600 }).unique(),
   excerpt: text("excerpt"),
   content: text("content"),
   category: varchar("category", { length: 100 }).notNull().default("GERAL"),
   tags: text("tags"), // JSON array of tags
   imageUrl: text("imageUrl"),
+  imageCredit: varchar("imageCredit", { length: 300 }),
   videoUrl: text("videoUrl"),
   status: mysqlEnum("status", ["online", "draft", "review", "scheduled"]).default("draft").notNull(),
   isHero: boolean("isHero").default(false).notNull(),

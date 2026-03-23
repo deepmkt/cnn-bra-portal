@@ -99,11 +99,13 @@ function ArticleForm({ article, onSave, onCancel, mediaItems }: {
 }) {
   const [form, setForm] = useState({
     title: article?.title || "",
+    subtitle: article?.subtitle || "",
     excerpt: article?.excerpt || "",
     content: article?.content || "",
     category: article?.category || "GERAL",
     tags: article?.tags || "",
     imageUrl: article?.imageUrl || "",
+    imageCredit: article?.imageCredit || "",
     videoUrl: article?.videoUrl || "",
     status: article?.status || "draft",
     scheduledAt: article?.scheduledAt ? new Date(article.scheduledAt).toISOString().slice(0, 16) : "",
@@ -114,11 +116,16 @@ function ArticleForm({ article, onSave, onCancel, mediaItems }: {
     newCategory: "",
   });
   const [showMediaGallery, setShowMediaGallery] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const [categories, setCategories] = useState([...CATEGORIES]);
   const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
   const [showSuggestedTags, setShowSuggestedTags] = useState(false);
   const [newTagInput, setNewTagInput] = useState("");
   const utils = trpc.useUtils();
+
+  // Upload mutation for direct image upload from the article form
+  const uploadImageMut = trpc.mediaUpload.upload.useMutation();
 
   // Parse current tags from JSON string to array
   const currentTagsArray = (): string[] => {
@@ -212,6 +219,11 @@ function ArticleForm({ article, onSave, onCancel, mediaItems }: {
               placeholder="Título da notícia..." className="mt-1 text-lg font-semibold" />
           </div>
           <div>
+            <Label className="font-semibold">Subtítulo</Label>
+            <Input value={form.subtitle} onChange={e => setForm(f => ({ ...f, subtitle: e.target.value }))}
+              placeholder="Subtítulo da notícia (complementa o título)..." className="mt-1 text-base" />
+          </div>
+          <div>
             <Label className="font-semibold">Resumo (Excerpt)</Label>
             <Textarea value={form.excerpt} onChange={e => setForm(f => ({ ...f, excerpt: e.target.value }))}
               placeholder="Breve resumo da notícia..." className="mt-1" rows={3} />
@@ -224,26 +236,82 @@ function ArticleForm({ article, onSave, onCancel, mediaItems }: {
         </div>
 
         <div className="space-y-4">
-          <div className="bg-gray-50 rounded-xl p-4 border">
+          <div className="bg-gray-50 rounded-xl p-4 border space-y-3">
             <Label className="font-semibold text-sm">Imagem de Capa</Label>
             {form.imageUrl ? (
-              <div className="mt-2 relative">
+              <div className="relative">
                 <img src={form.imageUrl} alt="Capa" className="w-full h-32 object-cover rounded-lg" />
-                <button onClick={() => setForm(f => ({ ...f, imageUrl: "" }))}
+                <button onClick={() => setForm(f => ({ ...f, imageUrl: "", imageCredit: "" }))}
                   className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center">
                   <X className="w-3 h-3" />
                 </button>
               </div>
             ) : (
-              <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center text-gray-400 text-sm">
-                <Image className="w-8 h-8 mx-auto mb-1 opacity-40" />Nenhuma imagem selecionada
+              <div
+                onClick={() => imageInputRef.current?.click()}
+                className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center text-gray-400 text-sm cursor-pointer hover:border-[#001c56] hover:text-[#001c56] transition-colors">
+                <Upload className="w-8 h-8 mx-auto mb-1 opacity-40" />
+                {isUploading ? "Enviando imagem..." : "Clique para enviar imagem"}
               </div>
             )}
+            {/* Hidden file input for direct upload */}
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                if (file.size > 10 * 1024 * 1024) {
+                  toast.error("Imagem muito grande. Máximo: 10MB.");
+                  return;
+                }
+                setIsUploading(true);
+                try {
+                  const reader = new FileReader();
+                  reader.onload = async () => {
+                    const base64 = (reader.result as string).split(",")[1];
+                    try {
+                      const result = await uploadImageMut.mutateAsync({
+                        filename: file.name,
+                        mimeType: file.type,
+                        dataBase64: base64,
+                        alt: form.title || file.name,
+                      });
+                      setForm(f => ({ ...f, imageUrl: result.url }));
+                      toast.success("Imagem enviada com sucesso!");
+                    } catch (err: any) {
+                      toast.error(`Erro no upload: ${err.message}`);
+                    } finally {
+                      setIsUploading(false);
+                    }
+                  };
+                  reader.readAsDataURL(file);
+                } catch {
+                  setIsUploading(false);
+                  toast.error("Erro ao ler o arquivo.");
+                }
+                // Reset input so same file can be re-selected
+                e.target.value = "";
+              }}
+            />
+            <div className="flex gap-1">
+              <Button variant="outline" size="sm" className="flex-1" onClick={() => imageInputRef.current?.click()} disabled={isUploading}>
+                <Upload className="w-3 h-3 mr-1" /> {isUploading ? "Enviando..." : "Enviar Imagem"}
+              </Button>
+              <Button variant="outline" size="sm" className="flex-1" onClick={() => setShowMediaGallery(true)}>
+                <Image className="w-3 h-3 mr-1" /> Galeria
+              </Button>
+            </div>
             <Input value={form.imageUrl} onChange={e => setForm(f => ({ ...f, imageUrl: e.target.value }))}
-              placeholder="URL da imagem..." className="mt-2 text-xs" />
-            <Button variant="outline" size="sm" className="w-full mt-2" onClick={() => setShowMediaGallery(true)}>
-              <Image className="w-3 h-3 mr-1" /> Escolher da Galeria
-            </Button>
+              placeholder="Ou cole a URL da imagem..." className="text-xs" />
+            {/* Image Credit */}
+            <div>
+              <Label className="text-xs text-gray-500 font-medium">Créditos da Imagem</Label>
+              <Input value={form.imageCredit} onChange={e => setForm(f => ({ ...f, imageCredit: e.target.value }))}
+                placeholder="Ex: Foto: João Silva / Agência Brasil" className="mt-1 text-xs" />
+            </div>
           </div>
 
           <div className="bg-gray-50 rounded-xl p-4 border">

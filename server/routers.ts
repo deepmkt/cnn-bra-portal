@@ -102,11 +102,13 @@ export const appRouter = router({
     create: adminProcedure
       .input(z.object({
         title: z.string().min(1),
+        subtitle: z.string().optional(),
         excerpt: z.string().optional(),
         content: z.string().optional(),
         category: z.string().default("GERAL"),
         tags: z.string().optional(),
         imageUrl: z.string().optional(),
+        imageCredit: z.string().optional(),
         videoUrl: z.string().optional(),
         status: z.enum(["online", "draft", "review", "scheduled"]).default("draft"),
         isHero: z.boolean().default(false),
@@ -144,11 +146,13 @@ export const appRouter = router({
       .input(z.object({
         id: z.number(),
         title: z.string().optional(),
+        subtitle: z.string().optional(),
         excerpt: z.string().optional(),
         content: z.string().optional(),
         category: z.string().optional(),
         tags: z.string().optional(),
         imageUrl: z.string().optional(),
+        imageCredit: z.string().optional(),
         videoUrl: z.string().optional(),
         status: z.enum(["online", "draft", "review", "scheduled"]).optional(),
         isHero: z.boolean().optional(),
