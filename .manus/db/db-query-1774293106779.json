@@ -1,0 +1,60 @@
+{
+  "query": "SELECT id, title, slug FROM articles ORDER BY id DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AGjn9SpCJUmEG7Z.root --database 6wzLmWaAhQKjEBEoadSqJc --execute SELECT id, title, slug FROM articles ORDER BY id DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "9630018",
+      "title": "Francisco Cerúndolo surpreende e elimina Daniil Medvedev no Masters 1000 de Miami",
+      "slug": "francisco-cerundolo-surpreende-e-elimina-daniil-medvedev-no-masters-1000-de-miam-KpvB12"
+    },
+    {
+      "id": "9630017",
+      "title": "Diagnóstico Precoce Eleva Chances de Cura para Câncer Colorretal, Alerta Médica em Alagoas",
+      "slug": "diagnostico-precoce-eleva-chances-de-cura-para-cancer-colorretal-alerta-medica-em-alagoas-TPg909"
+    },
+    {
+      "id": "9630016",
+      "title": "Tempo no Rio: Domingo Termina Sem Chuva e Próximos Dias Mantêm Estabilidade",
+      "slug": "tempo-no-rio-domingo-termina-sem-chuva-e-proximos-dias-mantem-estabilidade-RyiiK3"
+    },
+    {
+      "id": "9630015",
+      "title": "Apoio Maciço: Mais de 80% dos Prefeitos Alagoanos Endossam Arthur Lira ao Senado",
+      "slug": "apoio-macico-mais-de-80-dos-prefeitos-alagoanos-endossam-arthur-lira-ao-senado-pVzIea"
+    },
+    {
+      "id": "9630013",
+      "title": "Casal É Acolhido em Maceió Após Cair em Golpe de Falso Emprego Via Rede Social",
+      "slug": "casal-e-acolhido-em-maceio-apos-cair-em-golpe-de-falso-emprego-via-rede-social-0pHD0d"
+    },
+    {
+      "id": "9630011",
+      "title": "Blast Open Rotterdam 2026: 9z ainda distante dos europeus, mas em ascensão",
+      "slug": "blast-open-rotterdam-2026-9z-ainda-distante-dos-europeus-mas-em-ascensao-5dbGJR"
+    },
+    {
+      "id": "9630010",
+      "title": "Morre Marquinhos Abdalla, Pioneiro Brasileiro no Draft da NBA",
+      "slug": "morre-marquinhos-abdalla-pioneiro-brasileiro-no-draft-da-nba-cuEdlP"
+    },
+    {
+      "id": "9630009",
+      "title": "KSCERATO da FURIA destaca confiança como chave para o sucesso",
+      "slug": "kscerato-da-furia-destaca-confianca-como-chave-para-o-sucesso-D9OTSO"
+    },
+    {
+      "id": "9630008",
+      "title": "Confiança em alta: Copa do Brasil 2026 e a expectativa por um futuro promissor",
+      "slug": "confianca-em-alta-copa-do-brasil-2026-e-a-expectativa-por-um-futuro-promissor-lmM26Z"
+    },
+    {
+      "id": "9630007",
+      "title": "Morre Valerie Perrine, atriz indicada ao Oscar por 'Lenny' e estrela de 'Superman', aos 82 anos",
+      "slug": "morre-valerie-perrine-atriz-indicada-ao-oscar-por-lenny-e-estrela-de-superman-ao-Y7JyeU"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tslug\n9630018\tFrancisco Cerúndolo surpreende e elimina Daniil Medvedev no Masters 1000 de Miami\tfrancisco-cerundolo-surpreende-e-elimina-daniil-medvedev-no-masters-1000-de-miam-KpvB12\n9630017\tDiagnóstico Precoce Eleva Chances de Cura para Câncer Colorretal, Alerta Médica em Alagoas\tdiagnostico-precoce-eleva-chances-de-cura-para-cancer-colorretal-alerta-medica-em-alagoas-TPg909\n9630016\tTempo no Rio: Domingo Termina Sem Chuva e Próximos Dias Mantêm Estabilidade\ttempo-no-rio-domingo-termina-sem-chuva-e-proximos-dias-mantem-estabilidade-RyiiK3\n9630015\tApoio Maciço: Mais de 80% dos Prefeitos Alagoanos Endossam Arthur Lira ao Senado\tapoio-macico-mais-de-80-dos-prefeitos-alagoanos-endossam-arthur-lira-ao-senado-pVzIea\n9630013\tCasal É Acolhido em Maceió Após Cair em Golpe de Falso Emprego Via Rede Social\tcasal-e-acolhido-em-maceio-apos-cair-em-golpe-de-falso-emprego-via-rede-social-0pHD0d\n9630011\tBlast Open Rotterdam 2026: 9z ainda distante dos europeus, mas em ascensão\tblast-open-rotterdam-2026-9z-ainda-distante-dos-europeus-mas-em-ascensao-5dbGJR\n9630010\tMorre Marquinhos Abdalla, Pioneiro Brasileiro no Draft da NBA\tmorre-marquinhos-abdalla-pioneiro-brasileiro-no-draft-da-nba-cuEdlP\n9630009\tKSCERATO da FURIA destaca confiança como chave para o sucesso\tkscerato-da-furia-destaca-confianca-como-chave-para-o-sucesso-D9OTSO\n9630008\tConfiança em alta: Copa do Brasil 2026 e a expectativa por um futuro promissor\tconfianca-em-alta-copa-do-brasil-2026-e-a-expectativa-por-um-futuro-promissor-lmM26Z\n9630007\tMorre Valerie Perrine, atriz indicada ao Oscar por 'Lenny' e estrela de 'Superman', aos 82 anos\tmorre-valerie-perrine-atriz-indicada-ao-oscar-por-lenny-e-estrela-de-superman-ao-Y7JyeU\n",
+  "stderr": "",
+  "execution_time_ms": 111
+}

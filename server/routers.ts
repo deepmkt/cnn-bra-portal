@@ -238,9 +238,24 @@ export const appRouter = router({
       .query(async () => {
         return db.getArticles({ isHero: true });
       }),
+    // ── Fix all titles and slugs (ABNT + clean slugs) ─────────────────
+    fixTitlesAndSlugs: adminProcedure
+      .mutation(async () => {
+        const { abntTitle, cleanSlug } = await import("./fixTitlesAndSlugs");
+        const allArticles = await db.getArticles();
+        let fixed = 0;
+        for (const article of allArticles) {
+          const newTitle = abntTitle(article.title);
+          const newSlug = cleanSlug(newTitle, article.id);
+          if (newTitle !== article.title || newSlug !== article.slug) {
+            await db.updateArticleRaw(article.id, { title: newTitle, slug: newSlug });
+            fixed++;
+          }
+        }
+        return { fixed, total: allArticles.length };
+      }),
   }),
-
-  // ===== TAGS =====
+  // ===== TAGS ======
   tags: router({
     list: publicProcedure.query(async () => {
       return db.getTags();

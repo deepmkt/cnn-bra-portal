@@ -1,0 +1,60 @@
+{
+  "query": "SELECT id, title, slug FROM articles ORDER BY id DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AGjn9SpCJUmEG7Z.root --database 6wzLmWaAhQKjEBEoadSqJc --execute SELECT id, title, slug FROM articles ORDER BY id DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "9630023",
+      "title": "Athletic-mg: conheça o adversário do inter na copa do brasil com craque na casamata",
+      "slug": "athletic-mg-conheca-o-adversario-do-inter-na-copa-do-brasil-com-craque-na-casamata-9630023"
+    },
+    {
+      "id": "9630022",
+      "title": "Projeto de lei propõe prioridade absoluta na saúde de crianças indígenas no SUS",
+      "slug": "projeto-de-lei-propoe-prioridade-absoluta-na-saude-de-criancas-indigenas-no-sus-9630022"
+    },
+    {
+      "id": "9630021",
+      "title": "Fleury, porto seguro e oncoclínicas formam aliança estratégica",
+      "slug": "fleury-porto-seguro-e-oncoclinicas-formam-alianca-estrategica-9630021"
+    },
+    {
+      "id": "9630020",
+      "title": "Taquarana, AL, celebra o nascimento da primeira orquestra sinfônica feminina do estado",
+      "slug": "taquarana-al-celebra-o-nascimento-da-primeira-orquestra-sinfonica-feminina-do-estado-9630020"
+    },
+    {
+      "id": "9630019",
+      "title": "Analistas elevam projeção da SELIC para 12,50% em 2024, aponta relatório focus",
+      "slug": "analistas-elevam-projecao-da-selic-para-12-50-em-2024-aponta-relatorio-focus-9630019"
+    },
+    {
+      "id": "9630018",
+      "title": "Francisco cerúndolo surpreende e elimina daniil medvedev no masters 1000 de miami",
+      "slug": "francisco-cerundolo-surpreende-e-elimina-daniil-medvedev-no-masters-1000-de-miami-9630018"
+    },
+    {
+      "id": "9630017",
+      "title": "Diagnóstico precoce eleva chances de cura para câncer colorretal, alerta médica em alagoas",
+      "slug": "diagnostico-precoce-eleva-chances-de-cura-para-cancer-colorretal-alerta-medica-em-alagoas-9630017"
+    },
+    {
+      "id": "9630016",
+      "title": "Tempo no rio: domingo termina sem chuva e próximos dias mantêm estabilidade",
+      "slug": "tempo-no-rio-domingo-termina-sem-chuva-e-proximos-dias-mantem-estabilidade-9630016"
+    },
+    {
+      "id": "9630015",
+      "title": "Apoio maciço: mais de 80% dos prefeitos alagoanos endossam arthur lira ao senado",
+      "slug": "apoio-macico-mais-de-80-dos-prefeitos-alagoanos-endossam-arthur-lira-ao-senado-9630015"
+    },
+    {
+      "id": "9630013",
+      "title": "Casal é acolhido em maceió após cair em golpe de falso emprego via rede social",
+      "slug": "casal-e-acolhido-em-maceio-apos-cair-em-golpe-de-falso-emprego-via-rede-social-9630013"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tslug\n9630023\tAthletic-mg: conheça o adversário do inter na copa do brasil com craque na casamata\tathletic-mg-conheca-o-adversario-do-inter-na-copa-do-brasil-com-craque-na-casamata-9630023\n9630022\tProjeto de lei propõe prioridade absoluta na saúde de crianças indígenas no SUS\tprojeto-de-lei-propoe-prioridade-absoluta-na-saude-de-criancas-indigenas-no-sus-9630022\n9630021\tFleury, porto seguro e oncoclínicas formam aliança estratégica\tfleury-porto-seguro-e-oncoclinicas-formam-alianca-estrategica-9630021\n9630020\tTaquarana, AL, celebra o nascimento da primeira orquestra sinfônica feminina do estado\ttaquarana-al-celebra-o-nascimento-da-primeira-orquestra-sinfonica-feminina-do-estado-9630020\n9630019\tAnalistas elevam projeção da SELIC para 12,50% em 2024, aponta relatório focus\tanalistas-elevam-projecao-da-selic-para-12-50-em-2024-aponta-relatorio-focus-9630019\n9630018\tFrancisco cerúndolo surpreende e elimina daniil medvedev no masters 1000 de miami\tfrancisco-cerundolo-surpreende-e-elimina-daniil-medvedev-no-masters-1000-de-miami-9630018\n9630017\tDiagnóstico precoce eleva chances de cura para câncer colorretal, alerta médica em alagoas\tdiagnostico-precoce-eleva-chances-de-cura-para-cancer-colorretal-alerta-medica-em-alagoas-9630017\n9630016\tTempo no rio: domingo termina sem chuva e próximos dias mantêm estabilidade\ttempo-no-rio-domingo-termina-sem-chuva-e-proximos-dias-mantem-estabilidade-9630016\n9630015\tApoio maciço: mais de 80% dos prefeitos alagoanos endossam arthur lira ao senado\tapoio-macico-mais-de-80-dos-prefeitos-alagoanos-endossam-arthur-lira-ao-senado-9630015\n9630013\tCasal é acolhido em maceió após cair em golpe de falso emprego via rede social\tcasal-e-acolhido-em-maceio-apos-cair-em-golpe-de-falso-emprego-via-rede-social-9630013\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}

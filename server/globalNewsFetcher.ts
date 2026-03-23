@@ -792,7 +792,10 @@ async function tryPublishFromFeed(
         ? mapAnoticiaCategory(item.categories || [])
         : targetCategory;
 
-      // Create slug
+      // Apply ABNT title formatting
+      const { abntTitle } = await import("./fixTitlesAndSlugs");
+      rewritten.title = abntTitle(rewritten.title);
+      // Create temporary slug (will be updated with ID after insert)
       const slug = createSlug(rewritten.title) + "-" + nanoid(6);
 
       // Build source tag

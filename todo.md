@@ -652,3 +652,10 @@
 - [x] Campo de subtítulo em todas as notícias (editor + frontend)
 - [x] Colunas subtitle e imageCredit no banco de dados
 - [x] Atualizar procedures tRPC para aceitar os novos campos
+
+## Sprint — Correção de Slugs e Headlines
+
+- [x] Corrigir slugs de todas as matérias existentes para refletir o título
+- [x] Corrigir headlines de todas as matérias para minúsculo (regras ABNT)
+- [x] Atualizar geração de slug no código para novos artigos
+- [x] Atualizar capitalização de títulos no código para novos artigos

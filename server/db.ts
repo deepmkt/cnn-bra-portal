@@ -94,12 +94,14 @@ export async function updateUserRole(id: number, role: string) {
 
 // ===== ARTICLES (CMS Headless) =====
 
-function generateSlug(title: string): string {
-  return title.toLowerCase()
+function generateSlug(title: string, id?: number): string {
+  const base = title.toLowerCase()
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .substring(0, 200) + "-" + Date.now().toString(36);
+    .replace(/^-+|-+$/g, "")
+    .substring(0, 150);
+  // Use article ID as suffix for uniqueness; fallback to timestamp if ID not yet known
+  return id ? `${base}-${id}` : `${base}-${Date.now().toString(36)}`;
 }
 
 function calculateReadTime(content: string | null | undefined): number {
@@ -146,20 +148,34 @@ export async function getArticleBySlug(slug: string) {
 export async function createArticle(article: InsertArticle) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const slug = generateSlug(article.title);
+  const tempSlug = generateSlug(article.title);
   const readTime = calculateReadTime(article.content);
-  const result = await db.insert(articles).values({ ...article, slug, readTimeMinutes: readTime });
-  return result[0].insertId;
+  const result = await db.insert(articles).values({ ...article, slug: tempSlug, readTimeMinutes: readTime });
+  const id = result[0].insertId;
+  // Update slug with the actual ID for clean URLs
+  const finalSlug = generateSlug(article.title, id);
+  await db.update(articles).set({ slug: finalSlug }).where(eq(articles.id, id));
+  return id;
 }
 
 export async function updateArticle(id: number, data: Partial<InsertArticle>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   if (data.content) data.readTimeMinutes = calculateReadTime(data.content);
-  if (data.title) data.slug = generateSlug(data.title);
+  if (data.title) data.slug = generateSlug(data.title, id);
   if (data.status === "online" && !(data as any).publishedAt) {
     (data as any).publishedAt = new Date();
   }
+  await db.update(articles).set(data).where(eq(articles.id, id));
+}
+
+/**
+ * Raw update: sets exactly the fields provided without auto-generating slug.
+ * Used by the fixTitlesAndSlugs migration.
+ */
+export async function updateArticleRaw(id: number, data: Record<string, any>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
   await db.update(articles).set(data).where(eq(articles.id, id));
 }
 

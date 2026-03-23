@@ -1,0 +1,35 @@
+{
+  "query": "SELECT id, title, slug FROM articles WHERE id IN (2, 7, 8, 9, 10);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AGjn9SpCJUmEG7Z.root --database 6wzLmWaAhQKjEBEoadSqJc --execute SELECT id, title, slug FROM articles WHERE id IN (2, 7, 8, 9, 10);",
+  "rows": [
+    {
+      "id": "2",
+      "title": "Guerra de narrativas! silêncio de JHC alimenta fake news e fragiliza aliados em alagoas, avalia analista político",
+      "slug": "guerra-de-narrativas-silencio-de-jhc-alimenta-fake-news-e-fragiliza-aliados-em-alagoas-avalia-analista-politico-2"
+    },
+    {
+      "id": "7",
+      "title": "Com trabalho de arthur lira, habitação avança em rio largo e mais de 600 famílias realizam o sonho da casa própria",
+      "slug": "com-trabalho-de-arthur-lira-habitacao-avanca-em-rio-largo-e-mais-de-600-familias-realizam-o-sonho-da-casa-propria-7"
+    },
+    {
+      "id": "8",
+      "title": "Desaparecimento de jovem de palmeira mobiliza forças de segurança do estado e prefeitura nas buscas por bruno viana",
+      "slug": "desaparecimento-de-jovem-de-palmeira-mobiliza-forcas-de-seguranca-do-estado-e-prefeitura-nas-buscas-por-bruno-viana-8"
+    },
+    {
+      "id": "9",
+      "title": "Oposição aos calheiros pode lançar até quatro nomes ao senado",
+      "slug": "oposicao-aos-calheiros-pode-lancar-ate-quatro-nomes-ao-senado-9"
+    },
+    {
+      "id": "10",
+      "title": "NOVO pedido de falência aponta falta de recolhimento do FGTS pela TV gazeta desde 2024",
+      "slug": "novo-pedido-de-falencia-aponta-falta-de-recolhimento-do-fgts-pela-tv-gazeta-desde-2024-10"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tslug\n2\tGuerra de narrativas! silêncio de JHC alimenta fake news e fragiliza aliados em alagoas, avalia analista político\tguerra-de-narrativas-silencio-de-jhc-alimenta-fake-news-e-fragiliza-aliados-em-alagoas-avalia-analista-politico-2\n7\tCom trabalho de arthur lira, habitação avança em rio largo e mais de 600 famílias realizam o sonho da casa própria\tcom-trabalho-de-arthur-lira-habitacao-avanca-em-rio-largo-e-mais-de-600-familias-realizam-o-sonho-da-casa-propria-7\n8\tDesaparecimento de jovem de palmeira mobiliza forças de segurança do estado e prefeitura nas buscas por bruno viana\tdesaparecimento-de-jovem-de-palmeira-mobiliza-forcas-de-seguranca-do-estado-e-prefeitura-nas-buscas-por-bruno-viana-8\n9\tOposição aos calheiros pode lançar até quatro nomes ao senado\toposicao-aos-calheiros-pode-lancar-ate-quatro-nomes-ao-senado-9\n10\tNOVO pedido de falência aponta falta de recolhimento do FGTS pela TV gazeta desde 2024\tnovo-pedido-de-falencia-aponta-falta-de-recolhimento-do-fgts-pela-tv-gazeta-desde-2024-10\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}

@@ -1,0 +1,46 @@
+{
+  "query": "SELECT COUNT(*) as total FROM articles; SELECT id, title FROM articles WHERE title REGEXP BINARY '[A-Z][A-Z]' AND title NOT REGEXP '^[A-Z]{2,}:' LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AGjn9SpCJUmEG7Z.root --database 6wzLmWaAhQKjEBEoadSqJc --execute SELECT COUNT(*) as total FROM articles; SELECT id, title FROM articles WHERE title REGEXP BINARY '[A-Z][A-Z]' AND title NOT REGEXP '^[A-Z]{2,}:' LIMIT 10;",
+  "rows": [
+    {
+      "total": "1246"
+    },
+    {
+      "total": "id\ttitle"
+    },
+    {
+      "total": "2\tJORNAL A NOTÍCIA DIGITAL - GUERRA DE NARRATIVAS! Silêncio de JHC alimenta fake news e fragiliza aliados em Alagoas, avalia analista político"
+    },
+    {
+      "total": "7\tMORADIA - Com trabalho de Arthur Lira, habitação avança em Rio Largo e mais de 600 famílias realizam o sonho da casa própria"
+    },
+    {
+      "total": "8\tFORÇA TAREFA - Desaparecimento de jovem de Palmeira mobiliza forças de segurança do Estado e Prefeitura nas buscas por Bruno Viana"
+    },
+    {
+      "total": "9\tARTICULAÇÃO - Oposição aos Calheiros pode lançar até quatro nomes ao Senado"
+    },
+    {
+      "total": "10\tDECADÊNCIA DE COLLOR - Novo pedido de falência aponta falta de recolhimento do FGTS pela TV Gazeta desde 2024"
+    },
+    {
+      "total": "15\tRIO LARGO - Conselheiro tutelar entrega cadeiras de rodas e de banho a crianças e adolescentes com deficiência"
+    },
+    {
+      "total": "16\tJUSTIÇA FISCAL - Aprovada sob liderança de Arthur Lira, reforma tributária inicia fase de testes e implantação gradual"
+    },
+    {
+      "total": "17\tMEIO AMBIENTE - Denúncias apontam irregularidades ambientais e fiscais em barraca tradicional da Barra de São Miguel"
+    },
+    {
+      "total": "18\tTRABALHO - Arthur Lira se consolida como deputado que mais garantiu investimentos para pavimentação e construção de estradas em municípios de AL"
+    },
+    {
+      "total": "21\tDIREITOS - Presidente Nacional do Solidariedade afirma que votação na Câmara será favorável a PEC do Marco Temporal"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\n1246\nid\ttitle\n2\tJORNAL A NOTÍCIA DIGITAL - GUERRA DE NARRATIVAS! Silêncio de JHC alimenta fake news e fragiliza aliados em Alagoas, avalia analista político\n7\tMORADIA - Com trabalho de Arthur Lira, habitação avança em Rio Largo e mais de 600 famílias realizam o sonho da casa própria\n8\tFORÇA TAREFA - Desaparecimento de jovem de Palmeira mobiliza forças de segurança do Estado e Prefeitura nas buscas por Bruno Viana\n9\tARTICULAÇÃO - Oposição aos Calheiros pode lançar até quatro nomes ao Senado\n10\tDECADÊNCIA DE COLLOR - Novo pedido de falência aponta falta de recolhimento do FGTS pela TV Gazeta desde 2024\n15\tRIO LARGO - Conselheiro tutelar entrega cadeiras de rodas e de banho a crianças e adolescentes com deficiência\n16\tJUSTIÇA FISCAL - Aprovada sob liderança de Arthur Lira, reforma tributária inicia fase de testes e implantação gradual\n17\tMEIO AMBIENTE - Denúncias apontam irregularidades ambientais e fiscais em barraca tradicional da Barra de São Miguel\n18\tTRABALHO - Arthur Lira se consolida como deputado que mais garantiu investimentos para pavimentação e construção de estradas em municípios de AL\n21\tDIREITOS - Presidente Nacional do Solidariedade afirma que votação na Câmara será favorável a PEC do Marco Temporal\n",
+  "stderr": "",
+  "execution_time_ms": 71
+}
