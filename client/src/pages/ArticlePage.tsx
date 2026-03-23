@@ -131,20 +131,33 @@ function RecentNewsWidget({ currentId }: { currentId: number }) {
 // ===== RELATED POSTS BY TAGS =====
 function RelatedPosts({ articleId, tags }: { articleId: number; tags: string[] }) {
   const [, setLocation] = useLocation();
-  const { data: similar = [] } = trpc.recommendations.similar.useQuery({ articleId, limit: 6 });
-  // Also fetch by category/tag as fallback
-  const { data: byTag = [] } = trpc.articles.list.useQuery(
-    tags.length > 0 ? { tag: tags[0], limit: 12, status: "online" } : undefined,
-    { enabled: similar.length < 3 }
+  const { data: related = [], isLoading } = trpc.recommendations.related.useQuery(
+    { articleId, limit: 6 },
+    { enabled: !!articleId }
   );
 
-  const candidates = similar.length >= 3 ? similar : [
-    ...similar,
-    ...byTag.filter((a: any) => a.id !== articleId && !similar.find((s: any) => s.id === a.id))
-  ];
-  const posts = candidates.filter((a: any) => a.id !== articleId).slice(0, 6);
+  if (isLoading) {
+    return (
+      <div className="mt-16 pt-12 border-t-2 border-gray-100">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="w-1 h-8 bg-red-600 rounded-full" />
+          <h3 className="font-black text-2xl text-gray-900 uppercase tracking-tighter">Notícias Relacionadas</h3>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="animate-pulse">
+              <div className="aspect-video bg-gray-200 rounded-2xl mb-3" />
+              <div className="h-3 bg-gray-200 rounded w-16 mb-2" />
+              <div className="h-4 bg-gray-200 rounded w-full mb-1" />
+              <div className="h-4 bg-gray-200 rounded w-3/4" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
-  if (posts.length === 0) return null;
+  if (related.length === 0) return null;
 
   return (
     <div className="mt-16 pt-12 border-t-2 border-gray-100">
@@ -153,7 +166,7 @@ function RelatedPosts({ articleId, tags }: { articleId: number; tags: string[] }
         <h3 className="font-black text-2xl text-gray-900 uppercase tracking-tighter">Notícias Relacionadas</h3>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {posts.map((r: any) => (
+        {related.map((r: any) => (
           <button
             key={r.id}
             onClick={() => { setLocation(`/artigo/${r.id}`); window.scrollTo({ top: 0, behavior: "smooth" }); }}
@@ -165,6 +178,7 @@ function RelatedPosts({ articleId, tags }: { articleId: number; tags: string[] }
                   src={r.imageUrl}
                   alt={r.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
                 />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-[#001c56] to-[#003080] flex items-center justify-center">

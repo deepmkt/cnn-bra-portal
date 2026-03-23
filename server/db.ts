@@ -220,6 +220,85 @@ export async function getTrendingArticles(limit: number = 10) {
   return result;
 }
 
+/**
+ * Get related articles based on: same category, matching tags, same state.
+ * Excludes the current article. Prioritizes articles with more tag overlap.
+ */
+export async function getRelatedArticles(articleId: number, limit = 6) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // First, get the current article to know its category, tags, and state
+  const [current] = await db.select({
+    id: articles.id,
+    category: articles.category,
+    tags: articles.tags,
+    state: articles.state,
+  }).from(articles).where(eq(articles.id, articleId)).limit(1);
+
+  if (!current) return [];
+
+  // Parse tags from CSV
+  const currentTags = (current.tags || "").split(",").map(t => t.trim().toLowerCase()).filter(Boolean);
+
+  // Build conditions: same category OR matching tags OR same state, but not the same article
+  const conditions = [eq(articles.status, "online")];
+  const orConditions = [];
+
+  if (current.category) {
+    orConditions.push(eq(articles.category, current.category));
+  }
+  if (current.state) {
+    orConditions.push(eq(articles.state, current.state));
+  }
+  // Match any tag via LIKE
+  for (const tag of currentTags.slice(0, 5)) {
+    if (tag.length > 2) {
+      orConditions.push(like(articles.tags, `%${tag}%`));
+    }
+  }
+
+  if (orConditions.length === 0) {
+    // Fallback: just get recent articles
+    return db.select().from(articles)
+      .where(and(eq(articles.status, "online"), sql`${articles.id} != ${articleId}`))
+      .orderBy(desc(articles.publishedAt))
+      .limit(limit);
+  }
+
+  // Get candidates (more than needed to allow scoring)
+  const candidates = await db.select().from(articles)
+    .where(and(
+      eq(articles.status, "online"),
+      sql`${articles.id} != ${articleId}`,
+      or(...orConditions)
+    ))
+    .orderBy(desc(articles.publishedAt))
+    .limit(limit * 4);
+
+  // Score candidates by relevance
+  const scored = candidates.map(a => {
+    let score = 0;
+    // Same category = +3
+    if (a.category === current.category) score += 3;
+    // Same state = +2
+    if (current.state && a.state === current.state) score += 2;
+    // Tag overlap
+    const aTags = (a.tags || "").split(",").map(t => t.trim().toLowerCase()).filter(Boolean);
+    const overlap = currentTags.filter(t => aTags.includes(t)).length;
+    score += overlap;
+    // Recency bonus (published in last 48h = +1)
+    if (a.publishedAt && Date.now() - new Date(a.publishedAt).getTime() < 48 * 60 * 60 * 1000) score += 1;
+    return { ...a, _score: score };
+  });
+
+  // Sort by score desc, then by publishedAt desc
+  scored.sort((a, b) => b._score - a._score || (new Date(b.publishedAt || 0).getTime() - new Date(a.publishedAt || 0).getTime()));
+
+  // Return top N without the internal score
+  return scored.slice(0, limit).map(({ _score, ...rest }) => rest);
+}
+
 // ===== ARTICLE REVISIONS =====
 
 export async function createRevision(revision: InsertArticleRevision) {

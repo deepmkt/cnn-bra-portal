@@ -794,6 +794,12 @@ export const appRouter = router({
         return db.getSimilarArticles(input.articleId, input.limit);
       }),
 
+    related: publicProcedure
+      .input(z.object({ articleId: z.number(), limit: z.number().default(6) }))
+      .query(async ({ input }) => {
+        return db.getRelatedArticles(input.articleId, input.limit);
+      }),
+
     trackInteraction: protectedProcedure
       .input(z.object({
         articleId: z.number(),

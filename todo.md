@@ -673,3 +673,8 @@
 ## Bug Fix — JSON.parse de tags no ArticlePage
 
 - [x] Corrigir JSON.parse de tags no ArticlePage (tags são string CSV, não JSON)
+
+## Sprint — Notícias Relacionadas
+
+- [x] Procedure tRPC para buscar artigos relacionados (mesma categoria + tags em comum)
+- [x] Seção "Notícias Relacionadas" ao final de cada artigo com cards clicáveis
