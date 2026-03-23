@@ -810,6 +810,18 @@ async function tryPublishFromFeed(
       const stateText = `${rewritten.title} ${rewritten.excerpt} ${tagsPrefix} ${rewritten.tags}`;
       const detectedState = detectState(stateText);
 
+      // Check if there are manual heroes — if 10+ manual heroes exist, AI should not be hero
+      let finalIsHero = isHero;
+      if (isHero) {
+        const { getHeroArticles } = await import("./db");
+        const currentHeroes = await getHeroArticles(10);
+        const manualHeroes = currentHeroes.filter(a => a.authorId && a.authorId > 0);
+        if (manualHeroes.length >= 10) {
+          finalIsHero = false;
+          console.log(`[GlobalNews] Skipping hero flag: 10+ manual heroes already exist`);
+        }
+      }
+
       try {
         const result = await db.insert(articles).values({
           title: rewritten.title,
@@ -820,7 +832,7 @@ async function tryPublishFromFeed(
           imageUrl: finalImageUrl,
           videoUrl: scraped.videoUrl || "",
           status: "online",
-          isHero,
+          isHero: finalIsHero,
           tags: `${tagsPrefix},${rewritten.tags}`,
           state: detectedState,
           publishedAt: item.pubDate ? new Date(item.pubDate) : new Date(),

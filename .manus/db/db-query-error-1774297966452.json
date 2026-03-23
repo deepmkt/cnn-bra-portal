@@ -1,0 +1,8 @@
+{
+  "query": "SELECT * FROM site_settings WHERE `key` LIKE '%vlibras%' OR `key` LIKE '%libras%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AGjn9SpCJUmEG7Z.root --database 6wzLmWaAhQKjEBEoadSqJc --execute SELECT * FROM site_settings WHERE `key` LIKE '%vlibras%' OR `key` LIKE '%libras%';",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'key' in 'where clause'"
+  ]
+}

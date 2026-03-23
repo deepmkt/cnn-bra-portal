@@ -81,9 +81,10 @@ export default function Home() {
   const { data: articlesData } = trpc.articles.list.useQuery({ status: "online", limit: 20 });
   const articles = articlesData ?? [];
 
-  // Fetch hero articles (admin-selected for the carousel)
-  // Uses a dedicated query so hero articles are always loaded regardless of the main list limit.
-  const { data: heroArticlesData } = trpc.articles.list.useQuery({ status: "online", isHero: true });
+  // Fetch hero articles for the carousel (max 10, manual-first priority)
+  // Manual articles (editor-created) always come first and are never auto-removed.
+  // AI articles fill remaining slots only if fewer than 10 manual heroes exist.
+  const { data: heroArticlesData } = trpc.articles.listHeroPublic.useQuery();
 
   // Fetch ticker
   const { data: tickerData } = trpc.ticker.list.useQuery();
@@ -158,7 +159,7 @@ export default function Home() {
   const heroArticles = currentCategory === "home"
     ? allHeroArticles
     : allHeroArticles.filter((a: any) => a.category === currentCategory);
-  const carouselArticles = heroArticles.length > 0 ? heroArticles : filteredArticles.slice(0, 5);
+  const carouselArticles = heroArticles.length > 0 ? heroArticles.slice(0, 10) : filteredArticles.slice(0, 10);
   const currentHero = carouselArticles.length > 0 ? carouselArticles[heroIndex % carouselArticles.length] : filteredArticles[0];
 
   // Hero auto-rotation (pauses when heroPaused is true)

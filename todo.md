@@ -678,3 +678,10 @@
 
 - [x] Procedure tRPC para buscar artigos relacionados (mesma categoria + tags em comum)
 - [x] Seção "Notícias Relacionadas" ao final de cada artigo com cards clicáveis
+
+## Sprint — VLibras + Carrossel com Prioridade Manual
+
+- [x] Reativar VLibras no site (widget de acessibilidade em Libras)
+- [x] Limitar Hero/Carrossel a 10 notícias
+- [x] Notícias manuais (editor) têm prioridade no carrossel sobre as da IA
+- [x] Notícias manuais só saem do carrossel se removidas manualmente pelo editor

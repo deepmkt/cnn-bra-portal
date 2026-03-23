@@ -143,6 +143,33 @@ export async function getArticles(filters?: { status?: string; category?: string
   return filtered;
 }
 
+/**
+ * Get hero articles for the carousel with manual-first priority.
+ * Manual articles (authorId > 0) always come first and are never auto-removed.
+ * AI articles (authorId NULL or 0) fill remaining slots up to the limit.
+ * If there are >= limit manual heroes, AI heroes are not included.
+ */
+export async function getHeroArticles(limit = 10) {
+  const db = await getDb();
+  if (!db) return [];
+  const allHeroes = await db.select().from(articles)
+    .where(and(eq(articles.isHero, true), eq(articles.status, "online")))
+    .orderBy(desc(articles.publishedAt));
+
+  // Separate manual (editor-created) from AI-generated
+  const manualHeroes = allHeroes.filter(a => a.authorId && a.authorId > 0);
+  const aiHeroes = allHeroes.filter(a => !a.authorId || a.authorId === 0);
+
+  // Manual articles always take priority
+  if (manualHeroes.length >= limit) {
+    return manualHeroes.slice(0, limit);
+  }
+
+  // Fill remaining slots with AI articles
+  const remaining = limit - manualHeroes.length;
+  return [...manualHeroes, ...aiHeroes.slice(0, remaining)];
+}
+
 export async function getArticleById(id: number) {
   const db = await getDb();
   if (!db) return undefined;

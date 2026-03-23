@@ -155,8 +155,8 @@ export default function StatePage() {
     }).slice(0, 5);
   }
 
-  // Hero: use first 5 filtered articles for carousel
-  const carouselArticles = filteredArticles.slice(0, 5);
+  // Hero: use first 10 filtered articles for carousel
+  const carouselArticles = filteredArticles.slice(0, 10);
   const currentHero = carouselArticles.length > 0 ? carouselArticles[heroIndex % carouselArticles.length] : null;
 
   // Hero auto-rotation

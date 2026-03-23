@@ -226,13 +226,18 @@ export const appRouter = router({
       .input(z.object({ id: z.number(), isHero: z.boolean() }))
       .mutation(async ({ input }) => {
         if (input.isHero) {
-          const currentHeroes = await db.getArticles({ isHero: true });
-          if (currentHeroes.length >= 5) {
-            throw new Error("Limite de 5 matérias no carrossel atingido. Remova uma antes de adicionar outra.");
-          }
+          // Manual hero articles (set by editors) have no limit — they always get priority.
+          // The carousel display is capped at 10 on the frontend.
         }
         await db.updateArticle(input.id, { isHero: input.isHero });
         return { success: true };
+      }),
+
+    // List hero articles for the carousel (public, used by Home)
+    // Priority: manual articles (authorId > 0) first, then AI-generated, capped at 10.
+    listHeroPublic: publicProcedure
+      .query(async () => {
+        return db.getHeroArticles(10);
       }),
 
     // List all hero articles (admin management)

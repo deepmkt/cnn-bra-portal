@@ -1,0 +1,115 @@
+{
+  "query": "SELECT id, title, isHero, authorId, publishedAt FROM articles WHERE isHero = 1 ORDER BY publishedAt DESC LIMIT 15;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AGjn9SpCJUmEG7Z.root --database 6wzLmWaAhQKjEBEoadSqJc --execute SELECT id, title, isHero, authorId, publishedAt FROM articles WHERE isHero = 1 ORDER BY publishedAt DESC LIMIT 15;",
+  "rows": [
+    {
+      "id": "9630033",
+      "title": "Radialista djalma lyma processa colega cláudio andré por difamação em alagoas",
+      "isHero": "1",
+      "authorId": "NULL",
+      "publishedAt": "2026-03-23 20:05:30"
+    },
+    {
+      "id": "9630027",
+      "title": "Samu alagoas capacita médicos e enfermeiros em curso de suporte avançado à vida",
+      "isHero": "1",
+      "authorId": "NULL",
+      "publishedAt": "2026-03-23 19:33:04"
+    },
+    {
+      "id": "9630022",
+      "title": "Projeto de lei propõe prioridade absoluta na saúde de crianças indígenas no SUS",
+      "isHero": "1",
+      "authorId": "NULL",
+      "publishedAt": "2026-03-23 19:17:05"
+    },
+    {
+      "id": "9630004",
+      "title": "Acidente com ferrão de peixe em alagoas alerta pescadores para cuidados na praia",
+      "isHero": "1",
+      "authorId": "NULL",
+      "publishedAt": "2026-03-23 19:02:04"
+    },
+    {
+      "id": "9630002",
+      "title": "Mais de 80% dos prefeitos alagoanos apoiam arthur lira ao senado em lançamento de pré-candidatura",
+      "isHero": "1",
+      "authorId": "NULL",
+      "publishedAt": "2026-03-23 18:42:45"
+    },
+    {
+      "id": "9630015",
+      "title": "Apoio maciço: mais de 80% dos prefeitos alagoanos endossam arthur lira ao senado",
+      "isHero": "1",
+      "authorId": "NULL",
+      "publishedAt": "2026-03-23 18:42:45"
+    },
+    {
+      "id": "9630013",
+      "title": "Casal é acolhido em maceió após cair em golpe de falso emprego via rede social",
+      "isHero": "1",
+      "authorId": "NULL",
+      "publishedAt": "2026-03-23 18:40:55"
+    },
+    {
+      "id": "9630017",
+      "title": "Diagnóstico precoce eleva chances de cura para câncer colorretal, alerta médica em alagoas",
+      "isHero": "1",
+      "authorId": "NULL",
+      "publishedAt": "2026-03-23 18:31:06"
+    },
+    {
+      "id": "9630020",
+      "title": "Taquarana, AL, celebra o nascimento da primeira orquestra sinfônica feminina do estado",
+      "isHero": "1",
+      "authorId": "NULL",
+      "publishedAt": "2026-03-23 18:22:06"
+    },
+    {
+      "id": "9630025",
+      "title": "Polícia civil de alagoas participa de encontro nacional para fortalecer investigações de homicídios",
+      "isHero": "1",
+      "authorId": "NULL",
+      "publishedAt": "2026-03-23 18:00:10"
+    },
+    {
+      "id": "9630026",
+      "title": "Semana da Água em Alagoas Promove Educação Ambiental para Todas as Idades",
+      "isHero": "1",
+      "authorId": "NULL",
+      "publishedAt": "2026-03-23 17:29:05"
+    },
+    {
+      "id": "9600001",
+      "title": "Alagoas monitora qualidade da água em todos os municípios para garantir saúde pública",
+      "isHero": "1",
+      "authorId": "NULL",
+      "publishedAt": "2026-03-23 16:27:04"
+    },
+    {
+      "id": "9570002",
+      "title": "Santana do mundaú é reconhecido nacionalmente por projeto inovador na saúde",
+      "isHero": "1",
+      "authorId": "NULL",
+      "publishedAt": "2026-03-23 11:37:10"
+    },
+    {
+      "id": "9420006",
+      "title": " Lula cobra ONU por guerra no irã e critica países que \"fazem guerra em vez de manter a paz\"",
+      "isHero": "1",
+      "authorId": "0",
+      "publishedAt": "2026-03-20 17:55:04"
+    },
+    {
+      "id": "9420001",
+      "title": "Arthur lira lança pré-candidatura ao senado e demonstra ampla força política por alagoas forte",
+      "isHero": "1",
+      "authorId": "0",
+      "publishedAt": "2026-03-20 17:46:40"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tisHero\tauthorId\tpublishedAt\n9630033\tRadialista djalma lyma processa colega cláudio andré por difamação em alagoas\t1\tNULL\t2026-03-23 20:05:30\n9630027\tSamu alagoas capacita médicos e enfermeiros em curso de suporte avançado à vida\t1\tNULL\t2026-03-23 19:33:04\n9630022\tProjeto de lei propõe prioridade absoluta na saúde de crianças indígenas no SUS\t1\tNULL\t2026-03-23 19:17:05\n9630004\tAcidente com ferrão de peixe em alagoas alerta pescadores para cuidados na praia\t1\tNULL\t2026-03-23 19:02:04\n9630002\tMais de 80% dos prefeitos alagoanos apoiam arthur lira ao senado em lançamento de pré-candidatura\t1\tNULL\t2026-03-23 18:42:45\n9630015\tApoio maciço: mais de 80% dos prefeitos alagoanos endossam arthur lira ao senado\t1\tNULL\t2026-03-23 18:42:45\n9630013\tCasal é acolhido em maceió após cair em golpe de falso emprego via rede social\t1\tNULL\t2026-03-23 18:40:55\n9630017\tDiagnóstico precoce eleva chances de cura para câncer colorretal, alerta médica em alagoas\t1\tNULL\t2026-03-23 18:31:06\n9630020\tTaquarana, AL, celebra o nascimento da primeira orquestra sinfônica feminina do estado\t1\tNULL\t2026-03-23 18:22:06\n9630025\tPolícia civil de alagoas participa de encontro nacional para fortalecer investigações de homicídios\t1\tNULL\t2026-03-23 18:00:10\n9630026\tSemana da Água em Alagoas Promove Educação Ambiental para Todas as Idades\t1\tNULL\t2026-03-23 17:29:05\n9600001\tAlagoas monitora qualidade da água em todos os municípios para garantir saúde pública\t1\tNULL\t2026-03-23 16:27:04\n9570002\tSantana do mundaú é reconhecido nacionalmente por projeto inovador na saúde\t1\tNULL\t2026-03-23 11:37:10\n9420006\t Lula cobra ONU por guerra no irã e critica países que \"fazem guerra em vez de manter a paz\"\t1\t0\t2026-03-20 17:55:04\n9420001\tArthur lira lança pré-candidatura ao senado e demonstra ampla força política por alagoas forte\t1\t0\t2026-03-20 17:46:40\n",
+  "stderr": "",
+  "execution_time_ms": 77
+}
