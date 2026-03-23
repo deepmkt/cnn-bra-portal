@@ -127,9 +127,16 @@ function ArticleForm({ article, onSave, onCancel, mediaItems }: {
   // Upload mutation for direct image upload from the article form
   const uploadImageMut = trpc.mediaUpload.upload.useMutation();
 
-  // Parse current tags from JSON string to array
+  // Parse current tags from string (CSV or JSON) to array
   const currentTagsArray = (): string[] => {
-    try { return JSON.parse(form.tags || "[]"); } catch { return []; }
+    if (!form.tags) return [];
+    try {
+      const parsed = JSON.parse(form.tags);
+      if (Array.isArray(parsed)) return parsed.map((t: string) => t.trim()).filter(Boolean);
+      return [];
+    } catch {
+      return form.tags.split(',').map((t: string) => t.trim()).filter(Boolean);
+    }
   };
 
   // Add a tag to the current tags list

@@ -231,9 +231,18 @@ export default function ArticlePage({ id }: { id: number }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const startTime = useRef(Date.now());
 
-  // Parse article tags
+  // Parse article tags (stored as comma-separated string, not JSON)
   const articleTags: string[] = (() => {
-    try { return article?.tags ? JSON.parse(article.tags) : []; } catch { return []; }
+    if (!article?.tags) return [];
+    try {
+      // Try JSON first for backwards compatibility
+      const parsed = JSON.parse(article.tags);
+      if (Array.isArray(parsed)) return parsed.map((t: string) => t.trim()).filter(Boolean);
+      return [];
+    } catch {
+      // Tags are comma-separated string
+      return article.tags.split(',').map((t: string) => t.trim()).filter(Boolean);
+    }
   })();
 
   useEffect(() => {
@@ -278,7 +287,7 @@ export default function ArticlePage({ id }: { id: number }) {
     };
 
     setMeta('meta[name="description"]', 'content', description);
-    setMeta('meta[name="keywords"]', 'content', `${article.category}, notícias, CNN BRA, ${article.tags ? JSON.parse(article.tags).join(', ') : ''}`);
+    setMeta('meta[name="keywords"]', 'content', `${article.category}, notícias, CNN BRA, ${articleTags.join(', ')}`);
     setMeta('meta[property="og:title"]', 'content', title);
     setMeta('meta[property="og:description"]', 'content', description);
     setMeta('meta[property="og:image"]', 'content', image);

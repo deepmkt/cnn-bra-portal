@@ -669,3 +669,7 @@
 - [x] Rotas /:uf no App.tsx com validação de UF (27 estados)
 - [x] Detecção automática de estado no fetcher + backfill nos artigos existentes
 - [x] Banner central na página estadual com hero carrossel
+
+## Bug Fix — JSON.parse de tags no ArticlePage
+
+- [x] Corrigir JSON.parse de tags no ArticlePage (tags são string CSV, não JSON)
