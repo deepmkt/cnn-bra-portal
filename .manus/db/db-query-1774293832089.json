@@ -1,0 +1,14 @@
+{
+  "query": "SELECT state, COUNT(*) as total FROM articles WHERE state IS NOT NULL AND state != '' GROUP BY state ORDER BY total DESC LIMIT 30;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AGjn9SpCJUmEG7Z.root --database 6wzLmWaAhQKjEBEoadSqJc --execute SELECT state, COUNT(*) as total FROM articles WHERE state IS NOT NULL AND state != '' GROUP BY state ORDER BY total DESC LIMIT 30;",
+  "rows": [
+    {
+      "state": "AL",
+      "total": "16"
+    }
+  ],
+  "messages": [],
+  "stdout": "state\ttotal\nAL\t16\n",
+  "stderr": "",
+  "execution_time_ms": 76
+}

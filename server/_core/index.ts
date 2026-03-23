@@ -360,4 +360,19 @@ ${articleUrls}
   }, 10_000); // 10s after server start
 }
 
+// ===== BACKFILL: Auto-detect state for existing articles (runs once at startup) =====
+setTimeout(async () => {
+  try {
+    const { backfillArticleStates } = await import("../backfillStates");
+    const result = await backfillArticleStates();
+    if (result.updated > 0) {
+      console.log(`[Backfill] Updated state for ${result.updated}/${result.total} articles`);
+    } else {
+      console.log(`[Backfill] No articles need state backfill (${result.total} checked)`);
+    }
+  } catch (err) {
+    console.error("[Backfill] State backfill error:", err);
+  }
+}, 15_000); // 15s after server start
+
 startServer().catch(console.error);

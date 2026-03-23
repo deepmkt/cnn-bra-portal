@@ -1,0 +1,16 @@
+{
+  "query": "SELECT \n  SUM(CASE WHEN title LIKE '%alagoas%' OR title LIKE '%maceió%' OR title LIKE '%arapiraca%' THEN 1 ELSE 0 END) as alagoas_mentions,\n  SUM(CASE WHEN title LIKE '%são paulo%' OR title LIKE '%paulista%' THEN 1 ELSE 0 END) as sp_mentions,\n  SUM(CASE WHEN title LIKE '%rio de janeiro%' OR title LIKE '%carioca%' THEN 1 ELSE 0 END) as rj_mentions,\n  COUNT(*) as total\nFROM articles;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AGjn9SpCJUmEG7Z.root --database 6wzLmWaAhQKjEBEoadSqJc --execute SELECT \n  SUM(CASE WHEN title LIKE '%alagoas%' OR title LIKE '%maceió%' OR title LIKE '%arapiraca%' THEN 1 ELSE 0 END) as alagoas_mentions,\n  SUM(CASE WHEN title LIKE '%são paulo%' OR title LIKE '%paulista%' THEN 1 ELSE 0 END) as sp_mentions,\n  SUM(CASE WHEN title LIKE '%rio de janeiro%' OR title LIKE '%carioca%' THEN 1 ELSE 0 END) as rj_mentions,\n  COUNT(*) as total\nFROM articles;",
+  "rows": [
+    {
+      "alagoas_mentions": "46",
+      "sp_mentions": "12",
+      "rj_mentions": "5",
+      "total": "1251"
+    }
+  ],
+  "messages": [],
+  "stdout": "alagoas_mentions\tsp_mentions\trj_mentions\ttotal\n46\t12\t5\t1251\n",
+  "stderr": "",
+  "execution_time_ms": 76
+}

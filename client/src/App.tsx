@@ -21,6 +21,7 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const Shorts = lazy(() => import("./pages/Shorts"));
 const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
+const StatePage = lazy(() => import("./pages/StatePage"));
 
 const ADMIN_SUBDOMAIN = "admin.cnnbra.com.br";
 
@@ -208,6 +209,16 @@ function Router() {
       </Route>
       <Route path={"/contato"}>
         <Suspense fallback={<LazyFallback />}><Contact /></Suspense>
+      </Route>
+      <Route path={"/:uf"}>
+        {(params) => {
+          const uf = (params.uf || "").toUpperCase();
+          const validUFs = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
+          if (validUFs.includes(uf)) {
+            return <Suspense fallback={<LazyFallback />}><StatePage /></Suspense>;
+          }
+          return <NotFound />;
+        }}
       </Route>
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />

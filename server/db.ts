@@ -110,7 +110,7 @@ function calculateReadTime(content: string | null | undefined): number {
   return Math.max(1, Math.ceil(words / 200));
 }
 
-export async function getArticles(filters?: { status?: string; category?: string; isHero?: boolean; search?: string; tag?: string; limit?: number }) {
+export async function getArticles(filters?: { status?: string; category?: string; isHero?: boolean; search?: string; tag?: string; state?: string; stateKeywords?: string[]; limit?: number }) {
   const db = await getDb();
   if (!db) return [];
   const results = await db.select().from(articles).orderBy(desc(articles.createdAt));
@@ -125,6 +125,18 @@ export async function getArticles(filters?: { status?: string; category?: string
   if (filters?.tag) {
     filtered = filtered.filter(a => {
       try { const t = JSON.parse(a.tags || "[]"); return t.includes(filters.tag); } catch { return false; }
+    });
+  }
+  // Filter by state: match state column OR keywords in title/content/excerpt
+  if (filters?.state || filters?.stateKeywords) {
+    const stateCode = filters.state?.toUpperCase();
+    const keywords = filters.stateKeywords ?? [];
+    filtered = filtered.filter(a => {
+      // Direct state column match
+      if (stateCode && a.state?.toUpperCase() === stateCode) return true;
+      // Keyword match in title, excerpt, or content
+      const searchText = `${a.title} ${a.excerpt || ''} ${a.content || ''}`.toLowerCase();
+      return keywords.some(kw => searchText.includes(kw.toLowerCase()));
     });
   }
   if (filters?.limit) filtered = filtered.slice(0, filters.limit);

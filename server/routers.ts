@@ -61,6 +61,8 @@ export const appRouter = router({
         isHero: z.boolean().optional(),
         search: z.string().optional(),
         tag: z.string().optional(),
+        state: z.string().optional(),
+        stateKeywords: z.array(z.string()).optional(),
         limit: z.number().optional(),
       }).optional())
       .query(async ({ input }) => {

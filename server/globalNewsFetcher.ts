@@ -805,6 +805,11 @@ async function tryPublishFromFeed(
       const db = await getDb();
       if (!db) return false;
 
+      // Auto-detect Brazilian state from title + tags + excerpt
+      const { detectState } = await import("@shared/brazilStates");
+      const stateText = `${rewritten.title} ${rewritten.excerpt} ${tagsPrefix} ${rewritten.tags}`;
+      const detectedState = detectState(stateText);
+
       try {
         const result = await db.insert(articles).values({
           title: rewritten.title,
@@ -817,6 +822,7 @@ async function tryPublishFromFeed(
           status: "online",
           isHero,
           tags: `${tagsPrefix},${rewritten.tags}`,
+          state: detectedState,
           publishedAt: item.pubDate ? new Date(item.pubDate) : new Date(),
         });
 

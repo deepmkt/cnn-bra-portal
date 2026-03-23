@@ -306,10 +306,10 @@ export default function Home() {
               {statesOpen && (
                 <div className="absolute top-full left-0 w-[380px] bg-white shadow-2xl border p-3 grid grid-cols-5 gap-1.5 rounded-b-xl z-[100] animate-slide-up">
                   {BR_STATES.map(s => (
-                    <a key={s} href={`https://${s.toLowerCase()}.cnnbra.com.br`} target="_blank" rel="noopener noreferrer"
+                    <Link key={s} href={`/${s.toLowerCase()}`}
                       className="text-center py-1.5 hover:bg-cnn-blue hover:text-white rounded-md text-[11px] font-bold transition-all uppercase">
                       {s}
-                    </a>
+                    </Link>
                   ))}
                 </div>
               )}

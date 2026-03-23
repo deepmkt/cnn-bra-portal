@@ -659,3 +659,13 @@
 - [x] Corrigir headlines de todas as matérias para minúsculo (regras ABNT)
 - [x] Atualizar geração de slug no código para novos artigos
 - [x] Atualizar capitalização de títulos no código para novos artigos
+
+## Sprint — Portais Estaduais (27 estados)
+
+- [x] Dados de referência dos 27 estados (sigla, nome, capital, cidades destaque, keywords)
+- [x] Procedure tRPC para filtrar artigos por estado (state + stateKeywords)
+- [x] Página StatePage reutilizável com hero banner, sidebar por cidade, grid de notícias
+- [x] Menu Estados no header da Home com links internos (/al, /sp, etc.)
+- [x] Rotas /:uf no App.tsx com validação de UF (27 estados)
+- [x] Detecção automática de estado no fetcher + backfill nos artigos existentes
+- [x] Banner central na página estadual com hero carrossel
