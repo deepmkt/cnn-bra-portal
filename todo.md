@@ -685,3 +685,10 @@
 - [x] Limitar Hero/Carrossel a 10 notícias
 - [x] Notícias manuais (editor) têm prioridade no carrossel sobre as da IA
 - [x] Notícias manuais só saem do carrossel se removidas manualmente pelo editor
+
+## Bug Fix — Banners de Publicidade
+
+- [x] Corrigir upload de GIF nos banners de publicidade (imageUrl salva vazia — era fetch FormData em vez de tRPC base64)
+- [x] Corrigir exibição de banners ativos na home do site (placement aliases: middle↔home-mid, lateral↔home-sidebar, horizontal↔home-top)
+- [x] Garantir que todos os banners já ativos apareçam na aba Publicidade do admin (filtro por alias)
+- [x] Adicionar banner home-top entre o hero e o feed de notícias na Home

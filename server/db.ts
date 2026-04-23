@@ -509,11 +509,27 @@ export async function upsertUserPreferences(userId: number, prefs: Partial<Inser
 
 // ===== ADS =====
 
+// Map legacy placement names to canonical names
+const PLACEMENT_ALIASES: Record<string, string[]> = {
+  "home-top": ["home-top", "horizontal"],
+  "home-mid": ["home-mid", "middle"],
+  "home-sidebar": ["home-sidebar", "lateral"],
+  "article-mid": ["article-mid"],
+  "article-sidebar": ["article-sidebar"],
+  // Also support querying by legacy names
+  "horizontal": ["home-top", "horizontal"],
+  "middle": ["home-mid", "middle"],
+  "lateral": ["home-sidebar", "lateral"],
+};
+
 export async function getAds(placement?: string) {
   const db = await getDb();
   if (!db) return [];
   const results = await db.select().from(ads).orderBy(desc(ads.createdAt));
-  if (placement) return results.filter(a => a.placement === placement);
+  if (placement) {
+    const aliases = PLACEMENT_ALIASES[placement] || [placement];
+    return results.filter(a => aliases.includes(a.placement));
+  }
   return results;
 }
 

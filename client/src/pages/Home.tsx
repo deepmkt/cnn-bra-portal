@@ -584,6 +584,11 @@ export default function Home() {
           </aside>
         </div>
 
+        {/* ===== HOME TOP BANNER ===== */}
+        <div className="w-full flex justify-center my-6">
+          <AdBanner placement="home-top" fallbackIndex={0} className="w-full max-w-[728px]" />
+        </div>
+
         {/* ===== SECTION TITLE ===== */}
         <div className="flex items-center border-b-2 border-cnn-blue pb-3 mb-8">
           <h3 className="text-lg font-bold uppercase tracking-tight text-cnn-blue">

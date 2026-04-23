@@ -769,18 +769,34 @@ function AdsTab() {
     else createMut.mutate(form as any);
   };
 
+  const adUploadMut = trpc.mediaUpload.upload.useMutation();
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 16 * 1024 * 1024) { toast.error("Arquivo muito grande (máx 16MB)"); return; }
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/media/upload", { method: "POST", body: fd, credentials: "include" });
-      const json = await res.json();
-      if (json.url) setForm(f => ({ ...f, imageUrl: json.url }));
-      else toast.error("Falha no upload");
-    } catch { toast.error("Erro no upload"); }
+      const reader = new FileReader();
+      const dataBase64 = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve((reader.result as string).split(",")[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const result = await adUploadMut.mutateAsync({
+        filename: file.name,
+        mimeType: file.type,
+        dataBase64,
+        alt: form.sponsor || "Banner publicitário",
+      });
+      if (result.url) {
+        setForm(f => ({ ...f, imageUrl: result.url }));
+        toast.success("Imagem enviada com sucesso!");
+      } else {
+        toast.error("Falha no upload");
+      }
+    } catch (err: any) {
+      toast.error(`Erro no upload: ${err.message || "Tente novamente"}`);
+    }
     setUploading(false);
   };
 
@@ -892,7 +908,15 @@ function AdsTab() {
       ) : (
         <div className="space-y-4">
           {AD_PLACEMENTS.map(({ key, label, desc, color }) => {
-            const placementAds = ads.filter((a: any) => a.placement === key || (key === "home-top" && a.placement === "horizontal") || (key === "article-mid" && a.placement === "middle") || (key === "home-sidebar" && a.placement === "lateral"));
+            const aliasMap: Record<string, string[]> = {
+              "home-top": ["home-top", "horizontal"],
+              "home-mid": ["home-mid", "middle"],
+              "home-sidebar": ["home-sidebar", "lateral"],
+              "article-mid": ["article-mid"],
+              "article-sidebar": ["article-sidebar"],
+            };
+            const aliases = aliasMap[key] || [key];
+            const placementAds = ads.filter((a: any) => aliases.includes(a.placement));
             return (
               <div key={key} className={`rounded-xl border-2 p-4 ${color}`}>
                 <div className="flex items-center justify-between mb-3">
